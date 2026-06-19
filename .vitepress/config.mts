@@ -8,8 +8,15 @@ export default defineConfig({
   cleanUrls: true,
 
   head: [
-    ['link', { rel: 'icon', href: '/images/favicon.svg', type: 'image/svg+xml' }]
+    ['link', { rel: 'icon', href: '/favicon.svg', type: 'image/svg+xml' }],
+    ['link', { rel: 'apple-touch-icon', href: '/favicon.svg', sizes: '180x180' }],
+    ['link', { rel: 'mask-icon', href: '/favicon.svg', color: '#6366f1' }]
   ],
+
+  // Ensure favicon works well on GitHub Pages
+  vite: {
+    publicDir: '.vitepress/public'
+  },
 
   themeConfig: {
     logo: '/images/logo.svg',

@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+  <defs>
+    <linearGradient id="g" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#6366f1"/>
+      <stop offset="100%" style="stop-color:#4f46e5"/>
+    </linearGradient>
+  </defs>
+  <!-- Background -->
+  <circle cx="50" cy="50" r="46" fill="#0f172a"/>
+  <!-- Stylized "D" made of nodes (data structure) -->
+  <circle cx="35" cy="30" r="7" fill="url(#g)"/>
+  <circle cx="35" cy="50" r="7" fill="url(#g)"/>
+  <circle cx="35" cy="70" r="7" fill="url(#g)"/>
+  <circle cx="55" cy="30" r="7" fill="#64748b"/>
+  <circle cx="65" cy="50" r="7" fill="#64748b"/>
+  <circle cx="55" cy="70" r="7" fill="#64748b"/>
+  <!-- Connection lines -->
+  <line x1="42" y1="30" x2="48" y2="30" stroke="#64748b" stroke-width="3"/>
+  <line x1="42" y1="50" x2="58" y2="50" stroke="#64748b" stroke-width="3"/>
+  <line x1="42" y1="70" x2="48" y2="70" stroke="#64748b" stroke-width="3"/>
+  <line x1="35" y1="37" x2="35" y2="43" stroke="#64748b" stroke-width="3"/>
+  <line x1="35" y1="57" x2="35" y2="63" stroke="#64748b" stroke-width="3"/>
+  <!-- Small accent -->
+  <circle cx="75" cy="50" r="4" fill="#6366f1"/>
+</svg>
