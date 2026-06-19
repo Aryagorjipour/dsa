@@ -106,7 +106,7 @@ export default defineConfig({
           { text: '19. Quickselect', link: '/algorithms/19-quickselect' },
           { text: '20. Reservoir Sampling', link: '/algorithms/20-reservoir-sampling' },
           { text: '21-22. BST Operations', link: '/algorithms/21-bst-operations' },
-          { text: '23. Self-balancing Trees', link: '/algorithms/22-self-balancing-trees' },
+          { text: '23. Self-balancing Trees', link: '/algorithms/23-self-balancing-trees' },
           { text: '24. Trie Operations', link: '/algorithms/23-trie-operations' },
           { text: '25. BFS', link: '/algorithms/24-bfs' },
           { text: '26. DFS', link: '/algorithms/25-dfs' },
