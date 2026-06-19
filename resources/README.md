@@ -12,6 +12,11 @@ This directory contains curated, high-quality supplementary materials.
 - [dotnet-go-specific.md](dotnet-go-specific.md) — .NET/C# and Go runtime and production resources
 - [further-reading.md](further-reading.md) — Additional advanced / tangential topics
 
+## Related Projects
+
+- **[Structura](https://github.com/Aryagorjipour/structura)**: A dark fantasy RPG where you master DSA by fighting algorithmic bosses with quizzes, visualizations, and real code challenges (supports Go & C# via Wandbox).  
+  Play at: https://aryagorjipour.github.io/structura/
+
 All entries include direct links, short summaries, and context for why they are valuable.
 
 Use these alongside the main handbook chapters for deeper understanding.
