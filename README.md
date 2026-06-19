@@ -226,6 +226,15 @@ Runnable examples are in the `examples/` folder.
 
 Happy building. Now go make something that uses these structures and algorithms properly.
 
+---
+
+## Related Projects
+
+If you enjoy this handbook, check out **Structura** — a dark fantasy RPG that teaches the same concepts through boss fights, visualizations, and actual coding challenges in 6 languages (Go, C#, etc.).
+
+- GitHub: https://github.com/Aryagorjipour/structura
+- Play: https://aryagorjipour.github.io/structura/
+
 ## Visual Aids & Extra Resources
 
 - **images/**: 10+ educational diagrams (BST, Red-Black Tree, Trie, Segment Tree, Bloom Filter, Binary Search steps, Heap, Array vs Linked List, B+ Tree, BFS Graph, etc.) embedded directly in the chapters.

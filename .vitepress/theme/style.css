@@ -45,8 +45,102 @@
   margin-top: 8px;
 }
 
-/* Logo sizing */
+/* Make the header logo bigger and more visible */
+.VPNavBarTitle .logo,
+.VPNavBarTitle .logo img {
+  height: 42px !important;
+  max-height: 42px !important;
+  width: auto !important;
+}
+
+/* If using the component somewhere else */
 .dsa-logo {
-  height: 32px;
+  height: 42px;
   width: auto;
+}
+
+/* Focus Mode - hide sidebars for pure content focus */
+html.focus-mode .VPSidebar,
+html.focus-mode .dsa-explorer {
+  display: none !important;
+}
+
+html.focus-mode .VPDoc {
+  max-width: 860px;
+  margin: 0 auto;
+}
+
+html.focus-mode .VPContent {
+  padding-left: 0 !important;
+}
+
+/* Optional: subtle indicator */
+html.focus-mode::before {
+  content: "Focus Mode • Press Esc or ⌘F to exit";
+  position: fixed;
+  bottom: 12px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 11px;
+  background: var(--vp-c-bg-alt);
+  color: var(--vp-c-text-2);
+  padding: 2px 10px;
+  border-radius: 4px;
+  border: 1px solid var(--vp-c-divider);
+  z-index: 100;
+  opacity: 0.85;
+}
+
+.dsa-explorer .explorer-content.is-collapsed {
+  max-height: 0 !important;
+  overflow: hidden;
+  padding: 0;
+  margin: 0;
+}
+
+.explorer-content {
+  max-height: 380px;
+  overflow-y: auto;
+  transition: max-height 0.22s ease;
+}
+
+.explorer-footer {
+  display: flex;
+  gap: 6px;
+  margin-top: 8px;
+}
+
+.focus-btn, .collapse-btn {
+  font-size: 11px;
+  padding: 2px 8px;
+  border: 1px solid var(--vp-c-divider);
+  background: transparent;
+  color: var(--vp-c-text-2);
+  border-radius: 4px;
+  cursor: pointer;
+  flex: 1;
+}
+
+.focus-btn:hover, .collapse-btn:hover {
+  background: var(--vp-c-bg-alt);
+}
+
+.focus-btn-small {
+  font-size: 11px;
+  padding: 1px 8px;
+  border: 1px solid var(--vp-c-brand-1);
+  background: var(--vp-c-bg);
+  color: var(--vp-c-brand-1);
+  border-radius: 4px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.focus-btn-small.active {
+  background: var(--vp-c-brand-1);
+  color: white;
+}
+
+.focus-btn-small:hover {
+  opacity: 0.9;
 }

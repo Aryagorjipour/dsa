@@ -7,11 +7,15 @@ export default defineConfig({
   srcDir: '.',
   cleanUrls: true,
 
+  head: [
+    ['link', { rel: 'icon', href: '/images/favicon.svg', type: 'image/svg+xml' }]
+  ],
+
   themeConfig: {
-    logo: '/images/logo.svg', // We will provide SVG later
+    logo: '/images/logo.svg',
 
     nav: [
-      { text: 'GitHub', link: 'https://github.com/Aryagorjipour' },
+      { text: 'GitHub', link: 'https://github.com/Aryagorjipour/dsa' },
       { text: 'Handbook', link: '/README' }
     ],
 
@@ -138,7 +142,7 @@ export default defineConfig({
     ],
 
     socialLinks: [
-      { icon: 'github', link: 'https://github.com/Aryagorjipour' }
+      { icon: 'github', link: 'https://github.com/Aryagorjipour/dsa' }
     ],
 
     editLink: {

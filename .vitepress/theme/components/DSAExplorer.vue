@@ -1,4 +1,9 @@
 <script setup lang="ts">
+import { ref, onMounted, onUnmounted } from 'vue'
+
+const collapsed = ref(false)
+const focusMode = ref(false)
+
 const tree = [
   {
     name: 'Fundamentals',
@@ -60,7 +65,6 @@ const tree = [
       { name: 'Dynamic Programming (Knapsack, LCS...)', path: '/algorithms/32-dp-fundamentals' },
       { name: 'Aho-Corasick', path: '/algorithms/42-aho-corasick' },
       { name: 'Rate Limiting', path: '/algorithms/47-rate-limiting' },
-      // ... (can be expanded)
     ]
   },
   {
@@ -71,22 +75,156 @@ const tree = [
     ]
   }
 ]
+
+function toggleCollapse() {
+  collapsed.value = !collapsed.value
+}
+
+function toggleFocus() {
+  focusMode.value = !focusMode.value
+  if (focusMode.value) {
+    document.documentElement.classList.add('focus-mode')
+  } else {
+    document.documentElement.classList.remove('focus-mode')
+  }
+}
+
+function handleKeydown(e: KeyboardEvent) {
+  if (e.key.toLowerCase() === 'f' && (e.metaKey || e.ctrlKey)) {
+    e.preventDefault()
+    toggleFocus()
+  }
+  if (e.key === 'Escape' && focusMode.value) {
+    toggleFocus()
+  }
+}
+
+onMounted(() => {
+  document.addEventListener('keydown', handleKeydown)
+})
+
+onUnmounted(() => {
+  document.removeEventListener('keydown', handleKeydown)
+  document.documentElement.classList.remove('focus-mode')
+})
 </script>
 
 <template>
-  <div class="dsa-explorer">
-    <div style="font-weight:600; margin-bottom:8px; color: var(--vp-c-text-1);">
-      Handbook Structure
+  <div class="dsa-explorer" :class="{ collapsed: collapsed }">
+    <div class="explorer-header">
+      <span>Handbook Structure</span>
+      <button class="toggle-btn" @click="toggleCollapse" :title="collapsed ? 'Expand' : 'Collapse'">
+        {{ collapsed ? '▲' : '▼' }}
+      </button>
     </div>
-    <ul>
-      <li v-for="section in tree" :key="section.name">
-        <div class="folder">{{ section.name }}</div>
-        <ul>
-          <li v-for="item in section.children" :key="item.path">
-            <a :href="item.path">{{ item.name }}</a>
-          </li>
-        </ul>
-      </li>
-    </ul>
+
+    <div class="explorer-content" :class="{ 'is-collapsed': collapsed }">
+      <ul>
+        <li v-for="section in tree" :key="section.name">
+          <div class="folder">{{ section.name }}</div>
+          <ul>
+            <li v-for="item in section.children" :key="item.path">
+              <a :href="item.path">{{ item.name }}</a>
+            </li>
+          </ul>
+        </li>
+      </ul>
+    </div>
+
+    <div class="explorer-footer">
+      <button class="focus-btn" @click="toggleFocus" :title="focusMode ? 'Exit Focus (Esc)' : 'Focus Mode (⌘F / Ctrl+F)'">
+        {{ focusMode ? 'Exit Focus' : 'Focus' }}
+      </button>
+      <button class="collapse-btn" @click="toggleCollapse" :title="collapsed ? 'Expand tree' : 'Collapse from bottom'">
+        {{ collapsed ? 'Expand ↑' : 'Collapse' }}
+      </button>
+    </div>
   </div>
 </template>
+
+<style scoped>
+.dsa-explorer {
+  font-size: 13px;
+  line-height: 1.45;
+  transition: all 0.2s ease;
+}
+
+.explorer-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-weight: 600;
+  margin-bottom: 6px;
+  color: var(--vp-c-text-1);
+  font-size: 13px;
+}
+
+.toggle-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 14px;
+  color: var(--vp-c-text-2);
+  padding: 2px 6px;
+  line-height: 1;
+}
+
+.explorer-content {
+  max-height: 420px;
+  overflow-y: auto;
+  transition: max-height 0.25s ease;
+}
+
+.dsa-explorer.collapsed .explorer-content {
+  max-height: 0;
+  overflow: hidden;
+}
+
+.dsa-explorer ul {
+  list-style: none;
+  padding-left: 10px;
+  margin: 1px 0;
+}
+
+.dsa-explorer > ul {
+  padding-left: 0;
+}
+
+.dsa-explorer .folder {
+  font-weight: 600;
+  color: var(--vp-c-text-1);
+  margin-top: 6px;
+  font-size: 12px;
+}
+
+.dsa-explorer a {
+  color: var(--vp-c-text-2);
+  text-decoration: none;
+  display: block;
+  padding: 1px 0;
+}
+
+.dsa-explorer a:hover {
+  color: var(--vp-c-brand-1);
+}
+
+.explorer-footer {
+  margin-top: 8px;
+  display: flex;
+  gap: 6px;
+}
+
+.focus-btn, .collapse-btn {
+  font-size: 11px;
+  padding: 2px 8px;
+  border: 1px solid var(--vp-c-divider);
+  background: transparent;
+  color: var(--vp-c-text-2);
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.focus-btn:hover, .collapse-btn:hover {
+  background: var(--vp-c-bg-alt);
+}
+</style>

@@ -11,7 +11,7 @@ hero:
       link: /fundamentals/00-what-is-a-data-structure
     - theme: alt
       text: View on GitHub
-      link: https://github.com/Aryagorjipour
+      link: https://github.com/Aryagorjipour/dsa
 ---
 
 # Welcome to the DSA Handbook
@@ -47,5 +47,12 @@ We especially welcome:
 ---
 
 **Made with care by [Aryagorjipour](https://github.com/Aryagorjipour)**
+
+---
+
+## Related Projects
+
+- **[Structura](https://github.com/Aryagorjipour/structura)** — A dark-fantasy RPG where you master Data Structures & Algorithms by battling 80 bosses. Quizzes, visualizations, and real code duels in 6 languages (including Go & C#).  
+  Play live: [aryagorjipour.github.io/structura](https://aryagorjipour.github.io/structura/)
 
 Start exploring using the navigation on the left or the structure explorer on the right.
