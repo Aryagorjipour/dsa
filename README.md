@@ -106,7 +106,7 @@ Each topic includes:
 19. [Quickselect](algorithms/19-quickselect.md) — Kth smallest without full sort
 20/21. [Reservoir Sampling](algorithms/20-reservoir-sampling.md) — Uniform sample from infinite stream
 21/22. [BST Operations](algorithms/21-bst-operations.md) — Kth smallest, Validate BST, LCA in BST
-22/23. [Self-balancing Trees Operations](algorithms/22-self-balancing-trees.md)
+22/23. [Self-balancing Trees Operations](algorithms/23-self-balancing-trees.md)
 23/24. [Trie Operations](algorithms/23-trie-operations.md) — Word Search II on board
 24/25. [Breadth-First Search (BFS)](algorithms/24-bfs.md) — Shortest path unweighted
 25/26. [Depth-First Search (DFS)](algorithms/25-dfs.md)

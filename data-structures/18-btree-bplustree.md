@@ -37,7 +37,7 @@ Internal nodes only contain **keys for navigation** (indexes).
 
 ## Visual Intuition (B+ Tree)
 
-![B+ Tree](../images/bplus-tree.png)
+![B+ Tree](/images/bplus-tree.png)
 
 ```
           [  50  ]

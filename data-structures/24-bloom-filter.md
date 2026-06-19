@@ -16,7 +16,7 @@ This is incredibly useful when false positives are acceptable but you want to sa
 
 ## How It Works (Simple)
 
-![Bloom Filter Concept](../images/bloom-filter.png)
+![Bloom Filter Concept](/images/bloom-filter.png)
 
 1. You have a bit array of size `m`, initially all zeros.
 2. You have `k` different hash functions.

@@ -13,7 +13,7 @@ This invariant is what makes BSTs powerful.
 
 ## Visual
 
-![Binary Search Tree](../images/bst.png)
+![Binary Search Tree](/images/bst.png)
 
 ```
          50
@@ -197,6 +197,6 @@ It gives you the beautiful ability to search, insert, and delete in logarithmic 
 
 Plain BSTs are fragile. The next step in evolution is self-balancing trees.
 
-**Further reading & visuals**: Check [resources/further-reading.md](../resources/further-reading.md) and the diagrams in the [images/](../images/) folder.
+**Further reading & visuals**: Check [resources/further-reading.md](../resources/further-reading.md) and the diagrams in the images/ folder.
 
 **Next:** [14 - Self Balancing BST: Red-Black Tree](14-red-black-tree.md)

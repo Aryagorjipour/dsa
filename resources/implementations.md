@@ -29,6 +29,6 @@ Focus on clean, well-documented C# and Go code (matching the handbook style).
 - **RocksDB**: MemTable (skip list)
 - **PostgreSQL**: B+ tree indexes (src/backend/access/nbtree)
 - **Linux kernel**: Red-black trees (include/linux/rbtree.h)
-- **.NET**: Reference source for SortedSet<T> (uses Red-Black)
+- **.NET**: Reference source for SortedSet&lt;T&gt; (uses Red-Black)
 
 These are the best "evidence-based" implementations because they run at massive scale.

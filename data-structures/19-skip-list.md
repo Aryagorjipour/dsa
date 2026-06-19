@@ -10,7 +10,7 @@ It is an alternative to balanced trees that is often simpler to implement and ha
 
 ## Visual Intuition
 
-![Skip List](../images/skip-list.png)
+![Skip List](/images/skip-list.png)
 
 ```
 Level 3:   1 -------------------> 50

@@ -13,7 +13,7 @@ This is why arrays give you **O(1)** random access.
 
 ## Visual
 
-![Array vs Linked List comparison](../images/array-vs-linked-list.png)
+![Array vs Linked List comparison](/images/array-vs-linked-list.png)
 
 ```
 Index:   0    1    2    3    4

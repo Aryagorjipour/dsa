@@ -21,7 +21,7 @@ This property lets us store it very efficiently in an **array** without using no
 
 ## Array Representation (The Trick)
 
-![Heap as Tree and Array](../images/heap-array.png)
+![Heap as Tree and Array](/images/heap-array.png)
 
 For a node at index `i`:
 - Left child: `2*i + 1`

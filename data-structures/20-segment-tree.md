@@ -17,11 +17,11 @@ Segment tree: O(log n) per query and update.
 
 ## The Core Idea
 
-![Segment Tree](../images/segment-tree.png)
+![Segment Tree](/images/segment-tree.png)
 
 A segment tree is a **binary tree** over the array where each node represents a **range** (segment) of the array.
 
-![Advanced Segment Tree Example](../images/segment-tree-advanced.png)
+![Advanced Segment Tree Example](/images/segment-tree-advanced.png)
 
 ### Canonical Problem: Range Sum Queries with Point Updates (and Lazy Range Updates)
 

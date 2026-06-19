@@ -19,7 +19,7 @@ You can:
 
 ## Visual (Simple)
 
-![Merkle Tree](../images/merkle-tree.png)
+![Merkle Tree](/images/merkle-tree.png)
 
 ```
           Root Hash

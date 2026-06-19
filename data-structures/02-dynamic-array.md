@@ -9,7 +9,7 @@ It gives you:
 - The ability to grow and shrink as you add/remove elements
 
 This is the workhorse structure behind:
-- C#: `List<T>`
+- C#: `List&lt;T&gt;`
 - Java: `ArrayList`
 - Go: slices (`[]T` with `append`)
 - Python: `list`
@@ -32,7 +32,7 @@ Because resizing is rare, over many operations the cost is **amortized O(1)** pe
 
 Most implementations double the capacity when full.
 
-- .NET `List<T>` doubles
+- .NET `List&lt;T&gt;` doubles
 - Go slices grow by 2x when small, then by 1.25x when larger (implementation has evolved)
 
 Doubling gives excellent amortized performance.
@@ -48,7 +48,7 @@ Doubling gives excellent amortized performance.
 | Remove last          | O(1)        | O(1)           | Just decrement count |
 | Search               | O(n)        | O(n)           | Linear scan |
 
-## C# — List<T> Internals (Simplified)
+## C# — List&lt;T&gt; Internals (Simplified)
 
 ```csharp
 public class MyList<T> {

@@ -1,0 +1,11 @@
+name: New Topic Suggestion
+description: Suggest a new data structure or algorithm to cover
+body:
+  - type: input
+    id: name
+    attributes:
+      label: Name of the structure/algorithm
+  - type: textarea
+    id: why
+    attributes:
+      label: Why should it be added? (real-world use case or common problem)

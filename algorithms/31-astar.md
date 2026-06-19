@@ -27,7 +27,7 @@ Naive BFS fails because costs vary. Dijkstra works but explores too many unneces
 - Robotics (ROS navigation stack)
 - Puzzle solvers
 
-![A* Pathfinding with Heuristic](../images/astar-heuristic.png)
+![A* Pathfinding with Heuristic](/images/astar-heuristic.png)
 
 **Full Implementation (Grid A* with Manhattan heuristic)**
 

@@ -37,7 +37,7 @@
 - **File systems**: NTFS, APFS, ext4 (in some forms), XFS.
 
 ## Red-Black Trees
-- **.NET**: SortedSet<T>, SortedDictionary
+- **.NET**: SortedSet&lt;T&gt;, SortedDictionary
 - **Java**: TreeMap, TreeSet
 - **Linux kernel**: Process scheduler (CFS), virtual memory areas, many internal structures.
 - **Git** (indirectly through balanced trees in some operations).

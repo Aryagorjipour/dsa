@@ -50,7 +50,7 @@ We will implement both classic binary search and a version of this problem.
 
 ## Classic Binary Search
 
-![Binary Search Steps](../images/binary-search-steps.png)
+![Binary Search Steps](/images/binary-search-steps.png)
 
 Assuming a sorted array, find the index of `target`, or -1.
 

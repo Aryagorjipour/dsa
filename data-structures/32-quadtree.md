@@ -20,7 +20,7 @@ Naive O(n) scan is too slow.
 
 Quadtree lets you discard huge empty regions quickly.
 
-![Quadtree](../images/quadtree.png)
+![Quadtree](/images/quadtree.png)
 
 ## Types of Quadtrees
 

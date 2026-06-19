@@ -29,7 +29,7 @@ That is good enough for O(log n) operations.
 
 ## Visual Example
 
-![Red-Black Tree](../images/red-black-tree.png)
+![Red-Black Tree](/images/red-black-tree.png)
 
 ## Rotations — The Rebalancing Tool
 

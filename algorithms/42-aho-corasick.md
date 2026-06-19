@@ -40,7 +40,7 @@ This is exactly why Aho-Corasick was invented in 1975 at Bell Labs for bibliogra
 
 See the complete runnable code in examples/ and the detailed build steps in the chapter.
 
-![Aho-Corasick Automaton](../images/aho-corasick-automaton.png)
+![Aho-Corasick Automaton](/images/aho-corasick-automaton.png)
 
 ## Flagship Real Problems
 

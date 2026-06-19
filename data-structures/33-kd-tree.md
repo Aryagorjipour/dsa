@@ -22,7 +22,7 @@ Each level splits the space along one axis.
 - Not great for frequent updates (most implementations are static).
 - Nearest neighbor can degenerate in worst case.
 
-![KD Tree](../images/kd-tree.png)
+![KD Tree](/images/kd-tree.png)
 
 ## Real World Uses
 

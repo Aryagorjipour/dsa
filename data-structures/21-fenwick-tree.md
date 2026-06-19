@@ -84,7 +84,7 @@ public static long CountInversions(int[] arr) {
 
 See examples/ for full runnable inversion count demo.
 
-![Fenwick Tree](../images/fenwick-tree.png)
+![Fenwick Tree](/images/fenwick-tree.png)
 
 ## Simple Implementation (C#)
 

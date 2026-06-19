@@ -1,0 +1,52 @@
+/* Minimal custom styles for DSA Handbook */
+:root {
+  --vp-c-brand-1: #6366f1;
+  --vp-c-brand-2: #4f46e5;
+}
+
+.VPNavBarTitle {
+  font-weight: 600;
+}
+
+/* Nice landing hero adjustments */
+.VPHero {
+  padding-top: 80px;
+}
+
+/* Explorer on the right - basic styling */
+.dsa-explorer {
+  font-size: 13px;
+  line-height: 1.5;
+  padding: 8px 4px;
+}
+
+.dsa-explorer ul {
+  list-style: none;
+  padding-left: 12px;
+  margin: 2px 0;
+}
+
+.dsa-explorer > ul {
+  padding-left: 0;
+}
+
+.dsa-explorer a {
+  color: var(--vp-c-text-2);
+  text-decoration: none;
+}
+
+.dsa-explorer a:hover {
+  color: var(--vp-c-brand-1);
+}
+
+.dsa-explorer .folder {
+  font-weight: 600;
+  color: var(--vp-c-text-1);
+  margin-top: 8px;
+}
+
+/* Logo sizing */
+.dsa-logo {
+  height: 32px;
+  width: auto;
+}

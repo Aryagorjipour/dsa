@@ -12,7 +12,7 @@ It is optimized for **string** problems, especially:
 
 ## Visual Example — Inserting "cat", "car", "dog"
 
-![Trie (Prefix Tree)](../images/trie.png)
+![Trie (Prefix Tree)](/images/trie.png)
 
 - "cat" ends at the 't' node
 - "car" ends at the 'r' node

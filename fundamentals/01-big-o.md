@@ -134,7 +134,7 @@ In interviews and real systems we usually care most about:
 
 Some structures are **occasionally expensive** but cheap on average.
 
-Classic example: Dynamic Array (C# `List<T>`, Go slice append)
+Classic example: Dynamic Array (C# `List&lt;T&gt;`, Go slice append)
 
 ```csharp
 list.Add(item);   // Most of the time O(1)
@@ -207,7 +207,7 @@ If numbers are in range 0..n-1, use the array itself as a "set" by negating valu
    - In many languages `str += "x"` in a loop is O(n²) because strings are immutable.
    - Use `StringBuilder` (C#) or `strings.Builder` (Go) → amortized O(n).
 
-2. **List.Remove in a loop** (C# `List<T>`)
+2. **List.Remove in a loop** (C# `List&lt;T&gt;`)
    - Removing from middle of List is O(n) because it shifts elements.
    - Doing it n times = O(n²) disaster.
    - Use `LinkedList` or build a new list instead.
@@ -219,7 +219,7 @@ If numbers are in range 0..n-1, use the array itself as a "set" by negating valu
 
 ## How Languages Hide Big O From You
 
-**C# List<T>:**
+**C# List&lt;T&gt;:**
 - `Add` → amortized O(1)
 - `Insert(0, x)` → O(n) (shifts everything)
 - `RemoveAt(0)` → O(n)

@@ -1,0 +1,13 @@
+name: Content Suggestion
+description: Suggest improvement to an explanation, example, or diagram
+body:
+  - type: textarea
+    id: suggestion
+    attributes:
+      label: What should be improved?
+    validations:
+      required: true
+  - type: input
+    id: related
+    attributes:
+      label: Related file(s)

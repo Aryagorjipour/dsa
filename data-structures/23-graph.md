@@ -124,7 +124,7 @@ Used in high-performance graph databases and libraries.
 
 ## Core Graph Algorithms (We'll Cover in Depth Later)
 
-![BFS on a Graph](../images/bfs-graph.png)
+![BFS on a Graph](/images/bfs-graph.png)
 
 
 - BFS & DFS (traversal)
