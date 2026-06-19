@@ -82,7 +82,7 @@ Each topic includes:
 33. [KD Tree](data-structures/33-kd-tree.md)
 34. [R-Tree](data-structures/34-rtree.md)
 
-### Algorithms (Complete - 0 to 47 with dedicated problem + full impl for each)
+### Algorithms (Complete - 0 to 48 with dedicated problem + full impl for each)
 
 0. [What is an Algorithm? Algorithmic Thinking](fundamentals/00-what-is-an-algorithm.md)
 1. [Big O](fundamentals/01-big-o.md)
@@ -104,34 +104,34 @@ Each topic includes:
 17. [Radix Sort](algorithms/17-radix-sort.md)
 18. [Hashing (Deep Dive)](algorithms/18-hashing.md) — Two Sum and dedup problems
 19. [Quickselect](algorithms/19-quickselect.md) — Kth smallest without full sort
-20/21. [Reservoir Sampling](algorithms/20-reservoir-sampling.md) — Uniform sample from infinite stream
-21/22. [BST Operations](algorithms/21-bst-operations.md) — Kth smallest, Validate BST, LCA in BST
-22/23. [Self-balancing Trees Operations](algorithms/23-self-balancing-trees.md)
-23/24. [Trie Operations](algorithms/23-trie-operations.md) — Word Search II on board
-24/25. [Breadth-First Search (BFS)](algorithms/24-bfs.md) — Shortest path unweighted
-25/26. [Depth-First Search (DFS)](algorithms/25-dfs.md)
-26/27. [Topological Sort](algorithms/26-topological-sort.md) — Dependency ordering (build tools)
-27/28. [Dijkstra's Shortest Path](algorithms/27-dijkstra.md)
-28/29. [Bellman-Ford](algorithms/28-bellman-ford.md) — Currency arbitrage (negative cycle)
-29/30. [Floyd-Warshall](algorithms/29-floyd-warshall.md) — All-pairs shortest paths
-30/31. [Minimum Spanning Tree (Kruskal + Prim)](algorithms/30-mst-kruskal-prim.md)
-31/32. [A* Search](algorithms/31-astar.md)
-32/33. [Dynamic Programming Fundamentals](algorithms/32-dp-fundamentals.md)
-33/34. [0/1 Knapsack](algorithms/33-0-1-knapsack.md) — Classic thief knapsack
-34/35. [Longest Common Subsequence (LCS)](algorithms/34-lcs.md)
-35/36. [Edit Distance (Levenshtein)](algorithms/35-edit-distance.md)
-36/37. [Matrix Chain Multiplication](algorithms/36-matrix-chain-multiplication.md)
-37/38. [Longest Increasing Subsequence (LIS)](algorithms/37-longest-increasing-subsequence.md)
-38/39. [Knuth-Morris-Pratt (KMP)](algorithms/38-kmp.md)
-39/40. [Rabin-Karp](algorithms/39-rabin-karp.md)
-40/41. [Boyer-Moore](algorithms/40-boyer-moore.md)
-41/42. [Z-Algorithm](algorithms/41-z-algorithm.md)
-42/43. [Aho-Corasick](algorithms/42-aho-corasick.md) — Multi-pattern matching (virus sigs, moderation)
-43/44. [Backtracking](algorithms/43-backtracking.md)
-44/45. [Bit Manipulation](algorithms/44-bit-manipulation.md)
-45/46. [Bloom Filter Algorithms](algorithms/45-bloom-filter-alg.md)
-46/47. [Consistent Hashing](algorithms/46-consistent-hashing.md)
-47/48. [Rate Limiting Algorithms](algorithms/47-rate-limiting.md)
+20. [Reservoir Sampling](algorithms/20-reservoir-sampling.md) — Uniform sample from infinite stream
+21. [BST Operations](algorithms/21-bst-operations.md) — Kth smallest, Validate BST, LCA in BST
+22. [Self-balancing Trees Operations](algorithms/22-self-balancing-trees.md)
+23. [Trie Operations](algorithms/23-trie-operations.md) — Word Search II on board
+24. [Breadth-First Search (BFS)](algorithms/24-bfs.md) — Shortest path unweighted
+25. [Depth-First Search (DFS)](algorithms/25-dfs.md)
+26. [Topological Sort](algorithms/26-topological-sort.md) — Dependency ordering (build tools)
+27. [Dijkstra's Shortest Path](algorithms/27-dijkstra.md)
+28. [Bellman-Ford](algorithms/28-bellman-ford.md) — Currency arbitrage (negative cycle)
+29. [Floyd-Warshall](algorithms/29-floyd-warshall.md) — All-pairs shortest paths
+30. [Minimum Spanning Tree (Kruskal + Prim)](algorithms/30-mst-kruskal-prim.md)
+31. [A* Search](algorithms/31-astar.md)
+32. [Dynamic Programming Fundamentals](algorithms/32-dp-fundamentals.md)
+33. [0/1 Knapsack](algorithms/33-0-1-knapsack.md) — Classic thief knapsack
+34. [Longest Common Subsequence (LCS)](algorithms/34-lcs.md)
+35. [Edit Distance (Levenshtein)](algorithms/35-edit-distance.md)
+36. [Matrix Chain Multiplication](algorithms/36-matrix-chain-multiplication.md)
+37. [Longest Increasing Subsequence (LIS)](algorithms/37-longest-increasing-subsequence.md)
+38. [Knuth-Morris-Pratt (KMP)](algorithms/38-kmp.md)
+39. [Rabin-Karp](algorithms/39-rabin-karp.md)
+40. [Boyer-Moore](algorithms/40-boyer-moore.md)
+41. [Z-Algorithm](algorithms/41-z-algorithm.md)
+42. [Aho-Corasick](algorithms/42-aho-corasick.md) — Multi-pattern matching (virus sigs, moderation)
+43. [Backtracking](algorithms/43-backtracking.md)
+44. [Bit Manipulation](algorithms/44-bit-manipulation.md)
+45. [Bloom Filter Algorithms](algorithms/45-bloom-filter-alg.md)
+46. [Consistent Hashing](algorithms/46-consistent-hashing.md)
+47. [Rate Limiting Algorithms](algorithms/47-rate-limiting.md)
 
 **Complete Treatment Applied to All Items:**
 

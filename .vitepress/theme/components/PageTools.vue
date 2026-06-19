@@ -89,16 +89,32 @@ function loadExample() {
 
 async function runWandbox() {
   running.value = true
-  output.value = 'Compiling on Wandbox...'
-  
-  const compiler = lang.value === 'go' ? 'go-1.21.5' : 'mono-6.12.0.122'
-  
+  output.value = 'Fetching compilers and compiling on Wandbox...'
+
   try {
+    // Get current list of compilers to pick the right one dynamically
+    const listRes = await fetch('https://wandbox.org/api/list.json')
+    if (!listRes.ok) throw new Error('Failed to fetch compiler list')
+    const compilersList = await listRes.json()
+
+    let compilerName = ''
+    if (lang.value === 'go') {
+      const goComp = compilersList.find(c => 
+        c.language === 'Go' || c.name.toLowerCase().startsWith('go-') || c.name === 'go-head'
+      )
+      compilerName = goComp ? goComp.name : 'go-head'
+    } else {
+      const csComp = compilersList.find(c => 
+        c.language === 'C#' || c.name.toLowerCase().includes('mono') || c.name.toLowerCase().includes('csc') || c.name === 'mcs-head'
+      )
+      compilerName = csComp ? csComp.name : 'mcs-head'
+    }
+
     const res = await fetch('https://wandbox.org/api/compile.json', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        compiler,
+        compiler: compilerName,
         code: code.value,
         stdin: '',
         options: '',
@@ -106,16 +122,32 @@ async function runWandbox() {
         'runtime-option-raw': ''
       })
     })
-    
-    const data = await res.json()
+
+    const text = await res.text()  // read as text first to handle non-JSON errors
+
+    let data
+    try {
+      data = JSON.parse(text)
+    } catch (parseErr) {
+      output.value = `Wandbox API error (status ${res.status}). Response was not JSON:\n${text.substring(0, 500)}\n\nTry the "Open in Wandbox" button and paste the code manually.`
+      running.value = false
+      return
+    }
+
     let out = ''
     if (data.program_message) out += data.program_message + '\n'
-    if (data.compiler_message) out += 'Compiler: ' + data.compiler_message + '\n'
-    if (data.status) out += 'Status: ' + data.status + '\n'
-    
-    output.value = out || 'No output (check compiler)'
+    if (data.compiler_message) out += 'Compiler output:\n' + data.compiler_message + '\n'
+    if (data.status !== undefined) out += `Status: ${data.status}\n`
+    if (data.url) out += `Permalink: ${data.url}\n`
+
+    output.value = out.trim() || 'No output returned. The code may have compiled but produced no stdout.'
+
+    if (!res.ok || data.status !== '0') {
+      output.value += '\n\nTip: Click "Open in Wandbox" to debug on the official site.'
+    }
+
   } catch (e) {
-    output.value = 'Error calling Wandbox API. Try the "Open in Wandbox" button.\n' + e
+    output.value = `Error calling Wandbox API: ${e.message || e}\n\nTry the "Open in Wandbox" button below and paste your code there.`
   }
   running.value = false
 }
