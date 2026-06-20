@@ -6,6 +6,10 @@ import (
 	"math"
 )
 
+func ln(x float64) float64 {
+	return math.Log(x)
+}
+
 // Simple Bloom Filter
 // Real-world: Cassandra/HBase SSTable filters, web crawlers, Bitcoin SPV, caches
 
@@ -17,7 +21,7 @@ type BloomFilter struct {
 
 func NewBloomFilter(expectedItems int, falsePositiveRate float64) *BloomFilter {
 	m := int(-float64(expectedItems) * ln(falsePositiveRate) / (ln(2) * ln(2)))
-	k := int(float64(m) / float64(expectedItems) * log(2))
+	k := int(float64(m) / float64(expectedItems) * ln(2))
 	return &BloomFilter{
 		bitArray: make([]bool, m),
 		k:        k,
@@ -47,12 +51,6 @@ func hash(s string, seed int) int {
 	h.Write([]byte(s))
 	h.Write([]byte{byte(seed)})
 	return int(h.Sum32())
-}
-
-import "math" // add this at top
-
-func ln(x float64) float64 {
-	return math.Log(x)
 }
 
 func main() {

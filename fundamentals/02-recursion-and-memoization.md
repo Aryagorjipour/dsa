@@ -86,6 +86,16 @@ This is beautiful but **terrible** performance without memoization.
 
 `Fib(40)` does millions of redundant calls.
 
+## Complexity
+
+| Approach | Time | Space |
+|----------|------|-------|
+| Naive recursion (Fibonacci) | O(2^n) | O(n) stack |
+| Memoized recursion | O(n) | O(n) |
+| Tail-recursive / iterative | O(n) | O(1) |
+
+Recursion depth equals call stack usage — deep recursion can overflow the stack (typical limit ~1–8 MB per thread).
+
 ## Memoization — "Remember What You Already Computed"
 
 **Memoization** = cache the result of expensive function calls and return the cached result when the same inputs occur again.

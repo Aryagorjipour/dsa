@@ -2,67 +2,103 @@
 
 ## The Problem Hashing Solves
 
-**Problem: Achieve average O(1) time for insert, delete, and lookup by key without maintaining order.**
+Achieve **average O(1)** insert, lookup, and delete by mapping keys to array indices with a hash function.
 
-Hashing maps keys to array indices using a hash function.
+### Canonical Problem: Two Sum
 
-### Classic Problem: Two Sum (Unsorted array)
+Given integers and a target, return indices of two numbers that sum to target. Naive O(n²). With a hash map: O(n).
 
-Given an array of integers and a target, return indices of two numbers that add up to the target.
+## How Hashing Works
 
-Naive O(n²). With hashing: O(n).
+1. **Hash function** maps key → integer index.
+2. **Collision resolution**: chaining (buckets of lists) or open addressing (probe sequence).
+3. **Resize** when load factor exceeds threshold (typically 0.7–0.75).
+
+## Complexity
+
+| Operation | Average | Worst |
+|-----------|---------|-------|
+| Insert | O(1) | O(n) |
+| Lookup | O(1) | O(n) |
+| Delete | O(1) | O(n) |
+
+Worst case with pathological collisions; .NET and Go use randomized hashing to mitigate HashDoS.
+
+## Full Implementation
+
+### C# — Two Sum
 
 ```csharp
-// C#
 public int[] TwoSum(int[] nums, int target) {
     var map = new Dictionary<int, int>();
     for (int i = 0; i < nums.Length; i++) {
-        int complement = target - nums[i];
-        if (map.ContainsKey(complement)) {
-            return new int[] { map[complement], i };
-        }
+        int need = target - nums[i];
+        if (map.TryGetValue(need, out int j))
+            return new[] { j, i };
         map[nums[i]] = i;
     }
-    return new int[] { -1, -1 };
+    return new[] { -1, -1 };
 }
 ```
 
-Go version analogous using map.
+### Go — Two Sum
 
-## How Hashing Works in Detail
+```go
+func TwoSum(nums []int, target int) [2]int {
+    seen := make(map[int]int)
+    for i, x := range nums {
+        if j, ok := seen[target-x]; ok {
+            return [2]int{j, i}
+        }
+        seen[x] = i
+    }
+    return [2]int{-1, -1}
+}
+```
 
-- Hash function: maps key → integer
-- Collision resolution: chaining or open addressing
-- Load factor and resizing
+### C# — FNV-1a hash (educational)
 
-## Real World Problems Solved by Hashing
+```csharp
+public static uint Fnv1a(ReadOnlySpan<byte> data) {
+    uint hash = 2166136261;
+    foreach (byte b in data) {
+        hash ^= b;
+        hash *= 16777619;
+    }
+    return hash;
+}
+```
 
-1. **Two Sum / Subarray Sum Equals K**
-2. **Detect duplicate in array**
-3. **Group anagrams** (hash by sorted chars or frequency signature)
-4. **LRU Cache** (hash map + linked list)
-5. **Consistent hashing** (later)
-6. **Bloom filters** built on hashing ideas
+### Go — deduplication with map set
 
-## Hashing Pitfalls & Attacks
+```go
+func UniqueStrings(items []string) []string {
+    seen := make(map[string]struct{})
+    out := make([]string, 0, len(items))
+    for _, s := range items {
+        if _, ok := seen[s]; ok {
+            continue
+        }
+        seen[s] = struct{}{}
+        out = append(out, s)
+    }
+    return out
+}
+```
 
-- Poor hash function → clustering
-- HashDoS attacks (use randomized seeds, which .NET and Go do)
+## Real World
 
-## Hashing in .NET and Go
+- `Dictionary` / `HashSet` in .NET; maps in Go
+- LRU caches, consistent hashing, bloom filters
+- Deduplication in logs, crawlers, ETL pipelines
+- Group anagrams, subarray sum equals k
 
-- C# Dictionary / HashSet use open addressing + good hashers
-- Go maps use advanced Swiss table style since recent versions
+## Summary
 
-## Why Hashing Chapter Exists
+Hashing is the foundation for hash maps, sets, caches, and probabilistic structures. Master Two Sum and dedup patterns first.
 
-It is the foundation for:
-- HashSet / HashMap (data structures)
-- Many string algorithms
-- Caching
-- Deduplication at scale
-
-Master hashing here before advanced uses.
 ::: tip Project Lab
 **Build it yourself:** [Hash Map from Scratch](/projects/tier-1/04-hash-map-from-scratch) — FNV-1a, collision resolution, and resizing.
 :::
+
+**Next:** [19 - Quickselect](19-quickselect.md)

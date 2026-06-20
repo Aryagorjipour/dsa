@@ -75,16 +75,65 @@ public class Deque<T> {
         return val;
     }
 
-    // Resize logic similar to dynamic array + copy with wrap handling
-    private void Resize() { /* ... */ }
+    private void Resize() {
+        int newCap = Capacity * 2;
+        var newBuf = new T[newCap];
+        for (int i = 0; i < _count; i++) {
+            newBuf[i] = _buffer[(_head + i) % Capacity];
+        }
+        _buffer = newBuf;
+        _head = 0;
+        _tail = _count;
+    }
 }
 ```
 
-## Go
+### Go (circular buffer deque)
 
-`container/list` can be used as a deque (PushFront, PushBack, Remove, etc.).
+```go
+type Deque[T any] struct {
+    buf   []T
+    head  int
+    tail  int
+    count int
+}
 
-Many people implement a simple slice + two indices or use a library.
+func NewDeque[T any]() *Deque[T] {
+    return &Deque[T]{buf: make([]T, 8)}
+}
+
+func (d *Deque[T]) cap() int { return len(d.buf) }
+
+func (d *Deque[T]) grow() {
+    newBuf := make([]T, d.cap()*2)
+    for i := 0; i < d.count; i++ {
+        newBuf[i] = d.buf[(d.head+i)%d.cap()]
+    }
+    d.buf = newBuf
+    d.head, d.tail = 0, d.count
+}
+
+func (d *Deque[T]) AddFront(v T) {
+    if d.count == d.cap() { d.grow() }
+    d.head = (d.head - 1 + d.cap()) % d.cap()
+    d.buf[d.head] = v
+    d.count++
+}
+
+func (d *Deque[T]) AddBack(v T) {
+    if d.count == d.cap() { d.grow() }
+    d.buf[d.tail] = v
+    d.tail = (d.tail + 1) % d.cap()
+    d.count++
+}
+
+func (d *Deque[T]) RemoveFront() T {
+    v := d.buf[d.head]
+    d.head = (d.head + 1) % d.cap()
+    d.count--
+    return v
+}
+```
 
 ## Real World Use Cases
 
@@ -173,5 +222,9 @@ Whenever your problem says:
 ## Summary
 
 The deque is the most flexible linear structure. In high-performance concurrent systems it is often preferred over plain queues and stacks because of its two-ended nature and work-stealing friendliness.
+
+::: tip Project Lab
+**Build it yourself:** [API Rate Limiter](/projects/tier-4/18-api-rate-limiter)
+:::
 
 **Next:** [07 - Ring Buffer](07-ring-buffer.md) — the bounded, memory-efficient cousin that powers a huge amount of systems code.

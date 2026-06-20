@@ -188,4 +188,8 @@ It is one of the most important abstract data types in algorithms and systems.
 
 Almost always backed by a binary heap in real code.
 
+::: tip Project Lab
+**Build it yourself:** [Task Queue System](/projects/tier-2/06-task-queue-system)
+:::
+
 **Next:** [17 - Trie](17-trie.md)

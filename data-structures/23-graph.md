@@ -26,106 +26,168 @@ Special important graphs:
 
 ### 1. Adjacency List (Most Common)
 
-```csharp
-Dictionary<int, List<int>> graph = new();
-graph[0] = new List<int> { 1, 2 };
-graph[1] = new List<int> { 0, 3 };
-```
-
-Go:
-```go
-graph := map[int][]int{
-    0: {1, 2},
-    1: {0, 3},
-}
-```
-
-Pros: Memory efficient for sparse graphs, fast iteration over neighbors.
-Cons: Slow to check "is there an edge between u and v?"
+Memory efficient for sparse graphs, fast iteration over neighbors.
 
 ### 2. Adjacency Matrix
 
-```csharp
-bool[,] matrix = new bool[n, n];
-matrix[0, 1] = true;
-matrix[1, 0] = true; // undirected
-```
-
-Pros: O(1) edge check.
-Cons: O(n²) memory. Bad for sparse graphs.
+O(1) edge check, O(n²) memory. Bad for sparse graphs.
 
 ### 3. Edge List
 
-Just a list of pairs. Simple but slow for most algorithms.
+Simple but slow for most algorithms.
 
-### 4. Specialized (Incidence, CSR, etc.)
+## Operations & Complexity (Adjacency List)
 
-Used in high-performance graph databases and libraries.
+| Operation           | Time        | Space |
+|---------------------|-------------|-------|
+| Add vertex          | O(1)        | O(V + E) |
+| Add edge            | O(1) avg    | O(V + E) |
+| Remove edge         | O(degree)   | O(V + E) |
+| Neighbors(v)        | O(degree)   | O(V + E) |
+| Check edge (u, v)   | O(degree)   | O(V + E) |
+
+## Complete Implementation (C#) — Adjacency List
+
+```csharp
+public class Graph {
+    private readonly Dictionary<int, List<int>> _adj = new();
+    public bool Directed { get; }
+
+    public Graph(bool directed = false) {
+        Directed = directed;
+    }
+
+    public void AddVertex(int v) {
+        if (!_adj.ContainsKey(v)) {
+            _adj[v] = new List<int>();
+        }
+    }
+
+    public void AddEdge(int u, int v) {
+        AddVertex(u);
+        AddVertex(v);
+        _adj[u].Add(v);
+        if (!Directed) {
+            _adj[v].Add(u);
+        }
+    }
+
+    public IReadOnlyList<int> Neighbors(int v) {
+        if (!_adj.TryGetValue(v, out var list)) {
+            return Array.Empty<int>();
+        }
+        return list;
+    }
+
+    public IEnumerable<int> Vertices => _adj.Keys;
+
+    public bool HasEdge(int u, int v) {
+        return _adj.TryGetValue(u, out var list) && list.Contains(v);
+    }
+
+    public int VertexCount => _adj.Count;
+
+    public int EdgeCount {
+        get {
+            int count = _adj.Values.Sum(l => l.Count);
+            return Directed ? count : count / 2;
+        }
+    }
+}
+```
+
+## Complete Implementation (Go) — Adjacency List
+
+```go
+type Graph struct {
+    adj      map[int][]int
+    directed bool
+}
+
+func NewGraph(directed bool) *Graph {
+    return &Graph{
+        adj:      make(map[int][]int),
+        directed: directed,
+    }
+}
+
+func (g *Graph) AddVertex(v int) {
+    if _, ok := g.adj[v]; !ok {
+        g.adj[v] = []int{}
+    }
+}
+
+func (g *Graph) AddEdge(u, v int) {
+    g.AddVertex(u)
+    g.AddVertex(v)
+    g.adj[u] = append(g.adj[u], v)
+    if !g.directed {
+        g.adj[v] = append(g.adj[v], u)
+    }
+}
+
+func (g *Graph) Neighbors(v int) []int {
+    if list, ok := g.adj[v]; ok {
+        return list
+    }
+    return nil
+}
+
+func (g *Graph) HasEdge(u, v int) bool {
+    for _, n := range g.adj[u] {
+        if n == v {
+            return true
+        }
+    }
+    return false
+}
+
+func (g *Graph) VertexCount() int {
+    return len(g.adj)
+}
+```
 
 ## Real World Graphs (This List Is Massive)
 
 ### 1. Social Networks
 
-- Facebook friends graph (undirected)
-- Twitter / Instagram follow graph (directed)
-- LinkedIn professional network
+Facebook friends graph (undirected), Twitter/Instagram follow graph (directed).
 
 ### 2. Web
 
-- The entire internet is a directed graph (pages → links)
-- Google's original PageRank is a graph algorithm
+The entire internet is a directed graph. Google's original PageRank is a graph algorithm.
 
 ### 3. Maps and Navigation
 
-- Roads as edges, intersections as nodes
-- Google Maps, Uber, Waze all run graph algorithms constantly
+Roads as edges, intersections as nodes. Google Maps, Uber, Waze run graph algorithms constantly.
 
 ### 4. Package Managers & Build Systems
 
-- npm, Maven, NuGet, Go modules: dependency graphs (DAGs)
-- Make, Bazel, MSBuild: task dependency graphs
-- Topological sort is used to decide build order
+npm, Maven, NuGet, Go modules: dependency graphs (DAGs). Make, Bazel, MSBuild use topological sort.
 
 ### 5. Databases & Data Modeling
 
-- Many-to-many relationships are graphs
-- Neo4j, Amazon Neptune, JanusGraph are graph databases
-- Recommendation engines ("people who bought X also bought Y")
+Neo4j, Amazon Neptune, JanusGraph are graph databases.
 
 ### 6. Operating Systems & Runtimes
 
-- Process dependency graphs
-- File system hard links (can form graphs)
-- .NET and Go dependency graphs for assemblies/modules
+Process dependency graphs, .NET and Go dependency graphs for assemblies/modules.
 
 ### 7. Networking
 
-- Network topology
-- Routing tables (BGP is fundamentally graph-based)
-- CDN server relationships
+Network topology, routing tables (BGP is fundamentally graph-based).
 
-### 8. Biology & Chemistry
+### 8. Finance
 
-- Protein interaction networks
-- Metabolic pathways
-- Molecular graphs
+Transaction graphs (fraud detection), ownership graphs, payment networks.
 
-### 9. Finance
+### 9. Games
 
-- Transaction graphs (fraud detection)
-- Ownership graphs
-- Payment networks
-
-### 10. Games
-
-- State spaces
-- Navigation meshes (often turned into graphs)
-- Quest / dialogue graphs
+State spaces, navigation meshes, quest/dialogue graphs.
 
 ## Core Graph Algorithms (We'll Cover in Depth Later)
 
 ![BFS on a Graph](/images/bfs-graph.png)
-
 
 - BFS & DFS (traversal)
 - Topological Sort (on DAGs)
@@ -140,13 +202,12 @@ Used in high-performance graph databases and libraries.
 
 **C#**
 - No built-in graph, but `Dictionary` + lists is common.
-- Libraries: QuikGraph, GraphSharp, Microsoft Automatic Graph Layout.
-- Roslyn, MSBuild, and Entity Framework all model parts of the world as graphs internally.
+- Libraries: QuikGraph, GraphSharp.
+- Roslyn, MSBuild, and Entity Framework model parts of the world as graphs internally.
 
 **Go**
-- Again, maps of slices.
-- Used heavily in Kubernetes (object relationships, scheduling), Docker, Terraform providers, etc.
-- Many high-scale Go services have custom graph packages.
+- Maps of slices.
+- Used heavily in Kubernetes, Docker, Terraform providers.
 
 ## Common Graph Problems in Interviews & Real Life
 
@@ -157,17 +218,6 @@ Used in high-performance graph databases and libraries.
 - Critical connections in a network (bridges)
 - Word ladder
 - Alien dictionary
-- Reconstruct itinerary (Euler path)
-
-## Storage at Massive Scale
-
-When graphs have billions of nodes/edges:
-- Special graph databases
-- Distributed graph processing (Pregel, GraphX, GraphChi)
-- Sharded adjacency lists
-- Compression techniques
-
-Facebook, LinkedIn, Google, and Twitter all run some of the largest graphs in existence.
 
 ## Summary
 
@@ -177,9 +227,8 @@ If your problem involves "connections", "dependencies", "networks", "routes", or
 
 Mastering graphs + the algorithms that run on them (BFS, DFS, shortest path, topological sort, MST) will make you dramatically more powerful as an engineer.
 
-
 ::: tip Project Lab
 **Build it yourself:** [Route Planner](/projects/tier-2/08-route-planner) and [Network Optimizer](/projects/tier-3/15-network-optimizer) — shortest paths and backbone design.
 :::
 
-**Next:** Probabilistic data structures begin with [24 - Bloom Filter](24-bloom-filter.md)
+**Next:** [24 - Bloom Filter](24-bloom-filter.md)

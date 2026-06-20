@@ -77,6 +77,17 @@ Ask:
 
 If yes, greedy is often the answer.
 
+## Complexity
+
+Greedy algorithms are typically **O(n log n)** when sorting dominates, or **O(n)** when the input is already ordered.
+
+| Problem | Time | Optimal? |
+|---------|------|----------|
+| Activity selection | O(n log n) | Yes |
+| Fractional knapsack | O(n log n) | Yes |
+| US coin change | O(n) | Yes (US denominations) |
+| Arbitrary coin change | — | Greedy can fail |
+
 ## Implementation Pattern
 
 Typical greedy structure:
@@ -84,6 +95,25 @@ Typical greedy structure:
 1. Sort the input according to some criterion.
 2. Walk through the sorted list making the best choice at each step that doesn't violate constraints.
 3. Done.
+
+### C# (activity selection)
+
+```csharp
+public record Activity(int Start, int End);
+
+public static List<Activity> SelectActivities(List<Activity> acts) {
+    acts.Sort((a, b) => a.End.CompareTo(b.End));
+    var result = new List<Activity>();
+    int lastEnd = int.MinValue;
+    foreach (var a in acts) {
+        if (a.Start >= lastEnd) {
+            result.Add(a);
+            lastEnd = a.End;
+        }
+    }
+    return result;
+}
+```
 
 Example skeleton (activity selection):
 

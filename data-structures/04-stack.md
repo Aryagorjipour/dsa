@@ -99,7 +99,7 @@ When you call a function:
 ```csharp
 void A() { B(); }
 void B() { C(); }
-void C() { ... }
+void C() { return; }
 ```
 
 The runtime pushes return addresses and locals onto a stack. When a function returns, it pops.

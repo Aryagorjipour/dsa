@@ -23,7 +23,17 @@ With the two key optimizations (union by rank/size + path compression), both ope
 
 Together they make the structure ridiculously fast.
 
-## Implementation (C#)
+## Operations & Complexity
+
+| Operation   | Amortized | Space |
+|-------------|-----------|-------|
+| Find        | O(α(n))   | O(n)  |
+| Union       | O(α(n))   | O(n)  |
+| Connected   | O(α(n))   | O(n)  |
+
+α(n) ≤ 4 for any n that fits in the observable universe.
+
+## Complete Implementation (C#)
 
 ```csharp
 public class DisjointSet {
@@ -38,7 +48,7 @@ public class DisjointSet {
 
     public int Find(int x) {
         if (parent[x] != x) {
-            parent[x] = Find(parent[x]); // path compression
+            parent[x] = Find(parent[x]);
         }
         return parent[x];
     }
@@ -62,26 +72,83 @@ public class DisjointSet {
 }
 ```
 
-Go version is nearly identical.
+## Complete Implementation (Go)
+
+From `examples/go/union_find_mst.go`.
+
+```go
+type DisjointSet struct {
+    parent []int
+    rank   []int
+}
+
+func NewDisjointSet(n int) *DisjointSet {
+    d := &DisjointSet{
+        parent: make([]int, n),
+        rank:   make([]int, n),
+    }
+    for i := range d.parent {
+        d.parent[i] = i
+    }
+    return d
+}
+
+func (d *DisjointSet) Find(x int) int {
+    if d.parent[x] != x {
+        d.parent[x] = d.Find(d.parent[x])
+    }
+    return d.parent[x]
+}
+
+func (d *DisjointSet) Union(x, y int) {
+    px, py := d.Find(x), d.Find(y)
+    if px == py {
+        return
+    }
+    if d.rank[px] < d.rank[py] {
+        d.parent[px] = py
+    } else if d.rank[px] > d.rank[py] {
+        d.parent[py] = px
+    } else {
+        d.parent[py] = px
+        d.rank[px]++
+    }
+}
+
+func (d *DisjointSet) Connected(x, y int) bool {
+    return d.Find(x) == d.Find(y)
+}
+```
+
+### Example: Kruskal's Minimum Spanning Tree
+
+```go
+edges := [][3]int{{0, 1, 10}, {0, 2, 6}, {0, 3, 5}, {1, 3, 15}, {2, 3, 4}}
+sort.Slice(edges, func(i, j int) bool { return edges[i][2] < edges[j][2] })
+
+dsu := NewDisjointSet(4)
+mstWeight := 0
+for _, e := range edges {
+    if !dsu.Connected(e[0], e[1]) {
+        dsu.Union(e[0], e[1])
+        mstWeight += e[2]
+    }
+}
+```
 
 ## Real World Use Cases
 
 ### 1. Kruskal's Minimum Spanning Tree
 
-One of the two classic MST algorithms. Union-Find is used to avoid adding edges that would create cycles.
+Network design (cable laying), clustering, image segmentation.
 
 ### 2. Connected Components in Graphs
 
-Finding how many separate components exist, or labeling them.
-
-Used in:
-- Image processing (connected regions of pixels)
-- Social network "friend circles"
-- Network connectivity problems
+Image processing (connected regions of pixels), social network "friend circles".
 
 ### 3. Percolation / Grid Problems
 
-Famous in physics and games ("when does water reach the bottom?").
+"When does water reach the bottom?" — famous in physics and games.
 
 ### 4. Building Mazes (Randomized)
 
@@ -89,21 +156,11 @@ Union-Find is perfect for generating mazes by randomly merging cells.
 
 ### 5. Account Merge Problems
 
-"These two emails belong to the same person" → union them. Classic real-world problem at any company with user accounts.
+"These two emails belong to the same person" → union them.
 
 ### 6. Redundant Connection Detection
 
 "Which edge can we remove without disconnecting the network?"
-
-### 7. Database & Distributed Systems
-
-Some clustering and sharding decisions use union-find logic.
-
-## When Union-Find Shines
-
-- You only care about **connectivity**, not paths or distances.
-- You do a huge number of unions and finds.
-- The graph is being built dynamically.
 
 ## Limitations
 
@@ -125,5 +182,9 @@ Some clustering and sharding decisions use union-find logic.
 Disjoint Set / Union-Find is one of the most beautiful "small but mighty" data structures.
 
 With two clever optimizations it achieves near-constant time for connectivity queries, making it the weapon of choice for MST, component labeling, and many union-heavy problems.
+
+::: tip Project Lab
+**Build it yourself:** [Network Optimizer](/projects/tier-3/15-network-optimizer)
+:::
 
 **Next:** [26 - HyperLogLog](26-hyperloglog.md)

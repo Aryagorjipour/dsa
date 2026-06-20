@@ -20,7 +20,7 @@ By completing this project, you will deeply understand:
 
 3. **Min-heap as a priority queue** — how `heapify`, `push`, and `pop` maintain the heap invariant, and why O(log n) per operation is usually fast enough for task scheduling. See [`/data-structures/15-heap`](/data-structures/15-heap) and [`/data-structures/16-priority-queue`](/data-structures/16-priority-queue).
 
-4. **Topological sort for dependency resolution** — directed acyclic graphs, Kahn's BFS algorithm, in-degree computation, and what a cycle in the dependency graph means operationally (deadlock). See [`/algorithms/26-topological-sort`](/algorithms/26-topological-sort).
+4. **Topological sort for dependency resolution** — directed acyclic graphs, Kahn's BFS algorithm, in-degree computation, and what a cycle in the dependency graph means operationally (deadlock). See [`/algorithms/27-topological-sort`](/algorithms/27-topological-sort).
 
 5. **Queue vs Deque vs Ring Buffer trade-offs** — when to use each, what happens when a ring buffer is full (drop, block, or grow), and how linked-list queues avoid the fixed-capacity limitation at the cost of allocation pressure. See [`/data-structures/05-queue`](/data-structures/05-queue).
 
@@ -57,7 +57,7 @@ By completing this project, you will deeply understand:
 | Ring Buffer | Memory-efficient fixed-capacity queue; real I/O buffer implementation | [/data-structures/07-ring-buffer](/data-structures/07-ring-buffer) | Intermediate |
 | Heap / Priority Queue | Priority-ordered task dispatch; delayed task scheduling via timestamp heap | [/data-structures/15-heap](/data-structures/15-heap) | Intermediate |
 | Priority Queue | Min-heap as the dispatcher's primary data structure | [/data-structures/16-priority-queue](/data-structures/16-priority-queue) | Intermediate |
-| Graph + Topological Sort | Dependency resolution; deadlock (cycle) detection | [/algorithms/26-topological-sort](/algorithms/26-topological-sort) | Intermediate |
+| Graph + Topological Sort | Dependency resolution; deadlock (cycle) detection | [/algorithms/27-topological-sort](/algorithms/27-topological-sort) | Intermediate |
 
 ## 5. High-Level Architecture
 

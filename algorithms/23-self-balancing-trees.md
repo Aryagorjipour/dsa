@@ -2,36 +2,120 @@
 
 ## The Problem
 
-Plain BSTs can become skewed (O(n)). Self-balancing trees guarantee O(log n) height through rotations and recoloring (RB) or height balancing (AVL).
+Plain BSTs skew to O(n) height. Self-balancing trees maintain O(log n) through rotations and recoloring (red-black) or height checks (AVL).
 
-### Canonical Problems
+### Canonical Problem: Order Statistic — Select K-th Smallest in O(log n)
 
-1. Implement insertion/deletion with balancing for Red-Black (full fixup as in data structures chapter).
+Augment each node with subtree size. After insert/delete with balancing, `Select(k)` walks using sizes without full inorder traversal.
 
-2. AVL rotations and balance factor maintenance.
+## Operations & Complexity
 
-3. **Count of smaller numbers after self** or order statistic tree using augmented size in nodes.
+| Operation | Red-Black | AVL |
+|-----------|-----------|-----|
+| Search | O(log n) | O(log n) |
+| Insert | O(log n) | O(log n) |
+| Delete | O(log n) | O(log n) |
+| Select k-th | O(log n) with augmentation | O(log n) |
 
-4. **Range count queries** in a balanced BST.
+## Rotations (shared by RB and AVL)
 
-## Detailed Operations
+### C#
 
-- Insert with rotations/recolor (Red-Black fixup)
-- Delete with fixup (more complex)
-- For AVL: update heights + rotations on insert/delete
+```csharp
+static TreeNode RightRotate(TreeNode y) {
+    var x = y.Left!;
+    y.Left = x.Right;
+    x.Right = y;
+    return x;
+}
+
+static TreeNode LeftRotate(TreeNode x) {
+    var y = x.Right!;
+    x.Right = y.Left;
+    y.Left = x;
+    return y;
+}
+```
+
+### Go
+
+```go
+func rightRotate(y *TreeNode) *TreeNode {
+    x := y.Left
+    y.Left = x.Right
+    x.Right = y
+    return x
+}
+
+func leftRotate(x *TreeNode) *TreeNode {
+    y := x.Right
+    x.Right = y.Left
+    y.Left = x
+    return x
+}
+```
+
+## Order Statistic Select (augmented BST)
+
+### C#
+
+```csharp
+public class AugNode {
+    public int Val;
+    public AugNode? Left, Right;
+    public int Size = 1;
+}
+
+public static int Select(AugNode? root, int k) {
+    if (root == null) return -1;
+    int leftSize = root.Left?.Size ?? 0;
+    if (k == leftSize + 1) return root.Val;
+    if (k <= leftSize) return Select(root.Left, k);
+    return Select(root.Right, k - leftSize - 1);
+}
+```
+
+### Go
+
+```go
+type AugNode struct {
+    Val        int
+    Left, Right *AugNode
+    Size       int
+}
+
+func selectK(root *AugNode, k int) int {
+    if root == nil {
+        return -1
+    }
+    leftSize := 0
+    if root.Left != nil {
+        leftSize = root.Left.Size
+    }
+    if k == leftSize+1 {
+        return root.Val
+    }
+    if k <= leftSize {
+        return selectK(root.Left, k)
+    }
+    return selectK(root.Right, k-leftSize-1)
+}
+```
+
+Full insert/delete with red-black fixup is in [14 - Red-Black Tree](../data-structures/14-red-black-tree.md). Practice applying rotations after every BST mutation.
 
 ## Real World
 
-- `TreeMap` / `SortedSet` in Java / .NET
-- Linux kernel many uses
-- Database memory components
+- .NET `SortedSet<T>` / Java `TreeMap` — red-black trees
+- Linux kernel `rbtree` — scheduling, VMAs
+- Database in-memory indexes before flushing to B+ trees
 
-## Why Separate Chapter
+## Summary
 
-Operations on self-balancing trees are significantly more involved than plain BST. You must maintain invariants after every modification.
+Self-balancing tree operations are BST operations plus invariant restoration. Augment nodes for order statistics and range queries.
 
-Full code for rotations and fixups (reuse from data structure 14 but focus on the algorithm usage and problems).
+::: tip Project Lab
+**Build it yourself:** [In-Memory Database Index](/projects/tier-3/10-in-memory-db-index) — plain BST to red-black tree.
+:::
 
-Practice:
-- Implement a order statistic tree (select kth in O(log n))
-- Range sum tree using size augmentation
+**Next:** [24 - Trie Operations](24-trie-operations.md)

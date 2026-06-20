@@ -16,11 +16,11 @@ By completing this project, you will deeply understand:
 
 1. **Why Trie achieves O(L) prefix lookup where L is the query length** — lookup time is independent of the total number of words stored, unlike O(n*L) for scanning all n words. See [`/data-structures/17-trie`](/data-structures/17-trie).
 
-2. **The complete set of Trie operations** — insert, exact search, prefix search (startsWith), delete, and wildcard matching — and the edge cases that make delete the trickiest of them all. See [`/algorithms/23-trie-operations`](/algorithms/23-trie-operations).
+2. **The complete set of Trie operations** — insert, exact search, prefix search (startsWith), delete, and wildcard matching — and the edge cases that make delete the trickiest of them all. See [`/algorithms/24-trie-operations`](/algorithms/24-trie-operations).
 
-3. **DFS for prefix enumeration** — how to collect all words stored under a given prefix node using backtracking DFS, building up word strings character by character. See [`/algorithms/25-dfs`](/algorithms/25-dfs).
+3. **DFS for prefix enumeration** — how to collect all words stored under a given prefix node using backtracking DFS, building up word strings character by character. See [`/algorithms/26-dfs`](/algorithms/26-dfs).
 
-4. **BFS as an alternative traversal** — BFS enumerates words level-by-level from the prefix node, giving you breadth-first ordering (shorter words first). Contrast with DFS to understand when each is appropriate. See [`/algorithms/24-bfs`](/algorithms/24-bfs).
+4. **BFS as an alternative traversal** — BFS enumerates words level-by-level from the prefix node, giving you breadth-first ordering (shorter words first). Contrast with DFS to understand when each is appropriate. See [`/algorithms/25-bfs`](/algorithms/25-bfs).
 
 5. **Top-K selection with a min-heap** — given M candidates from prefix search, returning the top K by frequency in O(M log K) using a min-heap of size K. Why not sort? Sorting all M is O(M log M); a size-K heap is faster when K &lt;&lt; M. See [`/data-structures/16-priority-queue`](/data-structures/16-priority-queue).
 
@@ -53,9 +53,9 @@ By completing this project, you will deeply understand:
 | Concept | Role in this project | Handbook Link | Difficulty |
 |---------|----------------------|---------------|------------|
 | Trie | Core data structure; all insert/search/prefix/delete operations | [/data-structures/17-trie](/data-structures/17-trie) | Intermediate |
-| Trie Operations | Implementation of the full operation set | [/algorithms/23-trie-operations](/algorithms/23-trie-operations) | Intermediate |
-| DFS | Backtracking DFS to collect all words under a prefix node | [/algorithms/25-dfs](/algorithms/25-dfs) | Intermediate |
-| BFS | Level-order traversal for breadth-first word enumeration | [/algorithms/24-bfs](/algorithms/24-bfs) | Beginner |
+| Trie Operations | Implementation of the full operation set | [/algorithms/24-trie-operations](/algorithms/24-trie-operations) | Intermediate |
+| DFS | Backtracking DFS to collect all words under a prefix node | [/algorithms/26-dfs](/algorithms/26-dfs) | Intermediate |
+| BFS | Level-order traversal for breadth-first word enumeration | [/algorithms/25-bfs](/algorithms/25-bfs) | Beginner |
 | Priority Queue (Min-Heap) | Top-K selection from M prefix-match candidates | [/data-structures/16-priority-queue](/data-structures/16-priority-queue) | Intermediate |
 
 ## 5. High-Level Architecture

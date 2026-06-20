@@ -61,10 +61,10 @@ const tree = [
     children: [
       { name: 'Binary Search (+ Two Crystal Balls)', path: '/algorithms/07-binary-search' },
       { name: 'Merge Sort / Quicksort / Heapsort', path: '/algorithms/12-merge-sort' },
-      { name: 'A* Search', path: '/algorithms/31-astar' },
-      { name: 'Dynamic Programming (Knapsack, LCS...)', path: '/algorithms/32-dp-fundamentals' },
-      { name: 'Aho-Corasick', path: '/algorithms/42-aho-corasick' },
-      { name: 'Rate Limiting', path: '/algorithms/47-rate-limiting' },
+      { name: 'A* Search', path: '/algorithms/32-astar' },
+      { name: 'Dynamic Programming (Knapsack, LCS...)', path: '/algorithms/33-dp-fundamentals' },
+      { name: 'Aho-Corasick', path: '/algorithms/43-aho-corasick' },
+      { name: 'Rate Limiting', path: '/algorithms/48-rate-limiting' },
     ]
   },
   {

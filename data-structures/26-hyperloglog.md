@@ -8,13 +8,9 @@
 
 **Problem:**
 
-A website has billions of page views. You want to know "how many unique users visited today?" exactly would require storing all user IDs (too much memory).
+A website has billions of page views. You want to know "how many unique users visited today?" Storing all user IDs exactly would use too much memory.
 
-HyperLogLog gives ~2% error with ~1.5KB memory, no matter how many events.
-
-Used by every major analytics platform.
-
-Full register update and estimate code in the chapter. See Netflix and Redis production use in resources/.
+HyperLogLog gives ~2% error with ~1.5 KB memory, no matter how many events.
 
 Examples:
 - How many unique visitors came to my website today?
@@ -35,14 +31,139 @@ Example intuition:
 - If you see a hash starting with 10 zeros, it's likely you've seen roughly 2^10 ≈ 1K distinct items.
 - You combine many such observations using clever math (harmonic mean + bias correction).
 
-## Accuracy
+## Operations & Complexity
 
-Typical configuration:
-- 12–14 bits of precision
-- Memory: ~1.5 KB to ~6 KB
-- Relative error: ~2% or better
+| Operation | Time   | Space        | Accuracy |
+|-----------|--------|--------------|----------|
+| Add       | O(1)   | O(2^p) regs  | ~2% rel error (p=14) |
+| Estimate  | O(2^p) | O(2^p) regs  | ~2% rel error (p=14) |
+| Merge     | O(2^p) | O(2^p) regs  | For distributed counting |
 
-This is good enough for almost all analytics use cases.
+Typical p=10–14: memory 1.5 KB–24 KB.
+
+## Complete Implementation (C#)
+
+```csharp
+using System.Security.Cryptography;
+using System.Text;
+
+public class HyperLogLog {
+    private readonly int[] registers;
+    private readonly int p;
+    private readonly int m;
+
+    public HyperLogLog(int precision) {
+        p = precision;
+        m = 1 << p;
+        registers = new int[m];
+    }
+
+    public void Add(string item) {
+        uint hash = Hash32(item);
+        int idx = (int)(hash >> (32 - p));
+        int w = (int)(hash << p | (1u << (p - 1)));
+        int rho = LeadingZeros(w) + 1;
+        if (rho > registers[idx]) {
+            registers[idx] = rho;
+        }
+    }
+
+    public double Estimate() {
+        double sum = 0;
+        int zeros = 0;
+        foreach (int r in registers) {
+            sum += Math.Pow(2, -r);
+            if (r == 0) zeros++;
+        }
+        double alpha = m switch {
+            16 => 0.673,
+            32 => 0.697,
+            64 => 0.709,
+            _ => 0.7213 / (1 + 1.079 / m)
+        };
+        double estimate = alpha * m * m / sum;
+        if (estimate <= 2.5 * m && zeros > 0) {
+            estimate = m * Math.Log((double)m / zeros);
+        }
+        return estimate;
+    }
+
+    private static uint Hash32(string item) {
+        byte[] hash = SHA256.HashData(Encoding.UTF8.GetBytes(item));
+        return BitConverter.ToUInt32(hash, 0);
+    }
+
+    private static int LeadingZeros(int x) {
+        if (x == 0) return 32;
+        int n = 0;
+        if ((x & 0xFFFF0000) == 0) { n += 16; x <<= 16; }
+        if ((x & 0xFF000000) == 0) { n += 8; x <<= 8; }
+        if ((x & 0xF0000000) == 0) { n += 4; x <<= 4; }
+        if ((x & 0xC0000000) == 0) { n += 2; x <<= 2; }
+        if ((x & 0x80000000) == 0) { n += 1; }
+        return n;
+    }
+}
+```
+
+## Complete Implementation (Go)
+
+From `examples/go/hyperloglog_simple.go`, with proper leading-zero counting.
+
+```go
+import (
+    "hash/fnv"
+    "math"
+    "math/bits"
+)
+
+type HyperLogLog struct {
+    registers []int
+    p         int
+    m         int
+}
+
+func NewHyperLogLog(p int) *HyperLogLog {
+    return &HyperLogLog{
+        registers: make([]int, 1<<p),
+        p:         p,
+        m:         1 << p,
+    }
+}
+
+func (h *HyperLogLog) Add(item string) {
+    hash := hash32(item)
+    idx := hash >> (32 - h.p)
+    w := (hash << h.p) | (1 << (h.p - 1))
+    rho := bits.LeadingZeros32(w) + 1
+    if int(rho) > h.registers[idx] {
+        h.registers[idx] = int(rho)
+    }
+}
+
+func (h *HyperLogLog) Estimate() float64 {
+    sum := 0.0
+    zeros := 0
+    for _, r := range h.registers {
+        sum += math.Pow(2, -float64(r))
+        if r == 0 {
+            zeros++
+        }
+    }
+    alpha := 0.7213 / (1.0 + 1.079/float64(h.m))
+    estimate := alpha * float64(h.m) * float64(h.m) / sum
+    if estimate <= 2.5*float64(h.m) && zeros > 0 {
+        estimate = float64(h.m) * math.Log(float64(h.m)/float64(zeros))
+    }
+    return estimate
+}
+
+func hash32(s string) uint32 {
+    h := fnv.New32a()
+    h.Write([]byte(s))
+    return h.Sum32()
+}
+```
 
 ## Real World Use Cases
 
@@ -50,38 +171,17 @@ This is good enough for almost all analytics use cases.
 
 `PFADD`, `PFCOUNT`, `PFMERGE` commands are HyperLogLog.
 
-Used by almost every company using Redis for unique counting at scale (daily active users, unique sessions, etc.).
-
 ### 2. Google, Facebook, Twitter, Netflix, etc.
 
-Virtually every large tech company uses HyperLogLog (or improved variants) for:
-- Unique visitor counts
-- Unique search terms
-- Ad impression uniqueness
-- A/B test metrics
+Unique visitor counts, unique search terms, ad impression uniqueness, A/B test metrics.
 
 ### 3. Analytics Databases
 
-ClickHouse, Druid, BigQuery, Snowflake and others use HyperLogLog or similar sketches for approximate distinct counts.
+ClickHouse, Druid, BigQuery, Snowflake use HyperLogLog or similar sketches for approximate distinct counts.
 
 ### 4. Telemetry & Monitoring
 
-Prometheus, Datadog, New Relic, etc. use cardinality sketches.
-
-## Implementation Complexity
-
-The actual algorithm is a bit involved (multiple registers, bias correction tables, etc.).
-
-Most people use a well-tested library rather than implement from scratch:
-- Redis has a very good implementation
-- stream-lib (Java)
-- Various Go and C# ports exist
-
-## Variants & Improvements
-
-- **HyperLogLog++** (Google) — better accuracy and bias correction
-- **HLL** with sparse representation for very small cardinalities
-- **MinHash + HyperLogLog** combinations for set similarity
+Prometheus, Datadog, New Relic use cardinality sketches.
 
 ## Comparison With Exact
 
@@ -106,7 +206,6 @@ HyperLogLog is one of the greatest "good enough" data structures in existence.
 It lets companies count unique things at planetary scale with almost no memory.
 
 If you ever work in analytics, big data, or high-scale web systems, you will encounter it.
-
 
 ::: tip Project Lab
 **Build it yourself:** [Stream Analytics Pipeline](/projects/tier-4/19-stream-analytics-pipeline) — cardinality estimation at streaming scale.

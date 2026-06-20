@@ -24,7 +24,7 @@ By completing this project, you will deeply understand:
 
 2. **How Count-Min Sketch provides frequency estimates with one-sided error** — the d × w counter matrix, multiple hash functions, and why queries always overestimate (never underestimate) the true count. See [Count-Min Sketch](/data-structures/27-count-min-sketch).
 
-3. **How Bloom Filters enable O(1) stream deduplication with no false negatives** — the bit array + k hash functions design, false positive rate tuning, and why deletions are impossible without rebuilding. See [Bloom Filter](/data-structures/24-bloom-filter) and [Bloom Filter Algorithm](/algorithms/45-bloom-filter-alg).
+3. **How Bloom Filters enable O(1) stream deduplication with no false negatives** — the bit array + k hash functions design, false positive rate tuning, and why deletions are impossible without rebuilding. See [Bloom Filter](/data-structures/24-bloom-filter) and [Bloom Filter Algorithm](/algorithms/46-bloom-filter-alg).
 
 4. **How Cuckoo Filters support deletable membership with fingerprint buckets** — the two-bucket XOR trick, displacement protocol, and when Cuckoo outperforms Bloom for sliding-window deduplication. See [Cuckoo Filter](/data-structures/28-cuckoo-filter).
 
@@ -66,7 +66,7 @@ By completing this project, you will deeply understand:
 | HyperLogLog | Approximate distinct user count in O(1) memory per sketch | [/data-structures/26-hyperloglog](/data-structures/26-hyperloglog) | Hard |
 | Count-Min Sketch | Approximate frequency counts for user-campaign impression pairs | [/data-structures/27-count-min-sketch](/data-structures/27-count-min-sketch) | Hard |
 | Bloom Filter | Fast deduplication check: has this event ID been seen before? | [/data-structures/24-bloom-filter](/data-structures/24-bloom-filter) | Intermediate |
-| Bloom Filter Algorithm | k-hash design, false positive rate formula, optimal m and k | [/algorithms/45-bloom-filter-alg](/algorithms/45-bloom-filter-alg) | Intermediate |
+| Bloom Filter Algorithm | k-hash design, false positive rate formula, optimal m and k | [/algorithms/46-bloom-filter-alg](/algorithms/46-bloom-filter-alg) | Intermediate |
 | Cuckoo Filter | Deletable membership for sliding-window event deduplication | [/data-structures/28-cuckoo-filter](/data-structures/28-cuckoo-filter) | Hard |
 | Reservoir Sampling | Fixed-size uniform random sample of stream events | [/algorithms/20-reservoir-sampling](/algorithms/20-reservoir-sampling) | Intermediate |
 | Hashing | Hash user IDs, campaign IDs, and event IDs into sketch positions | [/algorithms/18-hashing](/algorithms/18-hashing) | Beginner |

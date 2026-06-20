@@ -21,7 +21,7 @@ By completing this project, you will deeply understand:
 1. **Skip list structure and probabilistic balancing** — how a multi-level linked list achieves O(log n) expected search, insert, and delete without any explicit rebalancing, and why p=0.5 is the standard level promotion probability. See [Skip List](/data-structures/19-skip-list).
 2. **B-Tree node structure and the split-on-overflow invariant** — why every non-root node must have at least t-1 keys, why splits propagate upward, and what it means for a tree of height h to guarantee at least t^h leaf nodes. See [B-Tree / B+ Tree](/data-structures/18-btree-bplustree).
 3. **B+ Tree leaf-linked-list and range scans** — why real databases use B+ Trees rather than B-Trees: internal nodes hold only routing keys, all data lives in leaves, and leaves form a linked list for O(k + log n) range scans. See [B-Tree / B+ Tree](/data-structures/18-btree-bplustree).
-4. **Bloom filter false positive rate and the k-hash trade-off** — how a bit array of m bits with k hash functions achieves a configurable false positive rate, and why false negatives are impossible by construction. See [Bloom Filter](/data-structures/24-bloom-filter) and [Bloom Filter Algorithm](/algorithms/45-bloom-filter-alg).
+4. **Bloom filter false positive rate and the k-hash trade-off** — how a bit array of m bits with k hash functions achieves a configurable false positive rate, and why false negatives are impossible by construction. See [Bloom Filter](/data-structures/24-bloom-filter) and [Bloom Filter Algorithm](/algorithms/46-bloom-filter-alg).
 5. **Hashing as the O(1) lookup primitive** — how open addressing and separate chaining differ, what load factor controls collision rate, and why a good hash function is a prerequisite for all of the above. See [Hashing](/algorithms/18-hashing).
 6. **Page-based serialization** — how to map a tree node to a fixed-size byte buffer, write it to a specific file offset, and read it back — the same operation SQLite performs for every B-tree access.
 7. **The MemTable pattern** — how separating fast in-memory writes (skip list or RB-Tree) from durable on-disk reads (sorted files + Bloom filters) enables high write throughput without sacrificing read performance.
@@ -57,7 +57,7 @@ By completing this project, you will deeply understand:
 | B-Tree / B+ Tree | On-disk (and in-memory) ordered structure; high branching factor minimizes tree height and disk seeks | [/data-structures/18-btree-bplustree](/data-structures/18-btree-bplustree) | Advanced |
 | Hashing | Underlies Bloom filter and can be used as an alternative O(1) lookup layer for exact key matches | [/algorithms/18-hashing](/algorithms/18-hashing) | Intermediate |
 | Bloom Filter | Guards disk reads: definitively eliminates keys that don't exist, avoiding expensive I/O | [/data-structures/24-bloom-filter](/data-structures/24-bloom-filter) | Intermediate |
-| Bloom Filter Algorithm | k-hash design, false positive rate formula, optimal k for given m and n | [/algorithms/45-bloom-filter-alg](/algorithms/45-bloom-filter-alg) | Intermediate |
+| Bloom Filter Algorithm | k-hash design, false positive rate formula, optimal k for given m and n | [/algorithms/46-bloom-filter-alg](/algorithms/46-bloom-filter-alg) | Intermediate |
 | Array | Underlying storage for Bloom filter bit array and B-Tree key/child arrays within each node | [/data-structures/02-dynamic-array](/data-structures/02-dynamic-array) | Beginner |
 
 ---

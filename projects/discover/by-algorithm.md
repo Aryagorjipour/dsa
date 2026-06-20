@@ -18,31 +18,31 @@ Find build projects that put a specific algorithm from the handbook into a real 
 | [Reservoir Sampling](/algorithms/20-reservoir-sampling) | [Statistical Sampler](/projects/tier-2/09-statistical-sampler), [Stream Analytics](/projects/tier-4/19-stream-analytics-pipeline) |
 | [BST Operations](/algorithms/21-bst-operations) | [In-Memory DB Index](/projects/tier-3/10-in-memory-db-index) |
 | [Self-Balancing Trees](/algorithms/23-self-balancing-trees) | [In-Memory DB Index](/projects/tier-3/10-in-memory-db-index) |
-| [Trie Operations](/algorithms/23-trie-operations) | [Autocomplete](/projects/tier-2/07-autocomplete-engine), [Full-Text Search](/projects/tier-3/13-full-text-search-engine), [Text Editor](/projects/tier-4/20-text-editor-engine) |
-| [BFS](/algorithms/24-bfs) | [Autocomplete](/projects/tier-2/07-autocomplete-engine), [Route Planner](/projects/tier-2/08-route-planner), [Network Optimizer](/projects/tier-3/15-network-optimizer) |
-| [DFS](/algorithms/25-dfs) | [Autocomplete](/projects/tier-2/07-autocomplete-engine), [Route Planner](/projects/tier-2/08-route-planner), [Mini VCS](/projects/tier-4/16-mini-version-control), [Constraint Solver](/projects/tier-4/22-constraint-solver) |
-| [Topological Sort](/algorithms/26-topological-sort) | [Task Queue](/projects/tier-2/06-task-queue-system), [Network Optimizer](/projects/tier-3/15-network-optimizer) |
-| [Dijkstra](/algorithms/27-dijkstra) | [Route Planner](/projects/tier-2/08-route-planner) |
-| [Bellman-Ford](/algorithms/28-bellman-ford) | [Route Planner](/projects/tier-2/08-route-planner) |
-| [Floyd-Warshall](/algorithms/29-floyd-warshall) | [Route Planner](/projects/tier-2/08-route-planner) |
-| [MST (Kruskal + Prim)](/algorithms/30-mst-kruskal-prim) | [Network Optimizer](/projects/tier-3/15-network-optimizer) |
-| [A* Search](/algorithms/31-astar) | [Route Planner](/projects/tier-2/08-route-planner) |
-| [DP Fundamentals](/algorithms/32-dp-fundamentals) | [DP Toolkit](/projects/tier-3/14-dp-toolkit) |
-| [0/1 Knapsack](/algorithms/33-0-1-knapsack) | [DP Toolkit](/projects/tier-3/14-dp-toolkit) |
-| [LCS](/algorithms/34-lcs) | [DP Toolkit](/projects/tier-3/14-dp-toolkit) |
-| [Edit Distance](/algorithms/35-edit-distance) | [DP Toolkit](/projects/tier-3/14-dp-toolkit), [Text Editor](/projects/tier-4/20-text-editor-engine) |
-| [Matrix Chain](/algorithms/36-matrix-chain-multiplication) | [DP Toolkit](/projects/tier-3/14-dp-toolkit) |
-| [LIS](/algorithms/37-longest-increasing-subsequence) | [DP Toolkit](/projects/tier-3/14-dp-toolkit) |
-| [KMP](/algorithms/38-kmp) | [Full-Text Search](/projects/tier-3/13-full-text-search-engine) |
-| [Rabin-Karp](/algorithms/39-rabin-karp) | [Full-Text Search](/projects/tier-3/13-full-text-search-engine) |
-| [Boyer-Moore](/algorithms/40-boyer-moore) | [Full-Text Search](/projects/tier-3/13-full-text-search-engine) |
-| [Z-Algorithm](/algorithms/41-z-algorithm) | [Full-Text Search](/projects/tier-3/13-full-text-search-engine) |
-| [Aho-Corasick](/algorithms/42-aho-corasick) | [Full-Text Search](/projects/tier-3/13-full-text-search-engine) |
-| [Backtracking](/algorithms/43-backtracking) | [Mini VCS](/projects/tier-4/16-mini-version-control), [Text Editor](/projects/tier-4/20-text-editor-engine), [Constraint Solver](/projects/tier-4/22-constraint-solver) |
-| [Bit Manipulation](/algorithms/44-bit-manipulation) | [Constraint Solver](/projects/tier-4/22-constraint-solver) |
-| [Bloom Filter (Alg)](/algorithms/45-bloom-filter-alg) | [KV Store](/projects/tier-3/11-key-value-store), [Distributed Cache](/projects/tier-4/17-distributed-cache), [Stream Analytics](/projects/tier-4/19-stream-analytics-pipeline) |
-| [Consistent Hashing](/algorithms/46-consistent-hashing) | [Distributed Cache](/projects/tier-4/17-distributed-cache) |
-| [Rate Limiting](/algorithms/47-rate-limiting) | [API Rate Limiter](/projects/tier-4/18-api-rate-limiter) |
+| [Trie Operations](/algorithms/24-trie-operations) | [Autocomplete](/projects/tier-2/07-autocomplete-engine), [Full-Text Search](/projects/tier-3/13-full-text-search-engine), [Text Editor](/projects/tier-4/20-text-editor-engine) |
+| [BFS](/algorithms/25-bfs) | [Autocomplete](/projects/tier-2/07-autocomplete-engine), [Route Planner](/projects/tier-2/08-route-planner), [Network Optimizer](/projects/tier-3/15-network-optimizer) |
+| [DFS](/algorithms/26-dfs) | [Autocomplete](/projects/tier-2/07-autocomplete-engine), [Route Planner](/projects/tier-2/08-route-planner), [Mini VCS](/projects/tier-4/16-mini-version-control), [Constraint Solver](/projects/tier-4/22-constraint-solver) |
+| [Topological Sort](/algorithms/27-topological-sort) | [Task Queue](/projects/tier-2/06-task-queue-system), [Network Optimizer](/projects/tier-3/15-network-optimizer) |
+| [Dijkstra](/algorithms/28-dijkstra) | [Route Planner](/projects/tier-2/08-route-planner) |
+| [Bellman-Ford](/algorithms/29-bellman-ford) | [Route Planner](/projects/tier-2/08-route-planner) |
+| [Floyd-Warshall](/algorithms/30-floyd-warshall) | [Route Planner](/projects/tier-2/08-route-planner) |
+| [MST (Kruskal + Prim)](/algorithms/31-mst-kruskal-prim) | [Network Optimizer](/projects/tier-3/15-network-optimizer) |
+| [A* Search](/algorithms/32-astar) | [Route Planner](/projects/tier-2/08-route-planner) |
+| [DP Fundamentals](/algorithms/33-dp-fundamentals) | [DP Toolkit](/projects/tier-3/14-dp-toolkit) |
+| [0/1 Knapsack](/algorithms/34-0-1-knapsack) | [DP Toolkit](/projects/tier-3/14-dp-toolkit) |
+| [LCS](/algorithms/35-lcs) | [DP Toolkit](/projects/tier-3/14-dp-toolkit) |
+| [Edit Distance](/algorithms/36-edit-distance) | [DP Toolkit](/projects/tier-3/14-dp-toolkit), [Text Editor](/projects/tier-4/20-text-editor-engine) |
+| [Matrix Chain](/algorithms/37-matrix-chain-multiplication) | [DP Toolkit](/projects/tier-3/14-dp-toolkit) |
+| [LIS](/algorithms/38-longest-increasing-subsequence) | [DP Toolkit](/projects/tier-3/14-dp-toolkit) |
+| [KMP](/algorithms/39-kmp) | [Full-Text Search](/projects/tier-3/13-full-text-search-engine) |
+| [Rabin-Karp](/algorithms/40-rabin-karp) | [Full-Text Search](/projects/tier-3/13-full-text-search-engine) |
+| [Boyer-Moore](/algorithms/41-boyer-moore) | [Full-Text Search](/projects/tier-3/13-full-text-search-engine) |
+| [Z-Algorithm](/algorithms/42-z-algorithm) | [Full-Text Search](/projects/tier-3/13-full-text-search-engine) |
+| [Aho-Corasick](/algorithms/43-aho-corasick) | [Full-Text Search](/projects/tier-3/13-full-text-search-engine) |
+| [Backtracking](/algorithms/44-backtracking) | [Mini VCS](/projects/tier-4/16-mini-version-control), [Text Editor](/projects/tier-4/20-text-editor-engine), [Constraint Solver](/projects/tier-4/22-constraint-solver) |
+| [Bit Manipulation](/algorithms/45-bit-manipulation) | [Constraint Solver](/projects/tier-4/22-constraint-solver) |
+| [Bloom Filter (Alg)](/algorithms/46-bloom-filter-alg) | [KV Store](/projects/tier-3/11-key-value-store), [Distributed Cache](/projects/tier-4/17-distributed-cache), [Stream Analytics](/projects/tier-4/19-stream-analytics-pipeline) |
+| [Consistent Hashing](/algorithms/47-consistent-hashing) | [Distributed Cache](/projects/tier-4/17-distributed-cache) |
+| [Rate Limiting](/algorithms/48-rate-limiting) | [API Rate Limiter](/projects/tier-4/18-api-rate-limiter) |
 
 ### Fundamentals
 

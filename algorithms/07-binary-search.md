@@ -93,6 +93,13 @@ func BinarySearch(arr []int, target int) int {
 }
 ```
 
+## Complexity
+
+| Variant | Time | Space |
+|---------|------|-------|
+| Classic binary search | O(log n) | O(1) |
+| Two Crystal Balls | O(√n) worst-case drops | O(1) |
+
 ## Key Variants
 
 1. **First occurrence** of target in sorted array with duplicates

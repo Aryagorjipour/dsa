@@ -18,15 +18,15 @@ Every public API faces the same threat: a single client — malicious or merely 
 
 By completing this project, you will deeply understand:
 
-1. **Fixed window counter and its boundary burst flaw** — O(1) memory and O(1) check, but clients can send 2× the limit by timing requests across window edges. See [`/algorithms/47-rate-limiting`](/algorithms/47-rate-limiting).
+1. **Fixed window counter and its boundary burst flaw** — O(1) memory and O(1) check, but clients can send 2× the limit by timing requests across window edges. See [`/algorithms/48-rate-limiting`](/algorithms/48-rate-limiting).
 
-2. **Sliding window log for precise rate enforcement** — store per-request timestamps in a deque, evict entries older than the window, count remaining entries. Accurate but O(n) memory per client. See [`/algorithms/47-rate-limiting`](/algorithms/47-rate-limiting) and [`/data-structures/06-deque`](/data-structures/06-deque).
+2. **Sliding window log for precise rate enforcement** — store per-request timestamps in a deque, evict entries older than the window, count remaining entries. Accurate but O(n) memory per client. See [`/algorithms/48-rate-limiting`](/algorithms/48-rate-limiting) and [`/data-structures/06-deque`](/data-structures/06-deque).
 
-3. **Token bucket for burst-tolerant limiting** — refill tokens at a steady rate, consume one per request, reject when empty. Allows controlled bursts up to bucket capacity. See [`/algorithms/47-rate-limiting`](/algorithms/47-rate-limiting).
+3. **Token bucket for burst-tolerant limiting** — refill tokens at a steady rate, consume one per request, reject when empty. Allows controlled bursts up to bucket capacity. See [`/algorithms/48-rate-limiting`](/algorithms/48-rate-limiting).
 
-4. **Leaky bucket for traffic shaping** — requests queue in a bucket, processed at a constant drip rate, overflow is dropped. Smooths traffic rather than hard-rejecting bursts. See [`/algorithms/47-rate-limiting`](/algorithms/47-rate-limiting) and [`/data-structures/05-queue`](/data-structures/05-queue).
+4. **Leaky bucket for traffic shaping** — requests queue in a bucket, processed at a constant drip rate, overflow is dropped. Smooths traffic rather than hard-rejecting bursts. See [`/algorithms/48-rate-limiting`](/algorithms/48-rate-limiting) and [`/data-structures/05-queue`](/data-structures/05-queue).
 
-5. **Sliding window counter as a practical hybrid** — combine the previous window's weighted count with the current window's count to approximate a sliding window with O(1) memory. See [`/algorithms/47-rate-limiting`](/algorithms/47-rate-limiting) and [`/fundamentals/05-two-pointers-sliding-window`](/fundamentals/05-two-pointers-sliding-window).
+5. **Sliding window counter as a practical hybrid** — combine the previous window's weighted count with the current window's count to approximate a sliding window with O(1) memory. See [`/algorithms/48-rate-limiting`](/algorithms/48-rate-limiting) and [`/fundamentals/05-two-pointers-sliding-window`](/fundamentals/05-two-pointers-sliding-window).
 
 6. **Ring buffer for bounded per-client state** — fixed-capacity circular buffer stores recent request timestamps without unbounded growth; essential when millions of clients each need a sliding window. See [`/data-structures/07-ring-buffer`](/data-structures/07-ring-buffer).
 
@@ -59,7 +59,7 @@ By completing this project, you will deeply understand:
 
 | Concept | Role in this project | Handbook Link | Difficulty |
 |---------|----------------------|---------------|------------|
-| Rate Limiting Algorithms | Core policy: fixed window, sliding log, token bucket, leaky bucket, sliding counter | [/algorithms/47-rate-limiting](/algorithms/47-rate-limiting) | Intermediate |
+| Rate Limiting Algorithms | Core policy: fixed window, sliding log, token bucket, leaky bucket, sliding counter | [/algorithms/48-rate-limiting](/algorithms/48-rate-limiting) | Intermediate |
 | Ring Buffer | Bounded circular storage for per-client request timestamps | [/data-structures/07-ring-buffer](/data-structures/07-ring-buffer) | Intermediate |
 | Deque | Sliding window log: O(1) push back, O(1) pop front for expired timestamps | [/data-structures/06-deque](/data-structures/06-deque) | Beginner |
 | Queue | Leaky bucket: FIFO request queue dripping at constant rate | [/data-structures/05-queue](/data-structures/05-queue) | Beginner |

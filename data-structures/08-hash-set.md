@@ -68,7 +68,14 @@ public class MyHashSet<T> where T : notnull {
         return false;
     }
     
-    private void Resize() { /* double size + rehash */ }
+    private void Resize() {
+        var old = _buckets;
+        _buckets = new T[old.Length * 2];
+        _count = 0;
+        foreach (var item in old) {
+            if (item != null) Add(item);
+        }
+    }
 }
 ```
 
@@ -95,7 +102,9 @@ Go does not have a separate `Set` type. People use `map[T]struct{}` as a set:
 ```go
 seen := make(map[string]struct{})
 seen["hello"] = struct{}{}
-if _, ok := seen["hello"]; ok { ... }
+if _, ok := seen["hello"]; ok {
+    fmt.Println("already seen")
+}
 ```
 
 This is idiomatic and extremely efficient because Go maps are very well optimized.
@@ -195,5 +204,9 @@ These are used in:
 Hash Set = the "have I seen this?" superpower.
 
 It is one of the highest leverage data structures in existence. Once you internalize it, you will find dozens of places in your code where using a set instead of a list makes things dramatically faster and cleaner.
+
+::: tip Project Lab
+**Build it yourself:** [Hash Map from Scratch](/projects/tier-1/04-hash-map-from-scratch)
+:::
 
 **Next:** [09 - Hash Map](09-hash-map.md) — the most used data structure in modern programming after the array.

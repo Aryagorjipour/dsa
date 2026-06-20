@@ -93,6 +93,18 @@ Many advanced algorithms are a mix.
 
 ## Implementation Pattern (Template)
 
+### C# (merge sort shape)
+
+```csharp
+int[] MergeSort(int[] arr, int lo, int hi) {
+    if (lo >= hi) return new[] { arr[lo] };
+    int mid = lo + (hi - lo) / 2;
+    var left = MergeSort(arr, lo, mid);
+    var right = MergeSort(arr, mid + 1, hi);
+    return Merge(left, right);
+}
+```
+
 Most divide and conquer code follows this skeleton:
 
 ```go

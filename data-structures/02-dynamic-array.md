@@ -210,4 +210,8 @@ Dynamic array = the best "default list" for 80% of use cases because:
 
 Master it. You will use it every single day.
 
+::: tip Project Lab
+**Build it yourself:** [Sorting Benchmarker](/projects/tier-1/02-sorting-benchmarker)
+:::
+
 **Next:** [03 - Linked List](03-linked-list.md)

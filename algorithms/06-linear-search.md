@@ -78,3 +78,8 @@ func LinearSearch(arr []int, target int) int {
 - Sentinel linear search (optimization to avoid bounds check)
 
 This is the starting point. Everything else improves on it when possible.
+
+::: tip Project Lab
+**Build it yourself:** [Search Library](/projects/tier-1/01-search-library)
+:::
+

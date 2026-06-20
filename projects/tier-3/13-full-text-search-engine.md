@@ -18,11 +18,11 @@
 
 By completing this project, you will deeply understand:
 
-1. **KMP failure function construction and its meaning** — why the failure function encodes the longest proper prefix of the pattern that is also a suffix, and how this allows the algorithm to avoid re-examining already-matched characters. See [KMP](/algorithms/38-kmp).
-2. **Rolling hash and Rabin-Karp collision handling** — how polynomial rolling hash enables O(1) window hash updates, why hash collisions cause the O(nm) worst case, and how to use double hashing to make collision probability negligible. See [Rabin-Karp](/algorithms/39-rabin-karp).
-3. **Boyer-Moore's two heuristics and sub-linear behavior** — how the bad-character table allows skipping `m` characters at once on a mismatch, and how the good-suffix table provides an alternative skip when the bad-character skip is small. See [Boyer-Moore](/algorithms/40-boyer-moore).
-4. **Z-Array semantics** — how Z[i] (the length of the longest substring starting at position i that matches a prefix of the full string) enables pattern matching via a single O(n+m) scan after concatenating pattern and text. See [Z-Algorithm](/algorithms/41-z-algorithm).
-5. **Aho-Corasick as a finite automaton** — how failure links on a trie create the same effect as KMP's failure function but for a set of patterns simultaneously, enabling O(n + total_pattern_length + number_of_matches) multi-pattern matching. See [Aho-Corasick](/algorithms/42-aho-corasick).
+1. **KMP failure function construction and its meaning** — why the failure function encodes the longest proper prefix of the pattern that is also a suffix, and how this allows the algorithm to avoid re-examining already-matched characters. See [KMP](/algorithms/39-kmp).
+2. **Rolling hash and Rabin-Karp collision handling** — how polynomial rolling hash enables O(1) window hash updates, why hash collisions cause the O(nm) worst case, and how to use double hashing to make collision probability negligible. See [Rabin-Karp](/algorithms/40-rabin-karp).
+3. **Boyer-Moore's two heuristics and sub-linear behavior** — how the bad-character table allows skipping `m` characters at once on a mismatch, and how the good-suffix table provides an alternative skip when the bad-character skip is small. See [Boyer-Moore](/algorithms/41-boyer-moore).
+4. **Z-Array semantics** — how Z[i] (the length of the longest substring starting at position i that matches a prefix of the full string) enables pattern matching via a single O(n+m) scan after concatenating pattern and text. See [Z-Algorithm](/algorithms/42-z-algorithm).
+5. **Aho-Corasick as a finite automaton** — how failure links on a trie create the same effect as KMP's failure function but for a set of patterns simultaneously, enabling O(n + total_pattern_length + number_of_matches) multi-pattern matching. See [Aho-Corasick](/algorithms/43-aho-corasick).
 6. **Suffix array construction and binary search for substring lookup** — why a suffix array of a string is equivalent to sorting all suffixes lexicographically, and how binary search over this sorted array finds all occurrences of a pattern in O(m log n). See [Suffix Array](/data-structures/31-suffix-array).
 7. **Trie as a prefix-index structure** — how a trie supports O(m) exact and prefix lookups regardless of how many strings are indexed, and how it forms the foundation of Aho-Corasick. See [Trie](/data-structures/17-trie).
 
@@ -55,11 +55,11 @@ By completing this project, you will deeply understand:
 
 | Concept | Role in this project | Handbook Link | Difficulty |
 |---------|----------------------|---------------|------------|
-| KMP | O(n+m) single-pattern search via failure function; foundational algorithm for all string matching | [/algorithms/38-kmp](/algorithms/38-kmp) | Intermediate |
-| Rabin-Karp | O(n+m) average case via rolling hash; natural extension to multi-pattern matching of equal length | [/algorithms/39-rabin-karp](/algorithms/39-rabin-karp) | Intermediate |
-| Boyer-Moore | Sub-linear best case via bad-character heuristic; most practical single-pattern algorithm for large alphabets | [/algorithms/40-boyer-moore](/algorithms/40-boyer-moore) | Intermediate |
-| Z-Algorithm | O(n+m) via Z-array; elegant alternative to KMP with a single unified scan | [/algorithms/41-z-algorithm](/algorithms/41-z-algorithm) | Intermediate |
-| Aho-Corasick | O(n + total_m + matches) multi-pattern matching; combines trie with KMP failure function | [/algorithms/42-aho-corasick](/algorithms/42-aho-corasick) | Advanced |
+| KMP | O(n+m) single-pattern search via failure function; foundational algorithm for all string matching | [/algorithms/39-kmp](/algorithms/39-kmp) | Intermediate |
+| Rabin-Karp | O(n+m) average case via rolling hash; natural extension to multi-pattern matching of equal length | [/algorithms/40-rabin-karp](/algorithms/40-rabin-karp) | Intermediate |
+| Boyer-Moore | Sub-linear best case via bad-character heuristic; most practical single-pattern algorithm for large alphabets | [/algorithms/41-boyer-moore](/algorithms/41-boyer-moore) | Intermediate |
+| Z-Algorithm | O(n+m) via Z-array; elegant alternative to KMP with a single unified scan | [/algorithms/42-z-algorithm](/algorithms/42-z-algorithm) | Intermediate |
+| Aho-Corasick | O(n + total_m + matches) multi-pattern matching; combines trie with KMP failure function | [/algorithms/43-aho-corasick](/algorithms/43-aho-corasick) | Advanced |
 | Trie | Prefix index structure; foundation of Aho-Corasick and autocomplete | [/data-structures/17-trie](/data-structures/17-trie) | Intermediate |
 | Suffix Array | O(m log n) substring search after O(n log² n) build; enables arbitrary substring queries without vocabulary pre-knowledge | [/data-structures/31-suffix-array](/data-structures/31-suffix-array) | Advanced |
 

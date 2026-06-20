@@ -7,7 +7,10 @@
     "example": "examples"
   },
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
+    "verify:examples": "node scripts/verify-go-examples.mjs",
+    "verify:coverage": "python3 scripts/audit_coverage.py --strict",
+    "verify:coverage:write": "python3 scripts/audit_coverage.py --write",
+    "verify": "npm run verify:coverage:write && npm run verify:coverage && npm run verify:examples && npm run docs:build",
     "docs:dev": "vitepress dev",
     "docs:build": "vitepress build",
     "docs:preview": "vitepress preview"

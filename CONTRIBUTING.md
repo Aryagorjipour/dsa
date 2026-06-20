@@ -14,8 +14,8 @@ Thank you for your interest! This handbook aims to be one of the best practical 
 - Every example should demonstrate a **real problem** the technique solves.
 
 ### 3. Adding Diagrams
-- Add new images to the `images/` folder.
-- Reference them in the relevant chapter using `![Description](/images/name.png)`.
+- Add new PNG diagrams to `public/images/`.
+- Reference them in chapters using `![Description](/images/your-diagram.png)`.
 
 ### 4. Adding Project Lab Specs
 - Follow the guide in [`projects/contributing.md`](projects/contributing.md).
@@ -31,6 +31,7 @@ Open an issue using the "New Topic Suggestion" template.
 ```bash
 npm install
 npm run docs:dev
+npm run verify   # coverage audit + Go examples + site build
 ```
 
 ## Pull Request Guidelines

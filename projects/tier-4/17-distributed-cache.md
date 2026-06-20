@@ -18,15 +18,15 @@ A single-machine cache has a hard ceiling: the RAM of one server. When your data
 
 By completing this project, you will deeply understand:
 
-1. **Why naive hash-based sharding (`key % n`) is catastrophic on cluster resize** — the math showing that changing n by 1 invalidates nearly every key assignment, and how consistent hashing limits migration to `K/n` keys. See [`/algorithms/46-consistent-hashing`](/algorithms/46-consistent-hashing).
+1. **Why naive hash-based sharding (`key % n`) is catastrophic on cluster resize** — the math showing that changing n by 1 invalidates nearly every key assignment, and how consistent hashing limits migration to `K/n` keys. See [`/algorithms/47-consistent-hashing`](/algorithms/47-consistent-hashing).
 
-2. **How a sorted ring with binary search implements consistent hashing in O(log n)** — placing node hashes on a sorted array, using binary search to find the first node clockwise from any key hash, and wrapping around at the ring boundary. See [`/algorithms/46-consistent-hashing`](/algorithms/46-consistent-hashing).
+2. **How a sorted ring with binary search implements consistent hashing in O(log n)** — placing node hashes on a sorted array, using binary search to find the first node clockwise from any key hash, and wrapping around at the ring boundary. See [`/algorithms/47-consistent-hashing`](/algorithms/47-consistent-hashing).
 
-3. **How virtual nodes solve the load imbalance problem** — why 3 physical nodes with 1 position each leads to uneven load when nodes differ in capacity, and why 150 virtual positions per node produces near-uniform distribution. See [`/algorithms/46-consistent-hashing`](/algorithms/46-consistent-hashing).
+3. **How virtual nodes solve the load imbalance problem** — why 3 physical nodes with 1 position each leads to uneven load when nodes differ in capacity, and why 150 virtual positions per node produces near-uniform distribution. See [`/algorithms/47-consistent-hashing`](/algorithms/47-consistent-hashing).
 
 4. **How LRU cache provides O(1) get and put with bounded memory per node** — the doubly linked list + hash map combination that makes both access and eviction O(1). See [`/data-structures/10-lru-cache`](/data-structures/10-lru-cache).
 
-5. **How Bloom Filters reduce unnecessary lookups with a probabilistic membership check** — the bit array + multiple hash functions structure, why false positives are possible but false negatives are not, and how to tune m (bits) and k (hash functions) for a target false positive rate. See [`/data-structures/24-bloom-filter`](/data-structures/24-bloom-filter) and [`/algorithms/45-bloom-filter-alg`](/algorithms/45-bloom-filter-alg).
+5. **How Bloom Filters reduce unnecessary lookups with a probabilistic membership check** — the bit array + multiple hash functions structure, why false positives are possible but false negatives are not, and how to tune m (bits) and k (hash functions) for a target false positive rate. See [`/data-structures/24-bloom-filter`](/data-structures/24-bloom-filter) and [`/algorithms/46-bloom-filter-alg`](/algorithms/46-bloom-filter-alg).
 
 6. **Why Cuckoo Filters outperform Bloom Filters when deletions are needed** — fingerprint-based storage in two tables, the cuckoo displacement protocol, and why you cannot delete from a standard Bloom Filter (which bit do you clear?). See [`/data-structures/28-cuckoo-filter`](/data-structures/28-cuckoo-filter).
 
@@ -56,7 +56,7 @@ By completing this project, you will deeply understand:
 
 | Concept | Role in this project | Handbook Link | Difficulty |
 |---------|----------------------|---------------|------------|
-| Consistent Hashing | Map keys to nodes on a virtual ring; minimize key migration on cluster resize | [/algorithms/46-consistent-hashing](/algorithms/46-consistent-hashing) | Hard |
+| Consistent Hashing | Map keys to nodes on a virtual ring; minimize key migration on cluster resize | [/algorithms/47-consistent-hashing](/algorithms/47-consistent-hashing) | Hard |
 | LRU Cache | Per-node bounded-memory cache with O(1) eviction | [/data-structures/10-lru-cache](/data-structures/10-lru-cache) | Intermediate |
 | Bloom Filter | Pre-lookup membership check to skip unnecessary node queries | [/data-structures/24-bloom-filter](/data-structures/24-bloom-filter) | Intermediate |
 | Cuckoo Filter | Deletable alternative to Bloom Filter with fingerprint-based storage | [/data-structures/28-cuckoo-filter](/data-structures/28-cuckoo-filter) | Hard |

@@ -23,30 +23,33 @@ A segment tree is a **binary tree** over the array where each node represents a 
 
 ![Advanced Segment Tree Example](/images/segment-tree-advanced.png)
 
+- Leaf nodes represent single elements.
+- Internal nodes represent the combination (sum, min, max, gcd, etc.) of their children.
+- The tree is usually built on top of an array (4×n size is a common trick).
+
 ### Canonical Problem: Range Sum Queries with Point Updates (and Lazy Range Updates)
 
 **Problem Description:**
 
-You are given an array of integers, say of size N (up to 10^5). You need to support two types of operations many times (up to 10^5):
+Given an array of integers (size N up to 10⁵), support many operations:
 
 1. **Update**: Add a value V to the element at index i (or set it to a new value).
 2. **Query**: Compute the sum (or min/max) of elements from index L to R (inclusive).
 
-Naive approach (loop each time) is O(N) per operation → too slow for large N and Q.
-
 A Segment Tree solves this in O(log N) per operation by storing precomputed aggregates in a tree over ranges.
 
-This is one of the most fundamental "why Segment Tree exists" problems. It appears in:
-- Database range aggregates
-- Time-series analytics (sum of sales in date ranges + corrections)
-- Competitive programming (hundreds of problems on Codeforces, AtCoder, etc.)
-- Financial systems (running portfolio value over periods with updates)
+This pattern appears in database range aggregates, time-series analytics, financial running totals, and competitive programming.
 
-Without lazy propagation, range updates would be slow. Lazy allows deferring range updates.
+## Operations & Complexity
 
-**Full Implementation (Point Update + Range Sum + Lazy Range Add)**
+| Operation        | Time     | Space  |
+|------------------|----------|--------|
+| Build            | O(n)     | O(n)   |
+| Range query      | O(log n) | O(n)   |
+| Point update     | O(log n) | O(n)   |
+| Range update (lazy)| O(log n)| O(n)   |
 
-**C#**
+## Complete Implementation (C#) — Lazy Range Add + Range Sum
 
 ```csharp
 public class SegmentTree {
@@ -98,6 +101,26 @@ public class SegmentTree {
         int mid = (start + end) / 2;
         UpdateRange(2 * node + 1, start, mid, l, r, val);
         UpdateRange(2 * node + 2, mid + 1, end, l, r, val);
+        Propagate(2 * node + 1, start, mid);
+        Propagate(2 * node + 2, mid + 1, end);
+        tree[node] = tree[2 * node + 1] + tree[2 * node + 2];
+    }
+
+    public void Update(int idx, long val) {
+        UpdatePoint(0, 0, n - 1, idx, val);
+    }
+
+    private void UpdatePoint(int node, int start, int end, int idx, long val) {
+        Propagate(node, start, end);
+        if (start == end) {
+            tree[node] = val;
+            return;
+        }
+        int mid = (start + end) / 2;
+        if (idx <= mid) UpdatePoint(2 * node + 1, start, mid, idx, val);
+        else UpdatePoint(2 * node + 2, mid + 1, end, idx, val);
+        Propagate(2 * node + 1, start, mid);
+        Propagate(2 * node + 2, mid + 1, end);
         tree[node] = tree[2 * node + 1] + tree[2 * node + 2];
     }
 
@@ -110,160 +133,156 @@ public class SegmentTree {
         if (start > end || start > r || end < l) return 0;
         if (l <= start && end <= r) return tree[node];
         int mid = (start + end) / 2;
-        return Query(2 * node + 1, start, mid, l, r) + Query(2 * node + 2, mid + 1, end, l, r);
-    }
-}
-```
-
-**Go** (similar structure with lazy)
-
-(The Go version follows the exact same logic as C# above, using slices for tree and lazy.)
-
-This full implementation (with lazy) shows the power for real complicated use cases. See the algorithms chapter for more DP/graph integrations.
-
-**Runnable example**: examples/go/segment_tree_range_sum.go and C# equivalent.
-
-- Leaf nodes represent single elements.
-- Internal nodes represent the combination (sum, min, max, gcd, etc.) of their children.
-
-The tree is usually built on top of an array (4*n size is a common trick).
-
-## Visual (Sum Segment Tree on [1,3,5,7,9,11])
-
-Indices: 0  1  2  3  4  5
-Values:  1  3  5  7  9 11
-
-Tree nodes (conceptual):
-- Root: sum [0-5] = 36
-  - Left: sum [0-2] = 9
-    - ...
-  - Right: sum [3-5] = 27
-
-## Operations
-
-- Build: O(n)
-- Range Query (sum/min/max/...): O(log n)
-- Point Update: O(log n)
-- Range Update (with lazy propagation): O(log n)
-
-## Lazy Propagation (The Power Move)
-
-When you need to update a **range** (add 5 to all elements from L to R), naive would be slow.
-
-Lazy propagation defers updates. You mark a node as "this whole range needs +5 later" and only push the update down when you actually need to look at children.
-
-This is essential for many advanced use cases.
-
-## C# Conceptual Implementation (Point Update + Range Sum)
-
-```csharp
-public class SegmentTree {
-    private long[] tree;
-    private int n;
-
-    public SegmentTree(int[] arr) {
-        n = arr.Length;
-        tree = new long[4 * n];
-        Build(arr, 0, 0, n - 1);
-    }
-
-    private void Build(int[] arr, int node, int start, int end) {
-        if (start == end) {
-            tree[node] = arr[start];
-            return;
-        }
-        int mid = (start + end) / 2;
-        Build(arr, 2 * node + 1, start, mid);
-        Build(arr, 2 * node + 2, mid + 1, end);
-        tree[node] = tree[2 * node + 1] + tree[2 * node + 2];
-    }
-
-    public long Query(int l, int r) => Query(0, 0, n - 1, l, r);
-
-    private long Query(int node, int start, int end, int l, int r) {
-        if (r < start || end < l) return 0;
-        if (l <= start && end <= r) return tree[node];
-        int mid = (start + end) / 2;
         return Query(2 * node + 1, start, mid, l, r) +
                Query(2 * node + 2, mid + 1, end, l, r);
     }
-
-    public void Update(int idx, long val) => Update(0, 0, n - 1, idx, val);
-
-    private void Update(int node, int start, int end, int idx, long val) {
-        if (start == end) {
-            tree[node] = val;
-            return;
-        }
-        int mid = (start + end) / 2;
-        if (idx <= mid)
-            Update(2 * node + 1, start, mid, idx, val);
-        else
-            Update(2 * node + 2, mid + 1, end, idx, val);
-        tree[node] = tree[2 * node + 1] + tree[2 * node + 2];
-    }
 }
 ```
 
+## Complete Implementation (Go)
+
+From `examples/go/segment_tree_range_sum.go`, expanded with lazy range add.
+
+```go
+type SegmentTree struct {
+    tree, lazy []int64
+    n          int
+}
+
+func NewSegmentTree(arr []int) *SegmentTree {
+    n := len(arr)
+    st := &SegmentTree{
+        tree: make([]int64, 4*n),
+        lazy: make([]int64, 4*n),
+        n:    n,
+    }
+    st.build(arr, 0, 0, n-1)
+    return st
+}
+
+func (st *SegmentTree) build(arr []int, node, start, end int) {
+    if start == end {
+        st.tree[node] = int64(arr[start])
+        return
+    }
+    mid := (start + end) / 2
+    st.build(arr, 2*node+1, start, mid)
+    st.build(arr, 2*node+2, mid+1, end)
+    st.tree[node] = st.tree[2*node+1] + st.tree[2*node+2]
+}
+
+func (st *SegmentTree) propagate(node, start, end int) {
+    if st.lazy[node] != 0 {
+        st.tree[node] += int64(end-start+1) * st.lazy[node]
+        if start != end {
+            st.lazy[2*node+1] += st.lazy[node]
+            st.lazy[2*node+2] += st.lazy[node]
+        }
+        st.lazy[node] = 0
+    }
+}
+
+func (st *SegmentTree) Update(idx, val int) {
+    st.updatePoint(0, 0, st.n-1, idx, int64(val))
+}
+
+func (st *SegmentTree) updatePoint(node, start, end, idx int, val int64) {
+    st.propagate(node, start, end)
+    if start == end {
+        st.tree[node] = val
+        return
+    }
+    mid := (start + end) / 2
+    if idx <= mid {
+        st.updatePoint(2*node+1, start, mid, idx, val)
+    } else {
+        st.updatePoint(2*node+2, mid+1, end, idx, val)
+    }
+    st.propagate(2*node+1, start, mid)
+    st.propagate(2*node+2, mid+1, end)
+    st.tree[node] = st.tree[2*node+1] + st.tree[2*node+2]
+}
+
+func (st *SegmentTree) UpdateRange(l, r int, val int64) {
+    st.updateRange(0, 0, st.n-1, l, r, val)
+}
+
+func (st *SegmentTree) updateRange(node, start, end, l, r int, val int64) {
+    st.propagate(node, start, end)
+    if start > end || start > r || end < l {
+        return
+    }
+    if l <= start && end <= r {
+        st.lazy[node] += val
+        st.propagate(node, start, end)
+        return
+    }
+    mid := (start + end) / 2
+    st.updateRange(2*node+1, start, mid, l, r, val)
+    st.updateRange(2*node+2, mid+1, end, l, r, val)
+    st.propagate(2*node+1, start, mid)
+    st.propagate(2*node+2, mid+1, end)
+    st.tree[node] = st.tree[2*node+1] + st.tree[2*node+2]
+}
+
+func (st *SegmentTree) Query(l, r int) int64 {
+    return st.query(0, 0, st.n-1, l, r)
+}
+
+func (st *SegmentTree) query(node, start, end, l, r int) int64 {
+    st.propagate(node, start, end)
+    if start > end || start > r || end < l {
+        return 0
+    }
+    if l <= start && end <= r {
+        return st.tree[node]
+    }
+    mid := (start + end) / 2
+    return st.query(2*node+1, start, mid, l, r) +
+        st.query(2*node+2, mid+1, end, l, r)
+}
+```
+
+**Runnable example:** `examples/go/segment_tree_range_sum.go`
+
+## Lazy Propagation (The Power Move)
+
+When you need to update a **range** (add 5 to all elements from L to R), naive approaches are slow.
+
+Lazy propagation defers updates. You mark a node as "this whole range needs +5 later" and only push the update down when you actually need to look at children.
+
 ## Real World Uses
 
-### 1. Competitive Programming (Heavy)
+### 1. Competitive Programming
 
 Almost every hard range query problem uses segment trees or fenwick trees.
 
 ### 2. Databases & Analytics Systems
 
-Some column stores and time-series databases use segment-tree like structures for range aggregates.
+Some column stores and time-series databases use segment-tree-like structures for range aggregates.
 
-### 3. Graphics & Computational Geometry
+### 3. Finance
 
-Range minimum queries on terrains, visibility computations.
+Risk calculations over ranges of trades, order book range statistics, time-series aggregations.
 
-### 4. Finance
+### 4. Gaming
 
-- Risk calculations over ranges of trades
-- Order book range statistics
-- Time-series aggregations
-
-### 5. Gaming
-
-- Range updates on grids (damage over area + queries)
-- Some AI planning structures
-
-### 6. Operating Systems / Memory Management
-
-Some allocators track free ranges using segment-tree-like structures for fast "find a free block of size X" queries.
-
-## Variants
-
-- Sum segment tree
-- Min/Max segment tree
-- Segment tree with lazy propagation
-- Segment tree beats (advanced)
-- 2D segment trees (rare but powerful)
-- Persistent segment trees (versioned history)
+Range updates on grids (damage over area + queries).
 
 ## Segment Tree vs Other Structures
 
-- Vs Fenwick Tree: Segment tree is more flexible (can do min, max, gcd, custom merge). Fenwick is simpler and faster for pure prefix sums.
-- Vs B+ Tree: B+ tree is for disk + persistence. Segment tree is usually in-memory.
-
-## When You Should Learn It Deeply
-
-If you ever work on:
-- Analytics engines
-- High-frequency trading systems
-- Game engines with complex state queries
-- Any system doing heavy range aggregation on arrays
-
-...segment trees (or fenwick) will appear.
+| Feature                  | Segment Tree       | Fenwick Tree          |
+|--------------------------|--------------------|-----------------------|
+| Code length              | Longer             | Very short            |
+| Min / Max / custom       | Easy               | Hard                  |
+| Range updates (lazy)     | Natural            | Possible with tricks  |
+| Sum queries              | Excellent          | Excellent             |
 
 ## Summary
 
 Segment tree = binary tree over array ranges that lets you query and update ranges in logarithmic time.
 
 It is one of the most powerful "array + range" tools in the algorithmic toolbox.
-
 
 ::: tip Project Lab
 **Build it yourself:** [Time-Series Analytics Engine](/projects/tier-3/12-time-series-analytics) — range queries and updates on streaming metrics.

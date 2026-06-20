@@ -46,9 +46,15 @@ When you access an item:
 When evicting:
 - Remove from the list at `minFrequency`
 
-This is quite beautiful.
+## Operations & Complexity
 
-## Complete Implementation Sketch (C#)
+| Operation | Time   | Space        | Notes |
+|-----------|--------|--------------|-------|
+| `Get`     | O(1)   | O(capacity)  | Bumps frequency; may update min freq |
+| `Put`     | O(1)   | O(capacity)  | Evicts LFU bucket when full |
+| Evict     | O(1)   | —            | Always from `minFrequency` list |
+
+## Complete Implementation (C#)
 
 ```csharp
 public class LFUCache<K, V> where K : notnull {
@@ -61,7 +67,7 @@ public class LFUCache<K, V> where K : notnull {
 
     private readonly int _capacity;
     private readonly Dictionary<K, Node> _keyToNode = new();
-    private readonly Dictionary<int, LinkedList<Node>> _freqToList = new();
+    private readonly Dictionary<int, (Node Head, Node Tail, int Count)> _freqToList = new();
     private int _minFreq;
 
     public LFUCache(int capacity) { _capacity = capacity; }
@@ -100,39 +106,144 @@ public class LFUCache<K, V> where K : notnull {
         node.Freq++;
         AddToFrequencyList(node);
         if (!_freqToList.ContainsKey(_minFreq)) {
-            _minFreq = node.Freq; // min may have increased
+            _minFreq = node.Freq;
         }
     }
 
     private void AddToFrequencyList(Node node) {
         if (!_freqToList.TryGetValue(node.Freq, out var list)) {
-            list = new LinkedList<Node>();
+            var head = new Node();
+            var tail = new Node();
+            head.Next = tail;
+            tail.Prev = head;
+            list = (head, tail, 0);
             _freqToList[node.Freq] = list;
         }
-        list.AddLast(node);
+        var (head, tail, count) = list;
+        node.Prev = tail.Prev;
+        node.Next = tail;
+        tail.Prev!.Next = node;
+        tail.Prev = node;
+        _freqToList[node.Freq] = (head, tail, count + 1);
     }
 
     private void RemoveFromFrequencyList(Node node) {
-        var list = _freqToList[node.Freq];
-        list.Remove(node);
-        if (list.Count == 0) {
+        var (head, tail, count) = _freqToList[node.Freq];
+        node.Prev!.Next = node.Next;
+        node.Next!.Prev = node.Prev;
+        count--;
+        if (count == 0) {
             _freqToList.Remove(node.Freq);
+        } else {
+            _freqToList[node.Freq] = (head, tail, count);
         }
     }
 
     private void Evict() {
-        var list = _freqToList[_minFreq];
-        var toEvict = list.First!.Value;
-        list.RemoveFirst();
+        var (head, tail, _) = _freqToList[_minFreq];
+        var toEvict = head.Next!;
+        RemoveFromFrequencyList(toEvict);
         _keyToNode.Remove(toEvict.Key);
-        if (list.Count == 0) {
-            _freqToList.Remove(_minFreq);
-        }
     }
 }
 ```
 
-The Go version follows the exact same structure using maps and a custom doubly linked list per frequency or using `container/list`.
+## Complete Implementation (Go)
+
+```go
+type lfuNode[K comparable, V any] struct {
+    key   K
+    value V
+    freq       int
+    prev, next *lfuNode[K, V]
+}
+
+type freqList[K comparable, V any] struct {
+    head, tail *lfuNode[K, V]
+    count      int
+}
+
+type LFUCache[K comparable, V any] struct {
+    capacity   int
+    minFreq    int
+    keyToNode  map[K]*lfuNode[K, V]
+    freqToList map[int]*freqList[K, V]
+}
+
+func NewLFUCache[K comparable, V any](capacity int) *LFUCache[K, V] {
+    return &LFUCache[K, V]{
+        capacity:   capacity,
+        keyToNode:  make(map[K]*lfuNode[K, V]),
+        freqToList: make(map[int]*freqList[K, V]),
+    }
+}
+
+func (c *LFUCache[K, V]) Get(key K) (V, bool) {
+    node, ok := c.keyToNode[key]
+    if !ok {
+        var zero V
+        return zero, false
+    }
+    c.updateFrequency(node)
+    return node.value, true
+}
+
+func (c *LFUCache[K, V]) Put(key K, value V) {
+    if c.capacity == 0 {
+        return
+    }
+    if node, ok := c.keyToNode[key]; ok {
+        node.value = value
+        c.updateFrequency(node)
+        return
+    }
+    if len(c.keyToNode) >= c.capacity {
+        c.evict()
+    }
+    node := &lfuNode[K, V]{key: key, value: value, freq: 1}
+    c.keyToNode[key] = node
+    c.addToFreqList(node)
+    c.minFreq = 1
+}
+
+func (c *LFUCache[K, V]) updateFrequency(node *lfuNode[K, V]) {
+    c.removeFromFreqList(node)
+    node.freq++
+    c.addToFreqList(node)
+    if _, ok := c.freqToList[c.minFreq]; !ok {
+        c.minFreq = node.freq
+    }
+}
+
+func (c *LFUCache[K, V]) addToFreqList(node *lfuNode[K, V]) {
+    fl, ok := c.freqToList[node.freq]
+    if !ok {
+        head, tail := &lfuNode[K, V]{}, &lfuNode[K, V]{}
+        head.next, tail.prev = tail, head
+        fl = &freqList[K, V]{head: head, tail: tail}
+        c.freqToList[node.freq] = fl
+    }
+    node.prev, node.next = fl.tail.prev, fl.tail
+    fl.tail.prev.next, fl.tail.prev = node, node
+    fl.count++
+}
+
+func (c *LFUCache[K, V]) removeFromFreqList(node *lfuNode[K, V]) {
+    fl := c.freqToList[node.freq]
+    node.prev.next, node.next.prev = node.next, node.prev
+    fl.count--
+    if fl.count == 0 {
+        delete(c.freqToList, node.freq)
+    }
+}
+
+func (c *LFUCache[K, V]) evict() {
+    fl := c.freqToList[c.minFreq]
+    victim := fl.head.next
+    c.removeFromFreqList(victim)
+    delete(c.keyToNode, victim.key)
+}
+```
 
 ## Real LFU in Production
 
@@ -171,9 +282,8 @@ It is more powerful than LRU in many stable workloads, but significantly harder 
 
 Most engineers will implement LRU from scratch at some point. Fewer will need to implement full LFU — but understanding the concepts makes you dangerous in a good way when tuning caches.
 
-
 ::: tip Project Lab
 **Build it yourself:** [Cache with Eviction Policies](/projects/tier-2/05-cache-with-eviction) — compare LRU vs heap-LFU vs O(1) bucket-LFU on Zipfian workloads.
 :::
 
-**Next:** Trees! Starting with general n-ary trees.
+**Next:** [12 - N-ary Tree](12-tree-n-ary.md)

@@ -16,17 +16,17 @@ By completing this project, you will deeply understand:
 
 1. **Graph representation trade-offs** — adjacency list (O(V+E) space, good for sparse graphs like road networks) vs adjacency matrix (O(V²) space, good for dense graphs and Floyd-Warshall). See [`/data-structures/23-graph`](/data-structures/23-graph).
 
-2. **BFS for unweighted shortest paths** — why BFS finds the minimum hop count, and why it cannot handle edge weights. The relationship between BFS and Dijkstra (Dijkstra is BFS with a priority queue instead of a plain queue). See [`/algorithms/24-bfs`](/algorithms/24-bfs).
+2. **BFS for unweighted shortest paths** — why BFS finds the minimum hop count, and why it cannot handle edge weights. The relationship between BFS and Dijkstra (Dijkstra is BFS with a priority queue instead of a plain queue). See [`/algorithms/25-bfs`](/algorithms/25-bfs).
 
-3. **DFS for structural graph analysis** — cycle detection, reachability, and topological ordering. Why DFS over BFS for these tasks. See [`/algorithms/25-dfs`](/algorithms/25-dfs).
+3. **DFS for structural graph analysis** — cycle detection, reachability, and topological ordering. Why DFS over BFS for these tasks. See [`/algorithms/26-dfs`](/algorithms/26-dfs).
 
-4. **Dijkstra's algorithm and its correctness invariant** — why the greedy selection of the minimum-distance unvisited node is correct, and why negative edge weights break it. O((V+E) log V) with a min-heap. See [`/algorithms/27-dijkstra`](/algorithms/27-dijkstra).
+4. **Dijkstra's algorithm and its correctness invariant** — why the greedy selection of the minimum-distance unvisited node is correct, and why negative edge weights break it. O((V+E) log V) with a min-heap. See [`/algorithms/28-dijkstra`](/algorithms/28-dijkstra).
 
-5. **Bellman-Ford and negative edge weights** — the relaxation-based approach, why V-1 passes suffice, and how one additional pass detects negative cycles. O(VE) vs Dijkstra's O((V+E) log V) — understanding when to pay the extra cost. See [`/algorithms/28-bellman-ford`](/algorithms/28-bellman-ford).
+5. **Bellman-Ford and negative edge weights** — the relaxation-based approach, why V-1 passes suffice, and how one additional pass detects negative cycles. O(VE) vs Dijkstra's O((V+E) log V) — understanding when to pay the extra cost. See [`/algorithms/29-bellman-ford`](/algorithms/29-bellman-ford).
 
-6. **Floyd-Warshall for all-pairs shortest paths** — the DP formulation `dist[i][j] = min(dist[i][j], dist[i][k] + dist[k][j])`, why the outer loop is over intermediate nodes k, and O(V³) time with O(V²) space. See [`/algorithms/29-floyd-warshall`](/algorithms/29-floyd-warshall).
+6. **Floyd-Warshall for all-pairs shortest paths** — the DP formulation `dist[i][j] = min(dist[i][j], dist[i][k] + dist[k][j])`, why the outer loop is over intermediate nodes k, and O(V³) time with O(V²) space. See [`/algorithms/30-floyd-warshall`](/algorithms/30-floyd-warshall).
 
-7. **A* and admissible heuristics** — how the heuristic function h(n) guides search toward the goal, why admissibility (never overestimates) is necessary for correctness, and why Manhattan distance is admissible for grid graphs but Euclidean distance is needed for geographic coordinates. See [`/algorithms/31-astar`](/algorithms/31-astar).
+7. **A* and admissible heuristics** — how the heuristic function h(n) guides search toward the goal, why admissibility (never overestimates) is necessary for correctness, and why Manhattan distance is admissible for grid graphs but Euclidean distance is needed for geographic coordinates. See [`/algorithms/32-astar`](/algorithms/32-astar).
 
 ## 3. Project Scope
 
@@ -55,12 +55,12 @@ By completing this project, you will deeply understand:
 | Concept | Role in this project | Handbook Link | Difficulty |
 |---------|----------------------|---------------|------------|
 | Graph (adjacency list) | Core data structure for road/network graphs; BFS/DFS/Dijkstra/Bellman-Ford | [/data-structures/23-graph](/data-structures/23-graph) | Intermediate |
-| BFS | Unweighted shortest path; minimum hop count | [/algorithms/24-bfs](/algorithms/24-bfs) | Beginner |
-| DFS | Cycle detection; reachability; all-paths enumeration | [/algorithms/25-dfs](/algorithms/25-dfs) | Beginner |
-| Dijkstra | Weighted shortest path; main routing algorithm | [/algorithms/27-dijkstra](/algorithms/27-dijkstra) | Intermediate |
-| Bellman-Ford | Negative-weight edges; negative cycle detection | [/algorithms/28-bellman-ford](/algorithms/28-bellman-ford) | Intermediate |
-| Floyd-Warshall | All-pairs shortest paths; adjacency matrix DP | [/algorithms/29-floyd-warshall](/algorithms/29-floyd-warshall) | Intermediate |
-| A* | Heuristic-guided shortest path on 2D grids | [/algorithms/31-astar](/algorithms/31-astar) | Hard |
+| BFS | Unweighted shortest path; minimum hop count | [/algorithms/25-bfs](/algorithms/25-bfs) | Beginner |
+| DFS | Cycle detection; reachability; all-paths enumeration | [/algorithms/26-dfs](/algorithms/26-dfs) | Beginner |
+| Dijkstra | Weighted shortest path; main routing algorithm | [/algorithms/28-dijkstra](/algorithms/28-dijkstra) | Intermediate |
+| Bellman-Ford | Negative-weight edges; negative cycle detection | [/algorithms/29-bellman-ford](/algorithms/29-bellman-ford) | Intermediate |
+| Floyd-Warshall | All-pairs shortest paths; adjacency matrix DP | [/algorithms/30-floyd-warshall](/algorithms/30-floyd-warshall) | Intermediate |
+| A* | Heuristic-guided shortest path on 2D grids | [/algorithms/32-astar](/algorithms/32-astar) | Hard |
 
 ## 5. High-Level Architecture
 

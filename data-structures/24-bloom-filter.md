@@ -20,97 +20,148 @@ This is incredibly useful when false positives are acceptable but you want to sa
 
 1. You have a bit array of size `m`, initially all zeros.
 2. You have `k` different hash functions.
-3. To **add** an item:
-   - Hash it with all k hashes
-   - Set the corresponding bits to 1
-4. To **query** an item:
-   - Hash it with all k hashes
-   - If **any** bit is 0 → "definitely not present"
-   - If all bits are 1 → "probably present"
+3. To **add** an item: hash it with all k hashes, set the corresponding bits to 1.
+4. To **query** an item: hash it with all k hashes; if **any** bit is 0 → "definitely not present"; if all bits are 1 → "probably present".
 
-## Tradeoff
+## Operations & Complexity
 
-You choose:
-- Size of the bit array (`m`)
-- Number of hash functions (`k`)
+| Operation | Time   | Space | Notes |
+|-----------|--------|-------|-------|
+| Add       | O(k)   | O(m)  | k = number of hash functions |
+| Query     | O(k)   | O(m)  | Never false negative |
+| Delete    | N/A    | —     | Standard Bloom cannot delete |
 
-This controls the **false positive rate**.
+False positive rate ≈ `(1 - e^(-kn/m))^k` where n = items inserted.
 
-Typical: 1% or 0.1% false positives with dramatically less memory than a real hash set.
-
-## Real World Use Cases (Extremely Common)
-
-### 1. Databases — Avoiding Disk Reads
-
-- **Cassandra, HBase, ScyllaDB**: Each SSTable has a Bloom filter. Before reading from disk, check the filter. If it says "no", skip the file entirely. Huge win.
-- **RocksDB / LevelDB**: Same pattern.
-
-### 2. Caches
-
-- Browser caches, CDN caches, Redis modules use Bloom filters to quickly say "we definitely don't have this".
-
-### 3. Web Crawlers & URL Deduping
-
-- "Have we already crawled this URL?" 
-- Billions of URLs. Can't store every one in memory. Bloom filter lets them skip most duplicates with tiny memory.
-
-### 4. Bitcoin / Cryptocurrency
-
-- Bitcoin SPV (Simplified Payment Verification) clients use Bloom filters to ask nodes for relevant transactions without revealing exactly which addresses they care about.
-
-### 5. Email / Spam Systems
-
-- "Have we seen this email hash before?" for deduplication and rate limiting.
-
-### 6. Advertising & Analytics
-
-- Frequency capping ("has this user seen this ad already?") at massive scale.
-
-### 7. Network Security
-
-- Many DPI (deep packet inspection) and DDoS mitigation systems use Bloom filters.
-
-### 8. .NET and Go Services
-
-Many high-scale services at Microsoft, Google, Meta, Netflix, etc. use Bloom filters in their custom caching and dedup layers.
-
-## Implementation Sketch (C#)
+## Complete Implementation (C#)
 
 ```csharp
 public class BloomFilter {
     private readonly BitArray _bits;
-    private readonly int _k; // number of hashes
+    private readonly int _k;
     private readonly int _m;
 
     public BloomFilter(int expectedItems, double falsePositiveRate) {
         _m = (int)(-expectedItems * Math.Log(falsePositiveRate) / (Math.Log(2) * Math.Log(2)));
-        _k = (int)(Math.Log(2) * _m / expectedItems);
+        _k = Math.Max(1, (int)(Math.Log(2) * _m / expectedItems));
         _bits = new BitArray(_m);
     }
 
     public void Add(string item) {
         foreach (int hash in GetHashes(item)) {
-            _bits[Math.Abs(hash) % _m] = true;
+            _bits[Math.Abs(hash % _m)] = true;
         }
     }
 
     public bool MightContain(string item) {
         foreach (int hash in GetHashes(item)) {
-            if (!_bits[Math.Abs(hash) % _m]) return false;
+            if (!_bits[Math.Abs(hash % _m)]) return false;
         }
         return true;
     }
 
     private IEnumerable<int> GetHashes(string item) {
-        // In practice use multiple independent hashes or double hashing
-        int h1 = item.GetHashCode();
-        int h2 = item.GetHashCode() * 31;
+        int h1 = Hash(item, 0);
+        int h2 = Hash(item, 1);
         for (int i = 0; i < _k; i++) {
             yield return h1 + i * h2;
         }
     }
+
+    private static int Hash(string item, int seed) {
+        unchecked {
+            int hash = seed;
+            foreach (char c in item) {
+                hash = hash * 31 + c;
+            }
+            return hash;
+        }
+    }
 }
 ```
+
+## Complete Implementation (Go)
+
+From `examples/go/bloom_filter.go`.
+
+```go
+import (
+    "hash/fnv"
+    "math"
+)
+
+type BloomFilter struct {
+    bitArray []bool
+    k        int
+    m        int
+}
+
+func NewBloomFilter(expectedItems int, falsePositiveRate float64) *BloomFilter {
+    m := int(-float64(expectedItems) * math.Log(falsePositiveRate) / (math.Ln2 * math.Ln2))
+    k := int(float64(m) / float64(expectedItems) * math.Ln2)
+    if k < 1 {
+        k = 1
+    }
+    return &BloomFilter{
+        bitArray: make([]bool, m),
+        k:        k,
+        m:        m,
+    }
+}
+
+func (bf *BloomFilter) Add(item string) {
+    for i := 0; i < bf.k; i++ {
+        h := hash(item, i) % bf.m
+        if h < 0 {
+            h += bf.m
+        }
+        bf.bitArray[h] = true
+    }
+}
+
+func (bf *BloomFilter) MightContain(item string) bool {
+    for i := 0; i < bf.k; i++ {
+        h := hash(item, i) % bf.m
+        if h < 0 {
+            h += bf.m
+        }
+        if !bf.bitArray[h] {
+            return false
+        }
+    }
+    return true
+}
+
+func hash(s string, seed int) int {
+    h := fnv.New32a()
+    h.Write([]byte(s))
+    h.Write([]byte{byte(seed)})
+    return int(h.Sum32())
+}
+```
+
+## Real World Use Cases (Extremely Common)
+
+### 1. Databases — Avoiding Disk Reads
+
+- **Cassandra, HBase, ScyllaDB**: Each SSTable has a Bloom filter. Before reading from disk, check the filter.
+- **RocksDB / LevelDB**: Same pattern.
+
+### 2. Caches
+
+Browser caches, CDN caches, Redis modules use Bloom filters to quickly say "we definitely don't have this".
+
+### 3. Web Crawlers & URL Deduping
+
+Billions of URLs. Can't store every one in memory.
+
+### 4. Bitcoin / Cryptocurrency
+
+SPV clients use Bloom filters to ask nodes for relevant transactions.
+
+### 5. Advertising & Analytics
+
+Frequency capping ("has this user seen this ad already?") at massive scale.
 
 ## Important Limitations
 
@@ -121,13 +172,8 @@ public class BloomFilter {
 ## Variants That Fix Limitations
 
 - **Counting Bloom Filter** — allows deletion (uses counters instead of bits)
-- **Cuckoo Filter** (covered later) — supports deletion + better performance in some cases
+- **Cuckoo Filter** — supports deletion + better performance in some cases
 - **Blocked Bloom Filter** — cache friendly
-- **Scalable / Dynamic Bloom Filters**
-
-## Cuckoo Filter (Preview)
-
-Cuckoo filters are a modern improvement that many new systems are adopting because they support deletion and have better space efficiency at low false positive rates.
 
 ## When to Use a Bloom Filter
 
@@ -143,9 +189,6 @@ Do **not** use it when you need exact answers.
 Bloom Filter = one of the most practical probabilistic data structures ever created.
 
 It powers a huge amount of the "fast path" decisions in modern databases, caches, and distributed systems by saying "we can skip this work with high probability".
-
-See [`resources/further-reading.md`](../resources/further-reading.md) for the original Bloom paper and modern variants.
-
 
 ::: tip Project Lab
 **Build it yourself:** [Persistent KV Store](/projects/tier-3/11-key-value-store), [Distributed Cache](/projects/tier-4/17-distributed-cache), and [Stream Analytics](/projects/tier-4/19-stream-analytics-pipeline).

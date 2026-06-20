@@ -183,4 +183,8 @@ It gives you the ability to always get the "best" (min or max) item extremely ef
 
 This is why it powers priority queues, scheduling, graph algorithms, and many "Top K" problems.
 
+::: tip Project Lab
+**Build it yourself:** [Cache with Eviction](/projects/tier-2/05-cache-with-eviction)
+:::
+
 **Next:** [16 - Priority Queue](16-priority-queue.md)

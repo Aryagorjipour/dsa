@@ -22,13 +22,13 @@ By completing this project, you will deeply understand:
 
 1. **How a CSP decomposes into variables, domains, and constraints** — the uniform interface that lets one search engine solve N-Queens, Sudoku, SAT, and scheduling problems without rewriting the core algorithm. See [`/fundamentals/02-recursion-and-memoization`](/fundamentals/02-recursion-and-memoization).
 
-2. **How recursive backtracking explores a search tree with explicit undo** — choose a variable, try each domain value, recurse, backtrack on failure by restoring state. See [`/algorithms/43-backtracking`](/algorithms/43-backtracking).
+2. **How recursive backtracking explores a search tree with explicit undo** — choose a variable, try each domain value, recurse, backtrack on failure by restoring state. See [`/algorithms/44-backtracking`](/algorithms/44-backtracking).
 
-3. **How DFS maps directly onto the backtracking call stack** — each recursive call descends one level; returning from a call is backtracking up the tree. See [`/algorithms/25-dfs`](/algorithms/25-dfs).
+3. **How DFS maps directly onto the backtracking call stack** — each recursive call descends one level; returning from a call is backtracking up the tree. See [`/algorithms/26-dfs`](/algorithms/26-dfs).
 
-4. **How constraint propagation prunes domains before search descends** — forward checking removes inconsistent values from unassigned variables' domains after each assignment, detecting dead ends early. See [`/algorithms/43-backtracking`](/algorithms/43-backtracking).
+4. **How constraint propagation prunes domains before search descends** — forward checking removes inconsistent values from unassigned variables' domains after each assignment, detecting dead ends early. See [`/algorithms/44-backtracking`](/algorithms/44-backtracking).
 
-5. **How bit masks accelerate N-Queens and set-based constraint checks** — packing row, column, and diagonal occupancy into integers for O(1) conflict detection. See [`/algorithms/44-bit-manipulation`](/algorithms/44-bit-manipulation).
+5. **How bit masks accelerate N-Queens and set-based constraint checks** — packing row, column, and diagonal occupancy into integers for O(1) conflict detection. See [`/algorithms/45-bit-manipulation`](/algorithms/45-bit-manipulation).
 
 6. **How greedy heuristics guide search order without guaranteeing optimality** — Minimum Remaining Values (MRV) picks the most constrained variable; Degree heuristic breaks ties by constraint connectivity. See [`/fundamentals/04-greedy-paradigm`](/fundamentals/04-greedy-paradigm).
 
@@ -57,10 +57,10 @@ By completing this project, you will deeply understand:
 
 | Concept | Role in this project | Handbook Link | Difficulty |
 |---------|----------------------|---------------|------------|
-| Backtracking | Core search: assign, recurse, undo on failure | [/algorithms/43-backtracking](/algorithms/43-backtracking) | Intermediate |
-| DFS | Search tree traversal via recursive call stack | [/algorithms/25-dfs](/algorithms/25-dfs) | Intermediate |
+| Backtracking | Core search: assign, recurse, undo on failure | [/algorithms/44-backtracking](/algorithms/44-backtracking) | Intermediate |
+| DFS | Search tree traversal via recursive call stack | [/algorithms/26-dfs](/algorithms/26-dfs) | Intermediate |
 | Recursion | Search engine structure; base case = all variables assigned | [/fundamentals/02-recursion-and-memoization](/fundamentals/02-recursion-and-memoization) | Beginner |
-| Bit Manipulation | N-Queens: O(1) row/col/diag conflict checks via bit masks | [/algorithms/44-bit-manipulation](/algorithms/44-bit-manipulation) | Intermediate |
+| Bit Manipulation | N-Queens: O(1) row/col/diag conflict checks via bit masks | [/algorithms/45-bit-manipulation](/algorithms/45-bit-manipulation) | Intermediate |
 | Greedy | MRV and Degree heuristics for variable ordering | [/fundamentals/04-greedy-paradigm](/fundamentals/04-greedy-paradigm) | Intermediate |
 | Stack | Undo stack for domain restoration during backtrack | [/data-structures/04-stack](/data-structures/04-stack) | Beginner |
 

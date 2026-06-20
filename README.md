@@ -105,33 +105,33 @@ Each topic includes:
 18. [Hashing (Deep Dive)](algorithms/18-hashing.md) — Two Sum and dedup problems
 19. [Quickselect](algorithms/19-quickselect.md) — Kth smallest without full sort
 20. [Reservoir Sampling](algorithms/20-reservoir-sampling.md) — Uniform sample from infinite stream
-21. [BST Operations](algorithms/21-bst-operations.md) — Kth smallest, Validate BST, LCA in BST
-22. [Self-balancing Trees Operations](algorithms/23-self-balancing-trees.md)
-23. [Trie Operations](algorithms/23-trie-operations.md) — Word Search II on board
-24. [Breadth-First Search (BFS)](algorithms/24-bfs.md) — Shortest path unweighted
-25. [Depth-First Search (DFS)](algorithms/25-dfs.md)
-26. [Topological Sort](algorithms/26-topological-sort.md) — Dependency ordering (build tools)
-27. [Dijkstra's Shortest Path](algorithms/27-dijkstra.md)
-28. [Bellman-Ford](algorithms/28-bellman-ford.md) — Currency arbitrage (negative cycle)
-29. [Floyd-Warshall](algorithms/29-floyd-warshall.md) — All-pairs shortest paths
-30. [Minimum Spanning Tree (Kruskal + Prim)](algorithms/30-mst-kruskal-prim.md)
-31. [A* Search](algorithms/31-astar.md)
-32. [Dynamic Programming Fundamentals](algorithms/32-dp-fundamentals.md)
-33. [0/1 Knapsack](algorithms/33-0-1-knapsack.md) — Classic thief knapsack
-34. [Longest Common Subsequence (LCS)](algorithms/34-lcs.md)
-35. [Edit Distance (Levenshtein)](algorithms/35-edit-distance.md)
-36. [Matrix Chain Multiplication](algorithms/36-matrix-chain-multiplication.md)
-37. [Longest Increasing Subsequence (LIS)](algorithms/37-longest-increasing-subsequence.md)
-38. [Knuth-Morris-Pratt (KMP)](algorithms/38-kmp.md)
-39. [Rabin-Karp](algorithms/39-rabin-karp.md)
-40. [Boyer-Moore](algorithms/40-boyer-moore.md)
-41. [Z-Algorithm](algorithms/41-z-algorithm.md)
-42. [Aho-Corasick](algorithms/42-aho-corasick.md) — Multi-pattern matching (virus sigs, moderation)
-43. [Backtracking](algorithms/43-backtracking.md)
-44. [Bit Manipulation](algorithms/44-bit-manipulation.md)
-45. [Bloom Filter Algorithms](algorithms/45-bloom-filter-alg.md)
-46. [Consistent Hashing](algorithms/46-consistent-hashing.md)
-47. [Rate Limiting Algorithms](algorithms/47-rate-limiting.md)
+21–22. [BST Operations](algorithms/21-bst-operations.md) — Kth smallest, Validate BST, LCA, insert/delete
+23. [Self-balancing Trees Operations](algorithms/23-self-balancing-trees.md)
+24. [Trie Operations](algorithms/24-trie-operations.md) — Word Search II on board
+25. [Breadth-First Search (BFS)](algorithms/25-bfs.md) — Shortest path unweighted
+26. [Depth-First Search (DFS)](algorithms/26-dfs.md)
+27. [Topological Sort](algorithms/27-topological-sort.md) — Dependency ordering (build tools)
+28. [Dijkstra's Shortest Path](algorithms/28-dijkstra.md)
+29. [Bellman-Ford](algorithms/29-bellman-ford.md) — Currency arbitrage (negative cycle)
+30. [Floyd-Warshall](algorithms/30-floyd-warshall.md) — All-pairs shortest paths
+31. [Minimum Spanning Tree (Kruskal + Prim)](algorithms/31-mst-kruskal-prim.md)
+32. [A* Search](algorithms/32-astar.md)
+33. [Dynamic Programming Fundamentals](algorithms/33-dp-fundamentals.md)
+34. [0/1 Knapsack](algorithms/34-0-1-knapsack.md) — Classic thief knapsack
+35. [Longest Common Subsequence (LCS)](algorithms/35-lcs.md)
+36. [Edit Distance (Levenshtein)](algorithms/36-edit-distance.md)
+37. [Matrix Chain Multiplication](algorithms/37-matrix-chain-multiplication.md)
+38. [Longest Increasing Subsequence (LIS)](algorithms/38-longest-increasing-subsequence.md)
+39. [Knuth-Morris-Pratt (KMP)](algorithms/39-kmp.md)
+40. [Rabin-Karp](algorithms/40-rabin-karp.md)
+41. [Boyer-Moore](algorithms/41-boyer-moore.md)
+42. [Z-Algorithm](algorithms/42-z-algorithm.md)
+43. [Aho-Corasick](algorithms/43-aho-corasick.md) — Multi-pattern matching (virus sigs, moderation)
+44. [Backtracking](algorithms/44-backtracking.md)
+45. [Bit Manipulation](algorithms/45-bit-manipulation.md)
+46. [Bloom Filter Algorithms](algorithms/46-bloom-filter-alg.md)
+47. [Consistent Hashing](algorithms/47-consistent-hashing.md)
+48. [Rate Limiting Algorithms](algorithms/48-rate-limiting.md)
 
 **Complete Treatment Applied to All Items:**
 
@@ -148,7 +148,7 @@ Complex/confusing ones (Segment/Fenwick, A*, Aho-Corasick, spatial trees, probab
 
 See updated resources/production-use-cases.md and examples/ for the full set.
 
-This handbook now has comprehensive coverage for all 0-34 DS and 0-47 Algos as requested.
+This handbook covers all 34 data structures and 48 algorithms (fundamentals 0–5 plus techniques 6–48) with full C# and Go implementations. See [COVERAGE.md](COVERAGE.md) for the chapter-by-chapter matrix. Run `npm run verify` before submitting changes.
 
 ---
 
@@ -230,12 +230,12 @@ The complete journey is here:
 
 This handbook contains **full, detailed, no-shortcut** coverage of:
 
-- 35+ Data Structures
-- 48 Algorithms (including fundamentals)
+- 34 Data Structures
+- 48 Algorithms (fundamentals 0–5 plus techniques 6–48)
 - Canonical problems for each major algorithm (Two Crystal Balls, LCS, Edit Distance, MST, Topological Sort, Rate Limiting, etc.)
 - Production context for C#/.NET and Go
 
-Runnable examples are in the `examples/` folder.
+Runnable examples are in the `examples/` folder. CI runs `npm run verify` on every push.
 
 ---
 

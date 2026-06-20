@@ -25,9 +25,9 @@ A no-hand-waving, deeply practical handbook written for developers who want to t
 
 - **Fundamentals** — Big O, recursion, divide & conquer, greedy, two pointers
 - **34 Data Structures** — from basic arrays to advanced structures like Segment Trees, HyperLogLog, and R-Trees
-- **47+ Algorithms** — with real motivating problems for each one
+- **48 Algorithms** — fundamentals plus 42 technique chapters, each with a motivating problem
 - **Project Lab** — 22 build-your-own systems spanning caches, search engines, route planners, and distributed infrastructure
-- **Full C# and Go code** — no pseudocode, no "left as exercise"
+- **Full C# and Go code** — no pseudocode, no "left as exercise" ([coverage matrix](COVERAGE.md))
 - **Real-world context** — where these are actually used (Redis, databases, .NET, Go runtimes, etc.)
 
 ## Roadmap

@@ -20,17 +20,17 @@ This project transforms six classic DP problems from isolated LeetCode exercises
 
 By completing this project, you will deeply understand:
 
-1. **The DP recognition checklist** — overlapping subproblems, optimal substructure, and the decision between top-down memoization and bottom-up tabulation. See [`/algorithms/32-dp-fundamentals`](/algorithms/32-dp-fundamentals) and [`/fundamentals/02-recursion-and-memoization`](/fundamentals/02-recursion-and-memoization).
+1. **The DP recognition checklist** — overlapping subproblems, optimal substructure, and the decision between top-down memoization and bottom-up tabulation. See [`/algorithms/33-dp-fundamentals`](/algorithms/33-dp-fundamentals) and [`/fundamentals/02-recursion-and-memoization`](/fundamentals/02-recursion-and-memoization).
 
-2. **0/1 Knapsack state transitions and space optimization** — why `dp[i][w] = max(dp[i-1][w], dp[i-1][w-weight[i]] + value[i])`, and how rolling the 2D table into a 1D array works by iterating weights in reverse. See [`/algorithms/33-0-1-knapsack`](/algorithms/33-0-1-knapsack).
+2. **0/1 Knapsack state transitions and space optimization** — why `dp[i][w] = max(dp[i-1][w], dp[i-1][w-weight[i]] + value[i])`, and how rolling the 2D table into a 1D array works by iterating weights in reverse. See [`/algorithms/34-0-1-knapsack`](/algorithms/34-0-1-knapsack).
 
-3. **LCS table construction and diff reconstruction** — how the LCS DP table encodes all optimal alignments, and how backtracking from `dp[m][n]` produces the actual subsequence for diff-style output. See [`/algorithms/34-lcs`](/algorithms/34-lcs).
+3. **LCS table construction and diff reconstruction** — how the LCS DP table encodes all optimal alignments, and how backtracking from `dp[m][n]` produces the actual subsequence for diff-style output. See [`/algorithms/35-lcs`](/algorithms/35-lcs).
 
-4. **Edit distance operations and backtrace** — the three operations (insert, delete, substitute) as state transitions, and how backtrace through the DP table reconstructs the minimum edit script. See [`/algorithms/35-edit-distance`](/algorithms/35-edit-distance).
+4. **Edit distance operations and backtrace** — the three operations (insert, delete, substitute) as state transitions, and how backtrace through the DP table reconstructs the minimum edit script. See [`/algorithms/36-edit-distance`](/algorithms/36-edit-distance).
 
-5. **Matrix chain multiplication and optimal parenthesization** — why the state is `(i, j)` representing the subchain from matrix i to j, and how `dp[i][j] = min over k of dp[i][k] + dp[k+1][j] + cost(i,k,j)` fills the table diagonally. See [`/algorithms/36-matrix-chain-multiplication`](/algorithms/36-matrix-chain-multiplication).
+5. **Matrix chain multiplication and optimal parenthesization** — why the state is `(i, j)` representing the subchain from matrix i to j, and how `dp[i][j] = min over k of dp[i][k] + dp[k+1][j] + cost(i,k,j)` fills the table diagonally. See [`/algorithms/37-matrix-chain-multiplication`](/algorithms/37-matrix-chain-multiplication).
 
-6. **LIS via patience sorting** — the O(n log n) algorithm maintaining a `tails` array where `tails[i]` is the smallest tail element of an increasing subsequence of length i+1, with binary search for insertion position. See [`/algorithms/37-longest-increasing-subsequence`](/algorithms/37-longest-increasing-subsequence).
+6. **LIS via patience sorting** — the O(n log n) algorithm maintaining a `tails` array where `tails[i]` is the smallest tail element of an increasing subsequence of length i+1, with binary search for insertion position. See [`/algorithms/38-longest-increasing-subsequence`](/algorithms/38-longest-increasing-subsequence).
 
 7. **Shared DP infrastructure** — building a reusable 2D table allocator, memoization wrapper, and backtrace utility that all six solvers share, mirroring how real libraries (e.g., bioinformatics toolkits) structure algorithm families.
 
@@ -59,12 +59,12 @@ By completing this project, you will deeply understand:
 
 | Concept | Role in this project | Handbook Link | Difficulty |
 |---------|----------------------|---------------|------------|
-| DP Fundamentals | Shared patterns: state definition, recurrence, tabulation vs memoization | [/algorithms/32-dp-fundamentals](/algorithms/32-dp-fundamentals) | Intermediate |
-| 0/1 Knapsack | Canonical optimization DP; resource allocation modeling | [/algorithms/33-0-1-knapsack](/algorithms/33-0-1-knapsack) | Intermediate |
-| Longest Common Subsequence | Sequence alignment foundation; diff and version comparison | [/algorithms/34-lcs](/algorithms/34-lcs) | Intermediate |
-| Edit Distance | Spell checking, fuzzy matching, sequence alignment with gaps | [/algorithms/35-edit-distance](/algorithms/35-edit-distance) | Intermediate |
-| Matrix Chain Multiplication | Optimal parenthesization; compiler loop optimization preview | [/algorithms/36-matrix-chain-multiplication](/algorithms/36-matrix-chain-multiplication) | Advanced |
-| Longest Increasing Subsequence | Trend detection; O(n log n) via patience sorting + binary search | [/algorithms/37-longest-increasing-subsequence](/algorithms/37-longest-increasing-subsequence) | Advanced |
+| DP Fundamentals | Shared patterns: state definition, recurrence, tabulation vs memoization | [/algorithms/33-dp-fundamentals](/algorithms/33-dp-fundamentals) | Intermediate |
+| 0/1 Knapsack | Canonical optimization DP; resource allocation modeling | [/algorithms/34-0-1-knapsack](/algorithms/34-0-1-knapsack) | Intermediate |
+| Longest Common Subsequence | Sequence alignment foundation; diff and version comparison | [/algorithms/35-lcs](/algorithms/35-lcs) | Intermediate |
+| Edit Distance | Spell checking, fuzzy matching, sequence alignment with gaps | [/algorithms/36-edit-distance](/algorithms/36-edit-distance) | Intermediate |
+| Matrix Chain Multiplication | Optimal parenthesization; compiler loop optimization preview | [/algorithms/37-matrix-chain-multiplication](/algorithms/37-matrix-chain-multiplication) | Advanced |
+| Longest Increasing Subsequence | Trend detection; O(n log n) via patience sorting + binary search | [/algorithms/38-longest-increasing-subsequence](/algorithms/38-longest-increasing-subsequence) | Advanced |
 
 ## 5. High-Level Architecture
 

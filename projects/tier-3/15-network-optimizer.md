@@ -18,15 +18,15 @@ By completing this project, you will deeply understand:
 
 1. **Graph representation for network topologies** — adjacency list for sparse ISP-style graphs, edge list for Kruskal, and when to use directed vs undirected edges. See [`/data-structures/23-graph`](/data-structures/23-graph).
 
-2. **BFS and DFS for connectivity analysis** — how BFS finds connected components in O(V+E), how DFS detects cycles in directed graphs, and why connectivity checks are prerequisite to MST. See [`/algorithms/24-bfs`](/algorithms/24-bfs) and [`/algorithms/25-dfs`](/algorithms/25-dfs).
+2. **BFS and DFS for connectivity analysis** — how BFS finds connected components in O(V+E), how DFS detects cycles in directed graphs, and why connectivity checks are prerequisite to MST. See [`/algorithms/25-bfs`](/algorithms/25-bfs) and [`/algorithms/26-dfs`](/algorithms/26-dfs).
 
 3. **Union-Find (Disjoint Set) with path compression and union by rank** — the O(α(n)) amortized `Find` and `Union` operations that make Kruskal's algorithm practical on graphs with millions of edges. See [`/data-structures/25-disjoint-set-union-find`](/data-structures/25-disjoint-set-union-find).
 
-4. **Kruskal's MST via greedy edge selection** — sort edges by weight, add the next cheapest edge that does not form a cycle (union-find check), stop at V-1 edges. See [`/algorithms/30-mst-kruskal-prim`](/algorithms/30-mst-kruskal-prim).
+4. **Kruskal's MST via greedy edge selection** — sort edges by weight, add the next cheapest edge that does not form a cycle (union-find check), stop at V-1 edges. See [`/algorithms/31-mst-kruskal-prim`](/algorithms/31-mst-kruskal-prim).
 
-5. **Prim's MST via greedy vertex growth** — grow a tree from a start vertex using a min-heap to repeatedly add the cheapest edge crossing the cut. See [`/algorithms/30-mst-kruskal-prim`](/algorithms/30-mst-kruskal-prim) and [`/data-structures/16-priority-queue`](/data-structures/16-priority-queue).
+5. **Prim's MST via greedy vertex growth** — grow a tree from a start vertex using a min-heap to repeatedly add the cheapest edge crossing the cut. See [`/algorithms/31-mst-kruskal-prim`](/algorithms/31-mst-kruskal-prim) and [`/data-structures/16-priority-queue`](/data-structures/16-priority-queue).
 
-6. **Topological sort for dependency-ordered rollout** — Kahn's BFS algorithm on a DAG, in-degree tracking, and cycle detection when no valid order exists. See [`/algorithms/26-topological-sort`](/algorithms/26-topological-sort).
+6. **Topological sort for dependency-ordered rollout** — Kahn's BFS algorithm on a DAG, in-degree tracking, and cycle detection when no valid order exists. See [`/algorithms/27-topological-sort`](/algorithms/27-topological-sort).
 
 7. **How greedy algorithms compose in real network design** — MST minimizes cable cost, topological sort orders policy deployment, and BFS/DFS validate reachability before either runs.
 
@@ -57,10 +57,10 @@ By completing this project, you will deeply understand:
 | Concept | Role in this project | Handbook Link | Difficulty |
 |---------|----------------------|---------------|------------|
 | Graph | Core topology model; adjacency list for traversal, edge list for Kruskal | [/data-structures/23-graph](/data-structures/23-graph) | Intermediate |
-| BFS | Connected components; unweighted reachability; Kahn's topological sort | [/algorithms/24-bfs](/algorithms/24-bfs) | Beginner |
-| DFS | Cycle detection in directed graphs; component exploration | [/algorithms/25-dfs](/algorithms/25-dfs) | Beginner |
-| Topological Sort | Safe rollout order for network policies and dependency chains | [/algorithms/26-topological-sort](/algorithms/26-topological-sort) | Intermediate |
-| MST (Kruskal + Prim) | Minimum-cost backbone connecting all network nodes | [/algorithms/30-mst-kruskal-prim](/algorithms/30-mst-kruskal-prim) | Intermediate |
+| BFS | Connected components; unweighted reachability; Kahn's topological sort | [/algorithms/25-bfs](/algorithms/25-bfs) | Beginner |
+| DFS | Cycle detection in directed graphs; component exploration | [/algorithms/26-dfs](/algorithms/26-dfs) | Beginner |
+| Topological Sort | Safe rollout order for network policies and dependency chains | [/algorithms/27-topological-sort](/algorithms/27-topological-sort) | Intermediate |
+| MST (Kruskal + Prim) | Minimum-cost backbone connecting all network nodes | [/algorithms/31-mst-kruskal-prim](/algorithms/31-mst-kruskal-prim) | Intermediate |
 | Disjoint Set (Union-Find) | O(α(n)) cycle detection during Kruskal's edge selection | [/data-structures/25-disjoint-set-union-find](/data-structures/25-disjoint-set-union-find) | Intermediate |
 | Greedy Paradigm | Both MST algorithms are canonical greedy proofs | [/fundamentals/04-greedy-paradigm](/fundamentals/04-greedy-paradigm) | Beginner |
 | Priority Queue | Prim's algorithm: extract-min edge crossing the growing tree | [/data-structures/16-priority-queue](/data-structures/16-priority-queue) | Intermediate |

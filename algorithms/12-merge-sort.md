@@ -14,12 +14,19 @@ Classic divide and conquer:
 
 The merge step is the key — it can merge two sorted arrays in linear time.
 
-## Implementation (C#)
+## Complexity
+
+| Case | Time | Space | Stable |
+|------|------|-------|--------|
+| All | O(n log n) | O(n) | Yes |
+
+## Full Implementation
+
+### C#
 
 ```csharp
 public static void MergeSort(int[] arr, int left, int right) {
     if (left >= right) return;
-
     int mid = left + (right - left) / 2;
     MergeSort(arr, left, mid);
     MergeSort(arr, mid + 1, right);
@@ -29,39 +36,60 @@ public static void MergeSort(int[] arr, int left, int right) {
 private static void Merge(int[] arr, int left, int mid, int right) {
     int[] temp = new int[right - left + 1];
     int i = left, j = mid + 1, k = 0;
-
     while (i <= mid && j <= right) {
         if (arr[i] <= arr[j]) temp[k++] = arr[i++];
         else temp[k++] = arr[j++];
     }
     while (i <= mid) temp[k++] = arr[i++];
     while (j <= right) temp[k++] = arr[j++];
-
-    for (int p = 0; p < temp.Length; p++) {
-        arr[left + p] = temp[p];
-    }
+    for (int p = 0; p < temp.Length; p++) arr[left + p] = temp[p];
 }
 ```
 
-## Go Version (similar structure)
+### Go
+
+```go
+func MergeSort(arr []int) []int {
+    if len(arr) <= 1 {
+        return arr
+    }
+    mid := len(arr) / 2
+    left := MergeSort(arr[:mid])
+    right := MergeSort(arr[mid:])
+    return merge(left, right)
+}
+
+func merge(a, b []int) []int {
+    out := make([]int, 0, len(a)+len(b))
+    i, j := 0, 0
+    for i < len(a) && j < len(b) {
+        if a[i] <= b[j] {
+            out = append(out, a[i])
+            i++
+        } else {
+            out = append(out, b[j])
+            j++
+        }
+    }
+    out = append(out, a[i:]...)
+    out = append(out, b[j:]...)
+    return out
+}
+```
 
 ## Real World
 
-- Used in many database sort operations (especially when data doesn't fit in memory — external merge sort)
-- Python's `list.sort` is Timsort (hybrid), but merge sort ideas are core
-- Many stable sort requirements in financial systems, UI sorting, etc.
-- Git merge operations have conceptual similarity
-
-## Properties
-
-- **Stable**: Equal elements keep original order
-- **O(n log n)** worst, average, best
-- **O(n)** extra space (can be optimized but usually not in-place)
+- External merge sort when data does not fit in RAM (databases, big data pipelines)
+- Stable sort requirements in financial systems and UI lists
+- Core idea inside **Timsort** (Python, Java object sorts)
+- Git merge has conceptual similarity (combine ordered histories)
 
 ## Summary
 
-Merge sort is the reliable, predictable, stable workhorse of sorting algorithms.
+Merge sort is the reliable, predictable, stable workhorse. Choose it when stability and worst-case guarantees matter more than in-place memory use.
 
-It is often the answer when you need "I don't care about constants, just give me guaranteed good behavior and stability."
+::: tip Project Lab
+**Build it yourself:** [Sorting Benchmarker](/projects/tier-1/02-sorting-benchmarker)
+:::
 
-We will see Quicksort next for contrast.
+**Next:** [13 - Quicksort](13-quicksort.md)

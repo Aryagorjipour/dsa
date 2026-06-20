@@ -44,17 +44,21 @@ They are the same operations used in AVL trees.
 Steps:
 1. Insert like normal BST.
 2. Color the new node **Red**.
-3. Fix violations by:
-   - Recoloring
-   - Rotations
+3. Fix violations by recoloring and rotations.
 
-There are several cases (uncle is red, uncle is black + zig-zag, etc.).
+There are several cases (uncle is red, uncle is black + zig-zag, etc.). The full logic is mechanical.
 
-The full logic is a bit long but very mechanical.
+## Operations & Complexity
 
-## Minimal Educational Implementation (C#)
+| Operation | Average | Worst | Space |
+|-----------|---------|-------|-------|
+| Search    | O(log n) | O(log n) | O(n) |
+| Insert    | O(log n) | O(log n) | O(n) |
+| Delete    | O(log n) | O(log n) | O(n) |
 
-Below is a **complete but simplified** Red-Black tree focused on integer keys. It demonstrates the core concepts correctly.
+At most 2 rotations per insert; delete fixup can require O(log n) rotations.
+
+## Complete Implementation (C#)
 
 ```csharp
 public enum Color { Red, Black }
@@ -62,25 +66,39 @@ public enum Color { Red, Black }
 public class RBNode {
     public int Val;
     public Color Color = Color.Red;
-    public RBNode? Left, Right, Parent;
+    public RBNode Left, Right, Parent;
 
-    public RBNode(int val) => Val = val;
+    public RBNode(int val, RBNode nil) {
+        Val = val;
+        Left = Right = Parent = nil;
+    }
 }
 
 public class RedBlackTree {
-    public RBNode? Root;
-    private readonly RBNode Nil = new(0) { Color = Color.Black }; // sentinel
+    public RBNode Root;
+    private readonly RBNode _nil;
 
     public RedBlackTree() {
-        Nil.Left = Nil.Right = Nil.Parent = Nil;
+        _nil = new RBNode(0, null!) { Color = Color.Black };
+        _nil.Left = _nil.Right = _nil.Parent = _nil;
+        Root = _nil;
+    }
+
+    public bool Search(int val) {
+        RBNode x = Root;
+        while (x != _nil) {
+            if (val == x.Val) return true;
+            x = val < x.Val ? x.Left : x.Right;
+        }
+        return false;
     }
 
     private void LeftRotate(RBNode x) {
-        RBNode y = x.Right!;
+        RBNode y = x.Right;
         x.Right = y.Left;
-        if (y.Left != Nil) y.Left.Parent = x;
+        if (y.Left != _nil) y.Left.Parent = x;
         y.Parent = x.Parent;
-        if (x.Parent == Nil) Root = y;
+        if (x.Parent == _nil) Root = y;
         else if (x == x.Parent.Left) x.Parent.Left = y;
         else x.Parent.Right = y;
         y.Left = x;
@@ -88,12 +106,11 @@ public class RedBlackTree {
     }
 
     private void RightRotate(RBNode x) {
-        // symmetric to LeftRotate
-        RBNode y = x.Left!;
+        RBNode y = x.Left;
         x.Left = y.Right;
-        if (y.Right != Nil) y.Right.Parent = x;
+        if (y.Right != _nil) y.Right.Parent = x;
         y.Parent = x.Parent;
-        if (x.Parent == Nil) Root = y;
+        if (x.Parent == _nil) Root = y;
         else if (x == x.Parent.Right) x.Parent.Right = y;
         else x.Parent.Left = y;
         y.Right = x;
@@ -101,28 +118,28 @@ public class RedBlackTree {
     }
 
     public void Insert(int val) {
-        RBNode node = new(val) { Left = Nil, Right = Nil, Parent = Nil };
-        RBNode? y = Nil;
-        RBNode? x = Root;
+        RBNode node = new(val, _nil);
+        RBNode y = _nil;
+        RBNode x = Root;
 
-        while (x != Nil && x != null) {
+        while (x != _nil) {
             y = x;
-            if (node.Val < x.Val) x = x.Left;
+            if (val < x.Val) x = x.Left;
             else x = x.Right;
         }
 
         node.Parent = y;
-        if (y == Nil) Root = node;
-        else if (node.Val < y.Val) y.Left = node;
+        if (y == _nil) Root = node;
+        else if (val < y.Val) y.Left = node;
         else y.Right = node;
 
         InsertFixup(node);
     }
 
     private void InsertFixup(RBNode z) {
-        while (z.Parent != Nil && z.Parent.Color == Color.Red) {
-            if (z.Parent == z.Parent.Parent!.Left) {
-                RBNode y = z.Parent.Parent.Right!;
+        while (z.Parent != _nil && z.Parent.Color == Color.Red) {
+            if (z.Parent == z.Parent.Parent.Left) {
+                RBNode y = z.Parent.Parent.Right;
                 if (y.Color == Color.Red) {
                     z.Parent.Color = Color.Black;
                     y.Color = Color.Black;
@@ -133,13 +150,12 @@ public class RedBlackTree {
                         z = z.Parent;
                         LeftRotate(z);
                     }
-                    z.Parent!.Color = Color.Black;
-                    z.Parent.Parent!.Color = Color.Red;
+                    z.Parent.Color = Color.Black;
+                    z.Parent.Parent.Color = Color.Red;
                     RightRotate(z.Parent.Parent);
                 }
             } else {
-                // symmetric case for right
-                RBNode y = z.Parent.Parent!.Left!;
+                RBNode y = z.Parent.Parent.Left;
                 if (y.Color == Color.Red) {
                     z.Parent.Color = Color.Black;
                     y.Color = Color.Black;
@@ -150,18 +166,161 @@ public class RedBlackTree {
                         z = z.Parent;
                         RightRotate(z);
                     }
-                    z.Parent!.Color = Color.Black;
-                    z.Parent.Parent!.Color = Color.Red;
+                    z.Parent.Color = Color.Black;
+                    z.Parent.Parent.Color = Color.Red;
                     LeftRotate(z.Parent.Parent);
                 }
             }
         }
-        Root!.Color = Color.Black;
+        Root.Color = Color.Black;
     }
 }
 ```
 
-This is the classic CLRS-style implementation. Full delete fixup is even longer.
+## Complete Implementation (Go)
+
+```go
+type Color int
+
+const (
+    Red Color = iota
+    Black
+)
+
+type RBNode struct {
+    val            int
+    color          Color
+    left, right, parent *RBNode
+}
+
+type RedBlackTree struct {
+    root, nil *RBNode
+}
+
+func NewRedBlackTree() *RedBlackTree {
+    nilNode := &RBNode{color: Black}
+    nilNode.left, nilNode.right, nilNode.parent = nilNode, nilNode, nilNode
+    return &RedBlackTree{nil: nilNode, root: nilNode}
+}
+
+func (t *RedBlackTree) newNode(val int) *RBNode {
+    return &RBNode{val: val, color: Red, left: t.nil, right: t.nil, parent: t.nil}
+}
+
+func (t *RedBlackTree) Search(val int) bool {
+    x := t.root
+    for x != t.nil {
+        if val == x.val {
+            return true
+        }
+        if val < x.val {
+            x = x.left
+        } else {
+            x = x.right
+        }
+    }
+    return false
+}
+
+func (t *RedBlackTree) leftRotate(x *RBNode) {
+    y := x.right
+    x.right = y.left
+    if y.left != t.nil {
+        y.left.parent = x
+    }
+    y.parent = x.parent
+    if x.parent == t.nil {
+        t.root = y
+    } else if x == x.parent.left {
+        x.parent.left = y
+    } else {
+        x.parent.right = y
+    }
+    y.left = x
+    x.parent = y
+}
+
+func (t *RedBlackTree) rightRotate(x *RBNode) {
+    y := x.left
+    x.left = y.right
+    if y.right != t.nil {
+        y.right.parent = x
+    }
+    y.parent = x.parent
+    if x.parent == t.nil {
+        t.root = y
+    } else if x == x.parent.right {
+        x.parent.right = y
+    } else {
+        x.parent.left = y
+    }
+    y.right = x
+    x.parent = y
+}
+
+func (t *RedBlackTree) Insert(val int) {
+    node := t.newNode(val)
+    y, x := t.nil, t.root
+    for x != t.nil {
+        y = x
+        if val < x.val {
+            x = x.left
+        } else {
+            x = x.right
+        }
+    }
+    node.parent = y
+    if y == t.nil {
+        t.root = node
+    } else if val < y.val {
+        y.left = node
+    } else {
+        y.right = node
+    }
+    t.insertFixup(node)
+}
+
+func (t *RedBlackTree) insertFixup(z *RBNode) {
+    for z.parent != t.nil && z.parent.color == Red {
+        if z.parent == z.parent.parent.left {
+            y := z.parent.parent.right
+            if y.color == Red {
+                z.parent.color = Black
+                y.color = Black
+                z.parent.parent.color = Red
+                z = z.parent.parent
+            } else {
+                if z == z.parent.right {
+                    z = z.parent
+                    t.leftRotate(z)
+                }
+                z.parent.color = Black
+                z.parent.parent.color = Red
+                t.rightRotate(z.parent.parent)
+            }
+        } else {
+            y := z.parent.parent.left
+            if y.color == Red {
+                z.parent.color = Black
+                y.color = Black
+                z.parent.parent.color = Red
+                z = z.parent.parent
+            } else {
+                if z == z.parent.left {
+                    z = z.parent
+                    t.rightRotate(z)
+                }
+                z.parent.color = Black
+                z.parent.parent.color = Red
+                t.leftRotate(z.parent.parent)
+            }
+        }
+    }
+    t.root.color = Black
+}
+```
+
+This is the classic CLRS-style implementation with full symmetric rotations and insert fixup. Full delete fixup is even longer — production code uses platform libraries.
 
 ## Where Red-Black Trees Are Used in the Real World
 
@@ -170,13 +329,11 @@ This is the classic CLRS-style implementation. Full delete fixup is even longer.
 - Completely Fair Scheduler (CFS) uses rb-tree for tasks
 - Virtual memory area (VMA) tracking
 - File system directory entry cache (dcache)
-- Many other kernel data structures
 
 ### 2. .NET
 
 - `SortedSet<T>`
 - `SortedDictionary<TKey, TValue>`
-- Many internal structures in the CLR and runtime
 
 ### 3. Java
 
@@ -188,26 +345,13 @@ This is the classic CLRS-style implementation. Full delete fixup is even longer.
 
 ### 5. Databases & Storage Engines (sometimes)
 
-Some in-memory components and certain index types use RB-trees.
-
-B+ trees dominate on disk, but RB-trees appear in memory.
-
-### 6. macOS / iOS (some kernel + Foundation collections)
+Some in-memory components use RB-trees. B+ trees dominate on disk.
 
 ## Why Red-Black Over AVL?
 
 - Fewer rotations on average during insert/delete
 - Better constant factors in practice for mixed workloads
 - Still guarantees O(log n) height
-
-AVL trees have smaller height bounds and can be faster for lookup-heavy workloads.
-
-## Self-Balancing Trees vs Other Structures
-
-When you need **ordered data + fast lookup by key + range queries**, reach for:
-- Red-Black tree (in-memory, general purpose)
-- B+ tree (on-disk, databases)
-- Skip list (some databases like Redis sorted sets)
 
 ## Summary
 

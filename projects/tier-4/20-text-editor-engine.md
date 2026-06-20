@@ -26,9 +26,9 @@ By completing this project, you will deeply understand:
 
 3. **How a Trie enables prefix-based dictionary lookup in O(m) time** — node structure, `isEndOfWord` marking, and why Tries outperform hash maps for prefix queries. See [Trie](/data-structures/17-trie).
 
-4. **How edit distance measures string similarity via dynamic programming** — the insertion, deletion, and substitution recurrence, and the O(m·n) DP table. See [Edit Distance](/algorithms/35-edit-distance).
+4. **How edit distance measures string similarity via dynamic programming** — the insertion, deletion, and substitution recurrence, and the O(m·n) DP table. See [Edit Distance](/algorithms/36-edit-distance).
 
-5. **How backtracking over a Trie generates spell-check suggestions** — pruning the search when the current edit budget is exhausted, and why Trie traversal + edit distance beats brute-force comparison against every dictionary word. See [Backtracking](/algorithms/43-backtracking).
+5. **How backtracking over a Trie generates spell-check suggestions** — pruning the search when the current edit budget is exhausted, and why Trie traversal + edit distance beats brute-force comparison against every dictionary word. See [Backtracking](/algorithms/44-backtracking).
 
 6. **When to choose gap buffer vs. rope** — the crossover point where file size and edit locality make one structure clearly superior, and how real editors use hybrid approaches (piece tree = rope variant).
 
@@ -65,8 +65,8 @@ By completing this project, you will deeply understand:
 | Gap Buffer | Default text buffer; O(1) insert at cursor for localized editing | [/data-structures/30-gap-buffer](/data-structures/30-gap-buffer) | Intermediate |
 | Rope | Alternative buffer for large files; O(log n) insert/delete at any position | [/data-structures/29-rope](/data-structures/29-rope) | Hard |
 | Trie | Dictionary storage for spell checking and prefix lookup | [/data-structures/17-trie](/data-structures/17-trie) | Intermediate |
-| Edit Distance | Scoring candidate suggestions by Levenshtein distance | [/algorithms/35-edit-distance](/algorithms/35-edit-distance) | Intermediate |
-| Backtracking | Generating spell-check suggestions by exploring edit operations over the Trie | [/algorithms/43-backtracking](/algorithms/43-backtracking) | Intermediate |
+| Edit Distance | Scoring candidate suggestions by Levenshtein distance | [/algorithms/36-edit-distance](/algorithms/36-edit-distance) | Intermediate |
+| Backtracking | Generating spell-check suggestions by exploring edit operations over the Trie | [/algorithms/44-backtracking](/algorithms/44-backtracking) | Intermediate |
 | Dynamic Array | Underlying storage for gap buffer and rope leaf chunks | [/data-structures/02-dynamic-array](/data-structures/02-dynamic-array) | Beginner |
 
 ---

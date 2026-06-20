@@ -22,9 +22,9 @@ By completing this project, you will deeply understand:
 
 3. **How a commit DAG encodes branching and merging history** — commits as nodes, parent-pointer edges forming a DAG where branching is two commits sharing one parent and merging is one commit with two parents. See [`/data-structures/23-graph`](/data-structures/23-graph).
 
-4. **How DFS backward traversal produces git log** — walking the DAG from HEAD through parent pointers using depth-first search to emit commits in reverse-chronological order. See [`/algorithms/25-dfs`](/algorithms/25-dfs).
+4. **How DFS backward traversal produces git log** — walking the DAG from HEAD through parent pointers using depth-first search to emit commits in reverse-chronological order. See [`/algorithms/26-dfs`](/algorithms/26-dfs).
 
-5. **How binary search on a DAG implements git bisect** — using backtracking search on the commit chain to find the first commit that introduced a bug in O(log n) steps. See [`/algorithms/43-backtracking`](/algorithms/43-backtracking).
+5. **How binary search on a DAG implements git bisect** — using backtracking search on the commit chain to find the first commit that introduced a bug in O(log n) steps. See [`/algorithms/44-backtracking`](/algorithms/44-backtracking).
 
 6. **Why branches are just named pointers to commit hashes** — a branch is a single file containing a commit hash; moving a branch is overwriting that file. HEAD is a pointer to a branch name (or directly to a commit hash in detached HEAD state).
 
@@ -57,8 +57,8 @@ By completing this project, you will deeply understand:
 | Merkle Tree | Tree and commit objects are a Merkle tree: each node's hash depends on its children's hashes | [/data-structures/22-merkle-tree](/data-structures/22-merkle-tree) | Hard |
 | Hashing (SHA-256) | Content-addressable storage: object name = SHA-256 of object content | [/algorithms/18-hashing](/algorithms/18-hashing) | Beginner |
 | Graph (DAG) | Commit history is a directed acyclic graph; parent pointers form edges | [/data-structures/23-graph](/data-structures/23-graph) | Intermediate |
-| DFS | `log` command: walk commit DAG backward from HEAD via parent pointers | [/algorithms/25-dfs](/algorithms/25-dfs) | Intermediate |
-| Backtracking | `bisect` command: binary search on commit chain, backtrack on bad/good markers | [/algorithms/43-backtracking](/algorithms/43-backtracking) | Intermediate |
+| DFS | `log` command: walk commit DAG backward from HEAD via parent pointers | [/algorithms/26-dfs](/algorithms/26-dfs) | Intermediate |
+| Backtracking | `bisect` command: binary search on commit chain, backtrack on bad/good markers | [/algorithms/44-backtracking](/algorithms/44-backtracking) | Intermediate |
 
 ## 5. High-Level Architecture
 
