@@ -14,6 +14,7 @@ import CodeBlockActions from './components/CodeBlockActions.vue'
 import HeadingNotes from './components/HeadingNotes.vue'
 import SettingsDrawer from './components/SettingsDrawer.vue'
 import { useFocusMode } from './composables/useFocusMode'
+import DSALogo from './components/DSALogo.vue'
 
 const QuizSection = defineAsyncComponent(() => import('./components/QuizSection.vue'))
 
@@ -23,6 +24,10 @@ const { isFocusMode, toggleFocusMode } = useFocusMode()
 
 <template>
   <Layout>
+    <template #nav-bar-title-before>
+      <DSALogo />
+    </template>
+
     <template #nav-bar-content-after>
       <SettingsDrawer />
     </template>

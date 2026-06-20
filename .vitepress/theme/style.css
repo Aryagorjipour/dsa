@@ -4,24 +4,12 @@
   --vp-c-brand-2: #4f46e5;
 }
 
-.VPNavBarTitle {
-  font-weight: 600;
+.VPNavBarTitle .title {
+  gap: 0;
 }
 
 .VPHero {
   padding-top: 80px;
-}
-
-.VPNavBarTitle .logo,
-.VPNavBarTitle .logo img {
-  height: 42px !important;
-  max-height: 42px !important;
-  width: auto !important;
-}
-
-.dsa-logo {
-  height: 42px;
-  width: auto;
 }
 
 /* Reading typography */

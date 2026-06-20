@@ -11,7 +11,10 @@ export default defineConfig({
   head: [
     ['link', { rel: 'icon', href: '/favicon.svg', type: 'image/svg+xml' }],
     ['link', { rel: 'apple-touch-icon', href: '/favicon.svg', sizes: '180x180' }],
-    ['link', { rel: 'mask-icon', href: '/favicon.svg', color: '#6366f1' }]
+    ['link', { rel: 'mask-icon', href: '/favicon.svg', color: '#6366f1' }],
+    ['link', { rel: 'preconnect', href: 'https://fonts.googleapis.com' }],
+    ['link', { rel: 'preconnect', href: 'https://fonts.gstatic.com', crossorigin: '' }],
+    ['link', { rel: 'stylesheet', href: 'https://fonts.googleapis.com/css2?family=Syne:wght@800&display=swap' }]
   ],
 
   vite: {
@@ -44,7 +47,7 @@ export default defineConfig({
   },
 
   themeConfig: {
-    logo: '/images/logo.svg',
+    siteTitle: false,
 
     nav: [
       { text: 'Handbook', link: '/README' },
