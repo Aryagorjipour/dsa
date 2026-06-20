@@ -1,0 +1,146 @@
+import type { QuizPack } from '../types'
+
+export default {
+  pagePath: '/algorithms/41-boyer-moore',
+  topicId: 'boyer-moore',
+  title: 'Boyer-Moore',
+  quiz: [
+    {
+      id: 'bm-q1',
+      type: 'mcq',
+      difficulty: 'easy',
+      question: 'Boyer-Moore compares characters within the current window:',
+      options: [
+        { id: 'a', text: 'Right-to-left' },
+        { id: 'b', text: 'Left-to-right' },
+        { id: 'c', text: 'Random order' },
+        { id: 'd', text: 'Middle-out only' },
+      ],
+      correct: ['a'],
+      explanation: 'Right-to-left matching enables larger shifts when mismatches occur early from the right.',
+    },
+    {
+      id: 'bm-q2',
+      type: 'mcq',
+      difficulty: 'medium',
+      question: 'Bad character rule: on mismatch at P[j] against character c in text, shift so:',
+      options: [
+        { id: 'a', text: 'Rightmost occurrence of c in P[0..j-1] aligns under c (or shift past if absent)' },
+        { id: 'b', text: 'Pattern always shifts by 1' },
+        { id: 'c', text: 'Text pointer moves backward' },
+        { id: 'd', text: 'LPS[j] is used' },
+      ],
+      correct: ['a'],
+      explanation: 'Align known character under mismatch or jump past — classic bad-character heuristic.',
+    },
+    {
+      id: 'bm-q3',
+      type: 'true-false',
+      difficulty: 'medium',
+      question: 'At each mismatch, Boyer-Moore takes the maximum shift from bad-character and good-suffix rules.',
+      correct: true,
+      explanation: 'max(1, bcShift, gsShift) ensures aggressive safe skipping.',
+    },
+    {
+      id: 'bm-q4',
+      type: 'complexity',
+      difficulty: 'medium',
+      question: 'Boyer-Moore worst-case vs typical behavior on long English text:',
+      options: [
+        { id: 'a', text: 'Worst O(n×m); often sublinear / much faster in practice' },
+        { id: 'b', text: 'Always O(n+m) guaranteed' },
+        { id: 'c', text: 'Always O(n/m) worst case' },
+        { id: 'd', text: 'O(1) regardless of n' },
+      ],
+      correct: ['a'],
+      explanation: 'Pathological patterns exist, but grep loves BM for skipping huge text stretches.',
+    },
+    {
+      id: 'bm-q5',
+      type: 'scenario',
+      difficulty: 'medium',
+      question: 'GNU grep historically favored Boyer-Moore variants because:',
+      options: [
+        { id: 'a', text: 'Large skips mean fewer characters examined on typical text' },
+        { id: 'b', text: 'It requires no preprocessing' },
+        { id: 'c', text: 'It handles regex alternation natively' },
+        { id: 'd', text: 'It is the only linear algorithm' },
+      ],
+      correct: ['a'],
+      explanation: 'Practical search on natural language benefits from right-to-left early mismatch shifts.',
+    },
+    {
+      id: 'bm-q6',
+      type: 'fill-blank',
+      difficulty: 'easy',
+      question: 'Boyer-Moore-Horspool uses only the ___ character rule — simpler but still fast.',
+      correct: ['bad', 'bad-character', 'bad character'],
+      aliases: ['badchar'],
+      explanation: 'Horspool shifts based on the last pattern character aligned with the window end.',
+    },
+    {
+      id: 'bm-q7',
+      type: 'mcq-multi',
+      difficulty: 'hard',
+      question: 'Compare string matchers. (Select all true)',
+      options: [
+        { id: 'a', text: 'KMP scans left-to-right with O(n+m) guarantee' },
+        { id: 'b', text: 'Boyer-Moore can skip more than one text position per step' },
+        { id: 'c', text: 'Rabin-Karp uses rolling hash' },
+        { id: 'd', text: 'Boyer-Moore never preprocesses the pattern' },
+      ],
+      correct: ['a', 'b', 'c'],
+      explanation: 'BM preprocesses bad-char and good-suffix tables in O(m + σ).',
+    },
+    {
+      id: 'bm-q8',
+      type: 'code-analysis',
+      difficulty: 'hard',
+      question: 'When j < 0 after the inner loop, what happened?',
+      code: `while (j >= 0 && pattern[j] == text[shift + j]) j--;
+if (j < 0) {
+    matches.Add(shift);
+    shift += goodSuffix[0];
+}`,
+      codeLang: 'csharp',
+      options: [
+        { id: 'a', text: 'Full pattern matched at shift; record and shift by good-suffix[0]' },
+        { id: 'b', text: 'Mismatch at first character' },
+        { id: 'c', text: 'Pattern longer than text' },
+        { id: 'd', text: 'Hash collision detected' },
+      ],
+      correct: ['a'],
+      explanation: 'j walks from m-1 down; j < 0 means entire pattern matched.',
+    },
+  ],
+  challenges: [
+    {
+      id: 'bm-c1',
+      type: 'scenario',
+      difficulty: 'medium',
+      question: 'Pattern "xyz", text has no x, y, or z. Bad-char rule often shifts by:',
+      options: [
+        { id: 'a', text: 'm (entire pattern length) or more' },
+        { id: 'b', text: 'Exactly 1 always' },
+        { id: 'c', text: '0' },
+        { id: 'd', text: 'n' },
+      ],
+      correct: ['a'],
+      explanation: 'Character outside pattern → shift past the mismatching text character under the window.',
+    },
+    {
+      id: 'bm-c2',
+      type: 'variant',
+      difficulty: 'hard',
+      question: 'Good suffix rule primarily prevents:',
+      options: [
+        { id: 'a', text: 'Redundant re-checking of a suffix that already matched' },
+        { id: 'b', text: 'Hash collisions' },
+        { id: 'c', text: 'Building a trie' },
+        { id: 'd', text: 'Case-insensitive matching' },
+      ],
+      correct: ['a'],
+      explanation: 'When P[j+1..m-1] matched, good-suffix shifts reuse that knowledge — critical on repetitive patterns.',
+    },
+  ],
+} satisfies QuizPack

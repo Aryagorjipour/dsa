@@ -30,6 +30,9 @@ export default defineConfig({
             if (id.includes('idb-keyval')) {
               return 'storage'
             }
+            if (id.includes('/quizzes/') || id.includes('QuizSection') || id.includes('QuizDashboard')) {
+              return 'quiz'
+            }
           },
         },
       },
@@ -47,6 +50,7 @@ export default defineConfig({
       { text: 'Handbook', link: '/README' },
       { text: 'Playground', link: '/playground' },
       { text: 'My Notes', link: '/my-notes' },
+      { text: 'Quizzes', link: '/quizzes' },
       { text: 'Project Lab', link: '/projects/README' },
       { text: 'GitHub', link: 'https://github.com/Aryagorjipour/dsa' },
     ],

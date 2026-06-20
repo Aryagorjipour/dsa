@@ -1,0 +1,145 @@
+import type { QuizPack } from '../types'
+
+export default {
+  pagePath: '/data-structures/14-red-black-tree',
+  topicId: 'red-black-tree',
+  title: 'Red-Black Tree',
+  quiz: [
+    {
+      id: 'red-black-tree-q1',
+      type: 'mcq',
+      difficulty: 'easy',
+      question: 'Why do we use red-black trees instead of plain BSTs?',
+      options: [
+        { id: 'a', text: 'Plain BSTs can degenerate to linked lists; RB trees stay balanced enough for O(log n) ops' },
+        { id: 'b', text: 'RB trees provide O(1) search' },
+        { id: 'c', text: 'RB trees store elements in insertion order' },
+        { id: 'd', text: 'RB trees require no extra memory over a BST' },
+      ],
+      correct: ['a'],
+      explanation: 'Self-balancing prevents worst-case O(n) height. RB trees guarantee height ≤ 2·log(n+1).',
+    },
+    {
+      id: 'red-black-tree-q2',
+      type: 'complexity',
+      difficulty: 'easy',
+      question: 'What is the worst-case time complexity of Search, Insert, and Delete in a red-black tree with n nodes?',
+      options: [
+        { id: 'a', text: 'O(log n) for all three' },
+        { id: 'b', text: 'O(n) for all three' },
+        { id: 'c', text: 'O(1) for search, O(n) for insert' },
+        { id: 'd', text: 'O(n log n) for all three' },
+      ],
+      correct: ['a'],
+      explanation: 'Color invariants bound tree height logarithmically, so all standard BST operations remain O(log n).',
+    },
+    {
+      id: 'red-black-tree-q3',
+      type: 'true-false',
+      difficulty: 'easy',
+      question: 'In a red-black tree, if a node is Red, both its children must be Black (no two consecutive red nodes).',
+      correct: true,
+      explanation: 'This is invariant #4. Combined with equal black-count paths (invariant #5), it limits how unbalanced the tree can become.',
+    },
+    {
+      id: 'red-black-tree-q4',
+      type: 'mcq-multi',
+      difficulty: 'medium',
+      question: 'Which are red-black tree invariants? (Select all that apply)',
+      options: [
+        { id: 'a', text: 'Root is always Black' },
+        { id: 'b', text: 'All NIL/leaf sentinel nodes are Black' },
+        { id: 'c', text: 'Every root-to-leaf path has the same number of black nodes' },
+        { id: 'd', text: 'All nodes must have exactly two children' },
+      ],
+      correct: ['a', 'b', 'c'],
+      explanation: 'Rules 2, 3, and 5 from the chapter. RB tree nodes can have 0, 1, or 2 children — they are not full trees.',
+    },
+    {
+      id: 'red-black-tree-q5',
+      type: 'scenario',
+      difficulty: 'medium',
+      question: 'You need a sorted collection with O(log n) insert and delete in C#. Which built-in type uses a red-black tree?',
+      options: [
+        { id: 'a', text: 'SortedSet<T> / SortedDictionary<TKey, TValue>' },
+        { id: 'b', text: 'HashSet<T>' },
+        { id: 'c', text: 'List<T>' },
+        { id: 'd', text: 'Queue<T>' },
+      ],
+      correct: ['a'],
+      explanation: '.NET SortedSet and SortedDictionary are red-black trees. Java TreeMap/TreeSet and C++ std::map/std::set are too.',
+    },
+    {
+      id: 'red-black-tree-q6',
+      type: 'fill-blank',
+      difficulty: 'medium',
+      question: 'Red-black tree height is at most ___ × log(n + 1), guaranteeing logarithmic operations.',
+      correct: ['2', 'two', '2x', '2×'],
+      aliases: ['double'],
+      explanation: 'The five color invariants ensure no path is more than twice as long as any other — height ≤ 2·log(n+1).',
+    },
+    {
+      id: 'red-black-tree-q7',
+      type: 'code-analysis',
+      difficulty: 'hard',
+      question: 'In RB insertion, why is the new node initially colored Red?',
+      code: `public void Insert(int val) {
+    // ... standard BST insert ...
+    RBNode node = new(val, _nil);  // Color defaults to Red
+    InsertFixup(node);
+}`,
+      codeLang: 'csharp',
+      options: [
+        { id: 'a', text: 'Red insertion avoids violating the black-count invariant; fixup only needed when red-red conflict occurs' },
+        { id: 'b', text: 'Red nodes are always leaves' },
+        { id: 'c', text: 'The root must start red and stay red' },
+        { id: 'd', text: 'Red is required for O(1) search' },
+      ],
+      correct: ['a'],
+      explanation: 'Coloring new nodes red cannot break the black-height rule (children of red are black). Fixup handles red-red violations via recoloring and rotations.',
+    },
+    {
+      id: 'red-black-tree-q8',
+      type: 'matching',
+      difficulty: 'medium',
+      question: 'Match each system to its red-black tree usage.',
+      pairs: [
+        { id: '1', left: 'Linux CFS scheduler', right: 'RB-tree for task ordering' },
+        { id: '2', left: 'Java TreeMap', right: 'Ordered map backed by RB-tree' },
+        { id: '3', left: 'C++ std::map', right: 'Ordered associative container (RB-tree)' },
+        { id: '4', left: 'AVL tree comparison', right: 'Stricter balance, more rotations on insert/delete' },
+      ],
+      explanation: 'RB trees are everywhere in production. AVL is stricter (height diff ≤ 1) but rotates more — RB wins for mixed workloads.',
+    },
+  ],
+  challenges: [
+    {
+      id: 'red-black-tree-c1',
+      type: 'ordering',
+      difficulty: 'medium',
+      question: 'Insert into a red-black tree. Order the steps correctly.',
+      items: [
+        { id: 'a', text: 'Insert the new value as in a standard BST' },
+        { id: 'b', text: 'Color the new node Red' },
+        { id: 'c', text: 'Run InsertFixup (recolor and/or rotate to restore invariants)' },
+        { id: 'd', text: 'Force the root to Black at the end' },
+      ],
+      correct: ['a', 'b', 'c', 'd'],
+      explanation: 'BST insert → red color → fixup loop for red-red violations → ensure root is black (invariant #2).',
+    },
+    {
+      id: 'red-black-tree-c2',
+      type: 'scenario',
+      difficulty: 'hard',
+      question: 'Why do red-black trees typically beat AVL trees for insertion-heavy mixed workloads?',
+      options: [
+        { id: 'a', text: 'Fewer rotations on average while still guaranteeing O(log n) height' },
+        { id: 'b', text: 'AVL trees cannot perform search in O(log n)' },
+        { id: 'c', text: 'RB trees use less memory because they store no color information' },
+        { id: 'd', text: 'AVL trees are only used in embedded systems' },
+      ],
+      correct: ['a'],
+      explanation: 'AVL enforces stricter balance (height diff ≤ 1), causing more rotations. RB trees are "loosely balanced" — at most 2× path length difference — with better constant factors.',
+    },
+  ],
+} satisfies QuizPack

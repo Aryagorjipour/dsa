@@ -1,0 +1,145 @@
+import type { QuizPack } from '../types'
+
+export default {
+  pagePath: '/data-structures/08-hash-set',
+  topicId: 'hash-set',
+  title: 'Hash Set',
+  quiz: [
+    {
+      id: 'hash-set-q1',
+      type: 'mcq',
+      difficulty: 'easy',
+      question: 'What is the core promise of a hash set?',
+      options: [
+        { id: 'a', text: 'O(1) average Add, Remove, and Contains with no duplicate elements' },
+        { id: 'b', text: 'O(log n) sorted unique elements' },
+        { id: 'c', text: 'O(1) access by integer index' },
+        { id: 'd', text: 'Preserves insertion order with O(1) lookup' },
+      ],
+      correct: ['a'],
+      explanation: 'Hash sets answer "have I seen this before?" with average O(1) operations and enforce uniqueness.',
+    },
+    {
+      id: 'hash-set-q2',
+      type: 'complexity',
+      difficulty: 'easy',
+      question: 'What is the average time complexity of Contains in a well-implemented hash set?',
+      options: [
+        { id: 'a', text: 'O(1)' },
+        { id: 'b', text: 'O(log n)' },
+        { id: 'c', text: 'O(n)' },
+        { id: 'd', text: 'O(n log n)' },
+      ],
+      correct: ['a'],
+      explanation: 'Hash → bucket index → compare. With a good hash function and load factor, lookup is constant average time.',
+    },
+    {
+      id: 'hash-set-q3',
+      type: 'true-false',
+      difficulty: 'easy',
+      question: 'In Go, the idiomatic way to represent a set is map[T]struct{}.',
+      correct: true,
+      explanation: 'Go has no built-in Set type. An empty struct value costs zero bytes — map[string]struct{} is the standard pattern.',
+    },
+    {
+      id: 'hash-set-q4',
+      type: 'mcq-multi',
+      difficulty: 'medium',
+      question: 'Which collision resolution strategies do modern hash set implementations use? (Select all that apply)',
+      options: [
+        { id: 'a', text: 'Chaining (linked list or tree per bucket)' },
+        { id: 'b', text: 'Open addressing (linear, quadratic, or double hashing)' },
+        { id: 'c', text: 'Binary search on sorted keys' },
+        { id: 'd', text: '.NET HashSet uses open addressing with quadratic probing' },
+      ],
+      correct: ['a', 'b', 'd'],
+      explanation: 'Chaining and open addressing are the two main families. .NET HashSet uses open addressing; Go maps use Swiss-table style.',
+    },
+    {
+      id: 'hash-set-q5',
+      type: 'scenario',
+      difficulty: 'medium',
+      question: 'You are implementing BFS and need to track which graph nodes have already been visited. Best choice?',
+      options: [
+        { id: 'a', text: 'Hash set of visited node IDs' },
+        { id: 'b', text: 'Unsorted array you scan linearly each time' },
+        { id: 'c', text: 'Stack' },
+        { id: 'd', text: 'Priority queue' },
+      ],
+      correct: ['a'],
+      explanation: 'Visited tracking is the quintessential hash set use case — O(1) "have I seen this node?" during traversal.',
+    },
+    {
+      id: 'hash-set-q6',
+      type: 'fill-blank',
+      difficulty: 'medium',
+      question: 'When a hash set exceeds its load factor (typically ~0.7–0.75), it ___ to maintain performance.',
+      correct: ['resizes', 'resize', 'rehashes', 'rehash', 'grows'],
+      aliases: ['expands', 'doubles'],
+      explanation: 'A too-full table degrades to long probe chains. Resize allocates a larger table and rehashes all elements.',
+    },
+    {
+      id: 'hash-set-q7',
+      type: 'code-analysis',
+      difficulty: 'hard',
+      question: 'Why can mutating a mutable object while it sits in a HashSet break lookups?',
+      code: `var set = new HashSet<Person>();
+var p = new Person { Name = "Alice" };
+set.Add(p);
+p.Name = "Bob";  // mutates hash-relevant field
+set.Contains(p); // may return false!`,
+      codeLang: 'csharp',
+      options: [
+        { id: 'a', text: 'GetHashCode() changes after mutation, so the set looks in the wrong bucket' },
+        { id: 'b', text: 'HashSet automatically removes mutated objects' },
+        { id: 'c', text: 'Contains always re-sorts the entire set' },
+        { id: 'd', text: 'No problem — hash codes update automatically' },
+      ],
+      correct: ['a'],
+      explanation: 'Set elements should be immutable (or hash-relevant fields must not change). Inconsistent hash codes break the bucket mapping.',
+    },
+    {
+      id: 'hash-set-q8',
+      type: 'matching',
+      difficulty: 'medium',
+      question: 'Match each need to the best data structure.',
+      pairs: [
+        { id: '1', left: 'Unique membership only', right: 'HashSet' },
+        { id: '2', left: 'Sorted unique elements', right: 'SortedSet / TreeSet' },
+        { id: '3', left: 'Count of each item', right: 'Dictionary / map' },
+        { id: '4', left: 'Approximate membership, tiny memory', right: 'Bloom Filter' },
+      ],
+      explanation: 'HashSet is for pure uniqueness. Sorted sets add ordering. Maps count occurrences. Bloom filters trade accuracy for space.',
+    },
+  ],
+  challenges: [
+    {
+      id: 'hash-set-c1',
+      type: 'trace',
+      difficulty: 'medium',
+      question: 'HashSet starts empty. Add("hello") → true, Add("hello") → ?, Contains("hello") → ?',
+      options: [
+        { id: 'a', text: 'Second Add returns false; Contains returns true' },
+        { id: 'b', text: 'Second Add returns true; Contains returns true' },
+        { id: 'c', text: 'Second Add returns false; Contains returns false' },
+        { id: 'd', text: 'Second Add throws an exception' },
+      ],
+      correct: ['a'],
+      explanation: 'Add returns false when the element already exists. Contains still finds the single stored "hello".',
+    },
+    {
+      id: 'hash-set-c2',
+      type: 'scenario',
+      difficulty: 'hard',
+      question: 'A web API uses idempotency keys to avoid processing duplicate requests. An attacker crafts inputs causing all keys to collide into one bucket (pre-randomization era). What happens?',
+      options: [
+        { id: 'a', text: 'Lookup/degradation to O(n) — hash collision DoS attack' },
+        { id: 'b', text: 'The set automatically switches to a balanced BST' },
+        { id: 'c', text: 'Collisions are impossible in any hash set' },
+        { id: 'd', text: 'Memory usage drops to O(1)' },
+      ],
+      correct: ['a'],
+      explanation: 'Before per-process randomized hash seeds, crafted collisions could force linear chains. Modern runtimes (.NET, Go) randomize to mitigate this.',
+    },
+  ],
+} satisfies QuizPack

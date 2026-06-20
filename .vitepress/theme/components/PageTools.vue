@@ -1,16 +1,18 @@
 <script setup>
 import { computed } from 'vue'
-import { useData, useRoute, withBase } from 'vitepress'
+import { useData, useRoute } from 'vitepress'
 import { showToast } from '../composables/useToast'
+import { buildPlaygroundUrl } from '../utils/playgroundUrl'
+import { normalizePagePath } from '../utils/normalizePagePath'
 
 const { page } = useData()
 const route = useRoute()
 
 const title = computed(() => page.value.title || 'DSA Topic')
-const isProjectPage = computed(() => route.path.includes('/projects/tier-'))
+const isProjectPage = computed(() => normalizePagePath(route.path).includes('/projects/tier-'))
 
 function playgroundUrl() {
-  return withBase(`/playground?from=${encodeURIComponent(route.path)}`)
+  return buildPlaygroundUrl({ from: route.path })
 }
 
 function sharePage() {

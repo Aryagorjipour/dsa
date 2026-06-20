@@ -1,0 +1,146 @@
+import type { QuizPack } from '../types'
+
+export default {
+  pagePath: '/algorithms/46-bloom-filter-alg',
+  topicId: 'bloom-filter-alg',
+  title: 'Bloom Filter Algorithms',
+  quiz: [
+    {
+      id: 'bloom-q1',
+      type: 'mcq',
+      difficulty: 'easy',
+      question: 'A standard Bloom filter guarantees:',
+      options: [
+        { id: 'a', text: 'No false negatives; possible false positives' },
+        { id: 'b', text: 'No false positives; possible false negatives' },
+        { id: 'c', text: 'Neither false positives nor false negatives' },
+        { id: 'd', text: 'Exact membership like a hash set' },
+      ],
+      correct: ['a'],
+      explanation: 'Bits only go 0→1; once added, all k positions are set — never a false "not seen".',
+    },
+    {
+      id: 'bloom-q2',
+      type: 'true-false',
+      difficulty: 'medium',
+      question: 'Standard Bloom filters support deletion of individual items.',
+      correct: false,
+      explanation: 'Clearing a bit could affect other items; use counting Bloom or Cuckoo filter for deletes.',
+    },
+    {
+      id: 'bloom-q3',
+      type: 'mcq',
+      difficulty: 'medium',
+      question: 'MightContain returns false when any of k bit positions is 0. This means:',
+      options: [
+        { id: 'a', text: 'Item was definitely never added' },
+        { id: 'b', text: 'Item was probably added' },
+        { id: 'c', text: 'Hash collision occurred' },
+        { id: 'd', text: 'Filter must be rebuilt' },
+      ],
+      correct: ['a'],
+      explanation: 'A zero bit was never set by any Add — definite non-membership.',
+    },
+    {
+      id: 'bloom-q4',
+      type: 'complexity',
+      difficulty: 'medium',
+      question: 'Add and Query time for a Bloom filter with k hash functions:',
+      options: [
+        { id: 'a', text: 'O(k) each' },
+        { id: 'b', text: 'O(n)' },
+        { id: 'c', text: 'O(log n)' },
+        { id: 'd', text: 'O(1) regardless of k' },
+      ],
+      correct: ['a'],
+      explanation: 'Set or check k bit positions — k is small (often ~7 for 1% FP rate).',
+    },
+    {
+      id: 'bloom-q5',
+      type: 'scenario',
+      difficulty: 'medium',
+      question: 'Web crawler URL dedup at billion-URL scale prefers Bloom filter over hash set because:',
+      options: [
+        { id: 'a', text: '~50× less memory with acceptable false positive rate' },
+        { id: 'b', text: 'Bloom filters store full URLs' },
+        { id: 'c', text: 'Hash sets have zero false positives always' },
+        { id: 'd', text: 'Bloom filters sort URLs' },
+      ],
+      correct: ['a'],
+      explanation: '1M URLs at 1% FP ≈ 1.14 MB vs tens of MB for hash set — huge savings.',
+    },
+    {
+      id: 'bloom-q6',
+      type: 'fill-blank',
+      difficulty: 'easy',
+      question: 'Double hashing simulates k functions: h_i(x) = (h1(x) + i × h2(x)) mod ___',
+      correct: ['m'],
+      aliases: ['m', 'size', 'bit array size'],
+      explanation: 'Two base hashes generate k distinct positions — production standard (Guava, RedisBloom).',
+    },
+    {
+      id: 'bloom-q7',
+      type: 'mcq-multi',
+      difficulty: 'hard',
+      question: 'Bloom filter tuning — which are correct? (Select all)',
+      options: [
+        { id: 'a', text: 'm = -n ln(p) / (ln 2)² sizes the bit array' },
+        { id: 'b', text: 'k = (m/n) ln 2 is optimal hash count' },
+        { id: 'c', text: 'Use k separate SHA-256 calls per bit in production' },
+        { id: 'd', text: 'Estimate n at peak load, not average' },
+      ],
+      correct: ['a', 'b', 'd'],
+      explanation: 'Double hashing replaces k independent hash functions — never k full hashes per op.',
+    },
+    {
+      id: 'bloom-q8',
+      type: 'code-analysis',
+      difficulty: 'hard',
+      question: 'Why check `if (!bits[pos]) return false` inside the query loop?',
+      code: `for (int i = 0; i < k; i++) {
+    int pos = (int)((h1 + (long)i * h2) % (uint)m);
+    if (!bits[pos]) return false;
+}
+return true;`,
+      codeLang: 'csharp',
+      options: [
+        { id: 'a', text: 'Early exit on definite non-membership — zero false negatives' },
+        { id: 'b', text: 'Detect false positive immediately' },
+        { id: 'c', text: 'Resize the filter' },
+        { id: 'd', text: 'Delete the item' },
+      ],
+      correct: ['a'],
+      explanation: 'Any unset bit proves the item was never added; all set → probably seen.',
+    },
+  ],
+  challenges: [
+    {
+      id: 'bloom-c1',
+      type: 'trace',
+      difficulty: 'medium',
+      question: 'n=1,000,000, p=0.01. Optimal k is approximately:',
+      options: [
+        { id: 'a', text: '7' },
+        { id: 'b', text: '1' },
+        { id: 'c', text: '100' },
+        { id: 'd', text: '32' },
+      ],
+      correct: ['a'],
+      explanation: 'Chapter example: m ≈ 9.6M bits, k ≈ 7 hash functions.',
+    },
+    {
+      id: 'bloom-c2',
+      type: 'design',
+      difficulty: 'hard',
+      question: 'Cassandra SSTable Bloom filter: query says "might contain" key. Next step?',
+      options: [
+        { id: 'a', text: 'If false → skip disk read; if true → read SSTable (may be FP)' },
+        { id: 'b', text: 'Always read disk regardless' },
+        { id: 'c', text: 'Delete the SSTable' },
+        { id: 'd', text: 'Rebuild cluster' },
+      ],
+      correct: ['a'],
+      explanation: 'Bloom negative lookup is definitive — saves I/O on keys definitely absent.',
+    },
+  ],
+} satisfies QuizPack

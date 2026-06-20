@@ -1,0 +1,143 @@
+import type { QuizPack } from '../types'
+
+export default {
+  pagePath: '/algorithms/37-matrix-chain-multiplication',
+  topicId: 'matrix-chain-multiplication',
+  title: 'Matrix Chain Multiplication',
+  quiz: [
+    {
+      id: 'mcm-q1',
+      type: 'mcq',
+      difficulty: 'easy',
+      question: 'Why does multiplication order matter for a chain of matrices?',
+      options: [
+        { id: 'a', text: 'Associative but different parenthesizations have different scalar multiplication costs' },
+        { id: 'b', text: 'Matrix multiplication is not associative' },
+        { id: 'c', text: 'Only square matrices can be chained' },
+        { id: 'd', text: 'Order affects the numerical result' },
+      ],
+      correct: ['a'],
+      explanation: 'Results are the same, but intermediate dimensions change cost dramatically.',
+    },
+    {
+      id: 'mcm-q2',
+      type: 'trace',
+      difficulty: 'medium',
+      question: 'A(10×30) × B(30×5) × C(5×60). Cost of (AB)C vs A(BC)?',
+      options: [
+        { id: 'a', text: '(AB)C = 4,500; A(BC) = 27,000' },
+        { id: 'b', text: 'Both cost 4,500' },
+        { id: 'c', text: '(AB)C = 27,000; A(BC) = 4,500' },
+        { id: 'd', text: 'Both cost 27,000' },
+      ],
+      correct: ['a'],
+      explanation: '(AB)C: 10×30×5 + 10×5×60 = 1,500+3,000. A(BC): 30×5×60 + 10×30×60 = 9,000+18,000.',
+    },
+    {
+      id: 'mcm-q3',
+      type: 'mcq',
+      difficulty: 'medium',
+      question: 'In interval DP, `dp[i][j]` represents:',
+      options: [
+        { id: 'a', text: 'Minimum cost to multiply matrices Ai through Aj' },
+        { id: 'b', text: 'The product matrix dimensions only' },
+        { id: 'c', text: 'Number of parenthesizations' },
+        { id: 'd', text: 'Maximum cost path' },
+      ],
+      correct: ['a'],
+      explanation: 'dp[i][j] optimizes over all split points k between i and j.',
+    },
+    {
+      id: 'mcm-q4',
+      type: 'complexity',
+      difficulty: 'medium',
+      question: 'Time complexity of matrix chain DP for n matrices:',
+      options: [
+        { id: 'a', text: 'O(n³)' },
+        { id: 'b', text: 'O(n²)' },
+        { id: 'c', text: 'O(2^n)' },
+        { id: 'd', text: 'O(n log n)' },
+      ],
+      correct: ['a'],
+      explanation: 'Three nested loops: interval length, start i, split k — classic O(n³) interval DP.',
+    },
+    {
+      id: 'mcm-q5',
+      type: 'true-false',
+      difficulty: 'medium',
+      question: 'Matrix chain DP should fill intervals by increasing length, not by i alone.',
+      correct: true,
+      explanation: 'Subproblems dp[i][k] and dp[k+1][j] must be ready before computing dp[i][j].',
+    },
+    {
+      id: 'mcm-q6',
+      type: 'fill-blank',
+      difficulty: 'easy',
+      question: 'The merge cost when splitting chain [i..j] at k is p[i-1] × p[k] × p[___].',
+      correct: ['j'],
+      aliases: ['j'],
+      explanation: 'Multiplying an (p[i-1]×p[k]) matrix by (p[k]×p[j]) costs p[i-1]×p[k]×p[j] scalars.',
+    },
+    {
+      id: 'mcm-q7',
+      type: 'scenario',
+      difficulty: 'hard',
+      question: 'Database join ordering is structurally similar to matrix chain because:',
+      options: [
+        { id: 'a', text: 'Both minimize cost of intermediate results via optimal sub-interval splits' },
+        { id: 'b', text: 'Both require sorting keys first' },
+        { id: 'c', text: 'Both use greedy earliest-deadline-first' },
+        { id: 'd', text: 'Both are O(n) problems' },
+      ],
+      correct: ['a'],
+      explanation: 'Query optimizers pick join order to minimize intermediate row counts — same interval DP spirit.',
+    },
+    {
+      id: 'mcm-q8',
+      type: 'code-analysis',
+      difficulty: 'hard',
+      question: 'What is the purpose of the `split` table in the implementation?',
+      code: `if (cost < dp[i, j]) {
+    dp[i, j] = cost;
+    split[i, j] = k;
+}`,
+      codeLang: 'csharp',
+      options: [
+        { id: 'a', text: 'Record optimal split k to reconstruct parenthesization' },
+        { id: 'b', text: 'Store matrix dimensions' },
+        { id: 'c', text: 'Count brute-force attempts' },
+        { id: 'd', text: 'Detect negative costs' },
+      ],
+      correct: ['a'],
+      explanation: 'After filling dp, follow split[i][j] recursively to print e.g. ((A1 A2) (A3 A4)).',
+    },
+  ],
+  challenges: [
+    {
+      id: 'mcm-c1',
+      type: 'trace',
+      difficulty: 'medium',
+      question: 'Dimension array p = [1, 2, 3, 4] (matrices 1×2, 2×3, 3×4). Minimum scalar multiplications?',
+      options: [
+        { id: 'a', text: '18' },
+        { id: 'b', text: '24' },
+        { id: 'c', text: '12' },
+        { id: 'd', text: '6' },
+      ],
+      correct: ['a'],
+      explanation: 'Optimal ((A1A2)A3): 1×2×3 + 1×3×4 = 6+12 = 18.',
+    },
+    {
+      id: 'mcm-c2',
+      type: 'matching',
+      difficulty: 'hard',
+      question: 'Match each problem to its interval DP flavor:',
+      pairs: [
+        { id: '1', left: 'Matrix chain', right: 'Minimize multiplication cost over splits' },
+        { id: '2', left: 'Optimal BST', right: 'Minimize search cost × key frequency' },
+        { id: '3', left: 'Burst balloons', right: 'Maximize coins over interval splits' },
+      ],
+      explanation: 'All are "best split on [i,j]" templates filled by increasing interval length.',
+    },
+  ],
+} satisfies QuizPack

@@ -1,0 +1,145 @@
+import type { QuizPack } from '../types'
+
+export default {
+  pagePath: '/data-structures/11-lfu-cache',
+  topicId: 'lfu-cache',
+  title: 'LFU Cache',
+  quiz: [
+    {
+      id: 'lfu-cache-q1',
+      type: 'mcq',
+      difficulty: 'easy',
+      question: 'What criterion does LFU use to decide which item to evict?',
+      options: [
+        { id: 'a', text: 'Lowest access frequency (fewest total accesses)' },
+        { id: 'b', text: 'Longest time since last access (recency)' },
+        { id: 'c', text: 'Smallest value stored' },
+        { id: 'd', text: 'Random selection' },
+      ],
+      correct: ['a'],
+      explanation: 'LFU = Least Frequently Used. The item with the lowest hit count is evicted when capacity is exceeded.',
+    },
+    {
+      id: 'lfu-cache-q2',
+      type: 'complexity',
+      difficulty: 'easy',
+      question: 'In the classic HashMap + frequency-bucket design (LeetCode 460 style), what is the time complexity of Get and Put?',
+      options: [
+        { id: 'a', text: 'O(1) for both' },
+        { id: 'b', text: 'O(log n) for both' },
+        { id: 'c', text: 'O(1) Get, O(n) Put' },
+        { id: 'd', text: 'O(n) for both' },
+      ],
+      correct: ['a'],
+      explanation: 'Key→node map plus freq→doubly-linked-list buckets with a minFreq tracker enables O(1) access, update, and eviction.',
+    },
+    {
+      id: 'lfu-cache-q3',
+      type: 'true-false',
+      difficulty: 'easy',
+      question: 'LRU can keep a once-popular item forever if it was accessed recently, even if it is no longer truly popular — LFU addresses this by tracking access counts.',
+      correct: true,
+      explanation: 'The chapter\'s example: item A accessed 1000 times then never again may survive in LRU but LFU would eventually lose it to more steadily-used items.',
+    },
+    {
+      id: 'lfu-cache-q4',
+      type: 'mcq-multi',
+      difficulty: 'medium',
+      question: 'Which are known problems with pure LFU? (Select all that apply)',
+      options: [
+        { id: 'a', text: 'New items start at frequency 1 and can be immediately evicted (cache pollution)' },
+        { id: 'b', text: 'Old high-frequency items may never leave (aging problem)' },
+        { id: 'c', text: 'Requires efficient tracking of frequencies and minimum frequency' },
+        { id: 'd', text: 'Cannot achieve O(1) operations in any implementation' },
+      ],
+      correct: ['a', 'b', 'c'],
+      explanation: 'Pure LFU has pollution, aging, and implementation complexity issues. The bucket design achieves O(1) — problem (d) is false.',
+    },
+    {
+      id: 'lfu-cache-q5',
+      type: 'scenario',
+      difficulty: 'medium',
+      question: 'A CDN caches API responses where a few endpoints get millions of hits daily while most get a handful. Which eviction policy fits best?',
+      options: [
+        { id: 'a', text: 'LFU — genuinely popular items stay, rare ones leave' },
+        { id: 'b', text: 'FIFO — first inserted always stays longest' },
+        { id: 'c', text: 'Random eviction' },
+        { id: 'd', text: 'Always evict the most recently added item' },
+      ],
+      correct: ['a'],
+      explanation: 'Stable long-term popularity patterns favor LFU. LRU might evict steady low-frequency items that are still more valuable than one-time spikes.',
+    },
+    {
+      id: 'lfu-cache-q6',
+      type: 'fill-blank',
+      difficulty: 'medium',
+      question: 'When evicting from an LFU cache, the victim is always removed from the doubly linked list at ___ frequency.',
+      correct: ['minimum', 'min', 'lowest', 'minFrequency'],
+      aliases: ['min frequency', 'least'],
+      explanation: 'The minFreq variable tracks the lowest frequency present. Eviction always takes from that bucket\'s list (typically head.Next).',
+    },
+    {
+      id: 'lfu-cache-q7',
+      type: 'code-analysis',
+      difficulty: 'hard',
+      question: 'After UpdateFrequency increments a node\'s Freq, why check if _freqToList lacks _minFreq?',
+      code: `node.Freq++;
+AddToFrequencyList(node);
+if (!_freqToList.ContainsKey(_minFreq)) {
+    _minFreq = node.Freq;
+}`,
+      codeLang: 'csharp',
+      options: [
+        { id: 'a', text: 'The min-frequency bucket became empty, so minFreq must jump to the node\'s new frequency' },
+        { id: 'b', text: 'It triggers a full cache flush' },
+        { id: 'c', text: 'It sorts all nodes by key' },
+        { id: 'd', text: 'It resets every node\'s frequency to 1' },
+      ],
+      correct: ['a'],
+      explanation: 'Removing the last node from the minFreq bucket means no items remain at that frequency. minFreq advances to the updated node\'s new (higher) frequency.',
+    },
+    {
+      id: 'lfu-cache-q8',
+      type: 'matching',
+      difficulty: 'medium',
+      question: 'Match each workload to the better eviction policy.',
+      pairs: [
+        { id: '1', left: 'News feeds, session data (recency matters)', right: 'LRU' },
+        { id: '2', left: 'Long-term popular endpoints (stable frequency)', right: 'LFU' },
+        { id: '3', left: 'Most production mixed workloads', right: 'Hybrid / ARC / TinyLFU' },
+        { id: '4', left: 'Java Caffeine cache admission', right: 'TinyLFU (approximate frequency sketch)' },
+      ],
+      explanation: 'Real systems rarely use pure LFU. Hybrids like ARC and TinyLFU combine LRU and LFU strengths.',
+    },
+  ],
+  challenges: [
+    {
+      id: 'lfu-cache-c1',
+      type: 'trace',
+      difficulty: 'medium',
+      question: 'LFU cache capacity=2. Put(A,1), Put(B,2), Get(A), Get(A), Put(C,3). Which key is evicted?',
+      options: [
+        { id: 'a', text: 'B (frequency 1)' },
+        { id: 'b', text: 'A (frequency 3)' },
+        { id: 'c', text: 'C' },
+        { id: 'd', text: 'A (because it was added first)' },
+      ],
+      correct: ['a'],
+      explanation: 'Frequencies: A=3 (1 from Put + 2 from Gets), B=1. Min frequency is 1 → evict B. Cache holds A(freq 3) and C(freq 1).',
+    },
+    {
+      id: 'lfu-cache-c2',
+      type: 'design',
+      difficulty: 'hard',
+      question: 'You are designing an LFU cache. Which data structures are needed for the O(1) bucket design?',
+      options: [
+        { id: 'a', text: 'HashMap key→node, HashMap freq→doubly linked list, minFreq variable' },
+        { id: 'b', text: 'Single sorted array scanned linearly on each access' },
+        { id: 'c', text: 'Min-heap only, no hash map' },
+        { id: 'd', text: 'Stack + queue, no frequency tracking' },
+      ],
+      correct: ['a'],
+      explanation: 'Key map for O(1) lookup, frequency map of DLLs for O(1) bucket operations, minFreq for O(1) eviction target.',
+    },
+  ],
+} satisfies QuizPack

@@ -1,0 +1,145 @@
+import type { QuizPack } from '../types'
+
+export default {
+  pagePath: '/algorithms/17-radix-sort',
+  topicId: 'radix-sort',
+  title: 'Radix Sort',
+  quiz: [
+    {
+      id: 'rs-q1',
+      type: 'mcq',
+      difficulty: 'easy',
+      question: 'LSD radix sort processes digits/characters from:',
+      options: [
+        { id: 'a', text: 'Least significant to most significant' },
+        { id: 'b', text: 'Most significant to least significant only' },
+        { id: 'c', text: 'Random positions each pass' },
+        { id: 'd', text: 'Middle outward' },
+      ],
+      correct: ['a'],
+      explanation: 'Chapter LSD approach: stable counting sort per digit from right to left (or byte by byte).',
+    },
+    {
+      id: 'rs-q2',
+      type: 'complexity',
+      difficulty: 'medium',
+      question: 'LSD radix sort time complexity with n elements, d digit passes, base b:',
+      options: [
+        { id: 'a', text: 'O(d × (n + b))' },
+        { id: 'b', text: 'O(n log n)' },
+        { id: 'c', text: 'O(n²)' },
+        { id: 'd', text: 'O(n + b) only' },
+      ],
+      correct: ['a'],
+      explanation: 'Each of d passes does counting sort on n items with b buckets → O(d × (n + b)).',
+    },
+    {
+      id: 'rs-q3',
+      type: 'true-false',
+      difficulty: 'easy',
+      question: 'Radix sort avoids pairwise comparisons between elements.',
+      correct: true,
+      explanation: 'Non-comparison sort: distributes by digit value using counting per pass.',
+    },
+    {
+      id: 'rs-q4',
+      type: 'scenario',
+      difficulty: 'medium',
+      question: 'Sort millions of 32-bit integers. Why might byte-wise LSD radix (base 256) beat comparison sort?',
+      options: [
+        { id: 'a', text: 'Fixed width → ~4 passes of O(n + 256) ≈ linear vs O(n log n) comparisons' },
+        { id: 'b', text: 'Radix sort uses O(1) memory always' },
+        { id: 'c', text: 'Comparison sorts cannot sort integers' },
+        { id: 'd', text: 'Radix requires unsorted input' },
+      ],
+      correct: ['a'],
+      explanation: 'Chapter canonical problem: bounded-width keys make radix effectively linear.',
+    },
+    {
+      id: 'rs-q5',
+      type: 'fill-blank',
+      difficulty: 'medium',
+      question: 'Each digit pass in the chapter’s decimal implementation uses counting sort with ___ buckets (digits 0–9).',
+      correct: ['10'],
+      explanation: 'count array size 10; exp tracks ones, tens, hundreds place via (x/exp)%10.',
+    },
+    {
+      id: 'rs-q6',
+      type: 'trace',
+      difficulty: 'hard',
+      question: 'Array [170, 45, 75, 90, 802, 24, 2, 66]. After the ones-digit pass (exp=1), which value is correctly placed toward the front of a stable LSD sort?',
+      options: [
+        { id: 'a', text: '170 (ends in 0)' },
+        { id: 'b', text: '802 (largest value)' },
+        { id: 'c', text: '90 before 802 when sorted by ones digit only' },
+        { id: 'd', text: 'Order unchanged after one pass' },
+      ],
+      correct: ['c'],
+      explanation: 'One LSD pass sorts by current digit only — e.g. …90 (0), …802 (2) grouping; full sort needs all digit passes.',
+    },
+    {
+      id: 'rs-q7',
+      type: 'mcq-multi',
+      difficulty: 'hard',
+      question: 'Real-world radix sort applications from the chapter: (Select all that apply)',
+      options: [
+        { id: 'a', text: 'Sorting IP addresses and fixed-width IDs' },
+        { id: 'b', text: 'GPU sorting pipelines' },
+        { id: 'c', text: 'Suffix array construction ideas (SA-IS)' },
+        { id: 'd', text: 'Sorting arbitrary-length unbounded strings without padding' },
+      ],
+      correct: ['a', 'b', 'c'],
+      explanation: 'Radix needs fixed-width or padded keys; unbounded variable strings need MSD or careful encoding.',
+    },
+    {
+      id: 'rs-q8',
+      type: 'code-analysis',
+      difficulty: 'hard',
+      question: 'Why iterate from right to left when placing into output during countByDigit?',
+      code: `for (int i = n - 1; i >= 0; i--) {
+    int digit = (arr[i] / exp) % 10;
+    output[count[digit] - 1] = arr[i];
+    count[digit]--;
+}`,
+      codeLang: 'csharp',
+      options: [
+        { id: 'a', text: 'Preserves stability — later equal-digit elements stay after earlier ones' },
+        { id: 'b', text: 'Required because the array is unsorted' },
+        { id: 'c', text: 'Avoids using an output buffer' },
+        { id: 'd', text: 'Computes the maximum element' },
+      ],
+      correct: ['a'],
+      explanation: 'Reverse placement is the standard stable counting-sort step inside each radix pass.',
+    },
+  ],
+  challenges: [
+    {
+      id: 'rs-c1',
+      type: 'variant',
+      difficulty: 'hard',
+      question: 'Processing 32-bit integers one byte at a time (base 256) uses d = ___ passes.',
+      options: [
+        { id: 'a', text: '4' },
+        { id: 'b', text: '8' },
+        { id: 'c', text: '32' },
+        { id: 'd', text: '256' },
+      ],
+      correct: ['a'],
+      explanation: '32 bits / 8 bits per byte = 4 byte-wise radix passes with 256 buckets each.',
+    },
+    {
+      id: 'rs-c2',
+      type: 'mini-code',
+      difficulty: 'medium',
+      question: 'Implement LSD radix sort (decimal, base 10) using countByDigit per exp. Sort [170, 45, 75, 90, 802, 24, 2, 66].',
+      rubric: [
+        'Find max to know digit passes needed',
+        'Loop exp = 1, 10, 100... while max/exp > 0',
+        'Stable count-by-digit into output, copy back',
+        'Use (x/exp)%10 for digit extraction',
+        'Fully sorted ascending result',
+      ],
+      explanation: 'Exploits digit structure — building block counting sort repeated per position.',
+    },
+  ],
+} satisfies QuizPack

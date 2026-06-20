@@ -1,0 +1,146 @@
+import type { QuizPack } from '../types'
+
+export default {
+  pagePath: '/data-structures/13-binary-search-tree',
+  topicId: 'bst',
+  title: 'Binary Search Tree',
+  quiz: [
+    {
+      id: 'bst-q1',
+      type: 'mcq',
+      difficulty: 'easy',
+      question: 'What invariant must a Binary Search Tree maintain?',
+      options: [
+        { id: 'a', text: 'Left subtree < node < right subtree (for all nodes)' },
+        { id: 'b', text: 'Tree is always perfectly balanced' },
+        { id: 'c', text: 'All nodes have exactly two children' },
+        { id: 'd', text: 'Root is always the median element' },
+      ],
+      correct: ['a'],
+      explanation: 'BST property: every node\'s left descendants are smaller, right descendants are larger.',
+    },
+    {
+      id: 'bst-q2',
+      type: 'complexity',
+      difficulty: 'medium',
+      question: 'Worst-case search time in an unbalanced BST (e.g., inserting sorted data):',
+      options: [
+        { id: 'a', text: 'O(1)' },
+        { id: 'b', text: 'O(log n)' },
+        { id: 'c', text: 'O(n)' },
+        { id: 'd', text: 'O(n log n)' },
+      ],
+      correct: ['c'],
+      explanation: 'Sorted inserts create a linked-list-like chain — no branching, linear search.',
+    },
+    {
+      id: 'bst-q3',
+      type: 'true-false',
+      difficulty: 'easy',
+      question: 'In-order traversal of a BST visits keys in sorted ascending order.',
+      correct: true,
+      explanation: 'Left → Node → Right naturally yields sorted order when BST property holds.',
+    },
+    {
+      id: 'bst-q4',
+      type: 'trace',
+      difficulty: 'medium',
+      question: 'Insert 5, 3, 7, 1, 4 into empty BST. What is the root after all insertions?',
+      options: [
+        { id: 'a', text: '5' },
+        { id: 'b', text: '3' },
+        { id: 'c', text: '7' },
+        { id: 'd', text: '1' },
+      ],
+      correct: ['a'],
+      explanation: 'First inserted element becomes root. 5 is inserted first.',
+    },
+    {
+      id: 'bst-q5',
+      type: 'mcq',
+      difficulty: 'hard',
+      question: 'Deleting a node with two children in a BST typically requires:',
+      options: [
+        { id: 'a', text: 'Replace with in-order successor or predecessor, then delete that node' },
+        { id: 'b', text: 'Delete both children first' },
+        { id: 'c', text: 'Rebuild the entire tree' },
+        { id: 'd', text: 'Swap with the root only' },
+      ],
+      correct: ['a'],
+      explanation: 'Successor (min of right subtree) or predecessor (max of left) preserves BST property.',
+    },
+    {
+      id: 'bst-q6',
+      type: 'scenario',
+      difficulty: 'medium',
+      question: 'Database indexes often use B-Trees instead of plain BSTs because:',
+      options: [
+        { id: 'a', text: 'B-Trees have wider nodes, reducing disk I/O and staying balanced' },
+        { id: 'b', text: 'BSTs cannot store integers' },
+        { id: 'c', text: 'BSTs are always faster on disk' },
+        { id: 'd', text: 'B-Trees violate the ordering property' },
+      ],
+      correct: ['a'],
+      explanation: 'Disk access is expensive. B-Trees pack many keys per node and self-balance.',
+    },
+    {
+      id: 'bst-q7',
+      type: 'code-analysis',
+      difficulty: 'medium',
+      question: 'What does this BST search return if target is not in the tree?',
+      code: `func Search(node *Node, target int) *Node {
+    if node == nil || node.Val == target { return node }
+    if target < node.Val { return Search(node.Left, target) }
+    return Search(node.Right, target)
+}`,
+      codeLang: 'go',
+      options: [
+        { id: 'a', text: 'nil when not found' },
+        { id: 'b', text: 'The root node always' },
+        { id: 'c', text: 'Panic' },
+        { id: 'd', text: 'The closest value' },
+      ],
+      correct: ['a'],
+      explanation: 'Reaches nil child without match → returns nil. Standard recursive BST search.',
+    },
+    {
+      id: 'bst-q8',
+      type: 'fill-blank',
+      difficulty: 'easy',
+      question: 'Average-case search in a randomly built BST is O(___).',
+      correct: ['log n', 'logn', 'O(log n)', 'o(log n)'],
+      aliases: ['logarithmic'],
+      explanation: 'Random insert order tends toward balanced height ≈ log n.',
+    },
+  ],
+  challenges: [
+    {
+      id: 'bst-c1',
+      type: 'trace',
+      difficulty: 'hard',
+      question: 'BST with root 8, left 3, right 10. Delete node 3 (which has one child 5). What replaces 3?',
+      options: [
+        { id: 'a', text: 'Node 5 becomes the left child of 8' },
+        { id: 'b', text: 'Node 10 moves left' },
+        { id: 'c', text: 'Tree becomes empty' },
+        { id: 'd', text: 'Node 8 is deleted' },
+      ],
+      correct: ['a'],
+      explanation: 'One-child deletion: promote the child (5) to replace the deleted node (3).',
+    },
+    {
+      id: 'bst-c2',
+      type: 'variant',
+      difficulty: 'medium',
+      question: 'You need guaranteed O(log n) operations regardless of insert order. Which chapter?',
+      options: [
+        { id: 'a', text: 'Plain BST (this chapter)' },
+        { id: 'b', text: 'Red-Black Tree or Self-Balancing BST' },
+        { id: 'c', text: 'Hash Set only' },
+        { id: 'd', text: 'Stack' },
+      ],
+      correct: ['b'],
+      explanation: 'Self-balancing trees (red-black, AVL) fix the sorted-insert degeneracy.',
+    },
+  ],
+} satisfies QuizPack

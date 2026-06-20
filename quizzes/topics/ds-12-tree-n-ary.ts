@@ -1,0 +1,145 @@
+import type { QuizPack } from '../types'
+
+export default {
+  pagePath: '/data-structures/12-tree-n-ary',
+  topicId: 'tree-n-ary',
+  title: 'N-ary Tree',
+  quiz: [
+    {
+      id: 'tree-n-ary-q1',
+      type: 'mcq',
+      difficulty: 'easy',
+      question: 'Which property is NOT true of a general tree?',
+      options: [
+        { id: 'a', text: 'It contains cycles between nodes' },
+        { id: 'b', text: 'It has exactly one root (unless empty)' },
+        { id: 'c', text: 'Every non-root node has exactly one parent' },
+        { id: 'd', text: 'A node with no children is called a leaf' },
+      ],
+      correct: ['a'],
+      explanation: 'Trees have no cycles. One root, single parent per non-root node, and leaves at the bottom are defining properties.',
+    },
+    {
+      id: 'tree-n-ary-q2',
+      type: 'complexity',
+      difficulty: 'easy',
+      question: 'What is the worst-case time to find a specific node in a general n-ary tree?',
+      options: [
+        { id: 'a', text: 'O(n) — may need to visit every node' },
+        { id: 'b', text: 'O(1)' },
+        { id: 'c', text: 'O(log n)' },
+        { id: 'd', text: 'O(n log n)' },
+      ],
+      correct: ['a'],
+      explanation: 'Unlike BSTs, general trees have no ordering guarantee. Search may require a full traversal of all n nodes.',
+    },
+    {
+      id: 'tree-n-ary-q3',
+      type: 'true-false',
+      difficulty: 'easy',
+      question: 'In an n-ary tree, each node can have zero or more children — a binary tree is the special case where n=2.',
+      correct: true,
+      explanation: 'File system directories, DOM trees, and ASTs are unbounded n-ary trees. Binary trees cap children at two.',
+    },
+    {
+      id: 'tree-n-ary-q4',
+      type: 'mcq-multi',
+      difficulty: 'medium',
+      question: 'Which are real-world examples of n-ary trees? (Select all that apply)',
+      options: [
+        { id: 'a', text: 'HTML DOM structure' },
+        { id: 'b', text: 'Compiler Abstract Syntax Trees (AST)' },
+        { id: 'c', text: 'File system directories' },
+        { id: 'd', text: 'A singly linked list of integers' },
+      ],
+      correct: ['a', 'b', 'c'],
+      explanation: 'DOM, AST, and file systems are hierarchical trees. A linked list is linear, not a tree (each node has at most one child).',
+    },
+    {
+      id: 'tree-n-ary-q5',
+      type: 'scenario',
+      difficulty: 'medium',
+      question: 'You need to visit every node in a tree level by level (root, then its children, then grandchildren). Which traversal?',
+      options: [
+        { id: 'a', text: 'Breadth-first (level-order) using a queue' },
+        { id: 'b', text: 'Pre-order DFS using a stack only' },
+        { id: 'c', text: 'In-order traversal' },
+        { id: 'd', text: 'Binary search' },
+      ],
+      correct: ['a'],
+      explanation: 'Level-order traversal processes one depth level at a time — naturally implemented with a queue (BFS).',
+    },
+    {
+      id: 'tree-n-ary-q6',
+      type: 'fill-blank',
+      difficulty: 'medium',
+      question: 'The ___ of a tree is the longest path from the root down to any leaf (equivalently, the height of the root node).',
+      correct: ['height', 'tree height'],
+      aliases: ['h'],
+      explanation: 'Depth measures distance from root to a node. Height measures longest downward path to a leaf; tree height = height of root.',
+    },
+    {
+      id: 'tree-n-ary-q7',
+      type: 'code-analysis',
+      difficulty: 'hard',
+      question: 'What does this C# TreeNode representation support efficiently?',
+      code: `public class TreeNode<T> {
+    public T Value { get; set; }
+    public List<TreeNode<T>> Children { get; } = new();
+    public void AddChild(TreeNode<T> child) => Children.Add(child);
+}`,
+      codeLang: 'csharp',
+      options: [
+        { id: 'a', text: 'O(1) add-child when you already hold a reference to the parent node' },
+        { id: 'b', text: 'O(1) lookup of any node by value without traversal' },
+        { id: 'c', text: 'Automatic balancing after each insert' },
+        { id: 'd', text: 'Guaranteed O(log n) search' },
+      ],
+      correct: ['a'],
+      explanation: 'With a parent reference in hand, appending to Children is O(1). Finding a node by value still requires O(n) traversal.',
+    },
+    {
+      id: 'tree-n-ary-q8',
+      type: 'matching',
+      difficulty: 'medium',
+      question: 'Match each DFS traversal order to its visit sequence.',
+      pairs: [
+        { id: '1', left: 'Pre-order', right: 'Root → children (left to right)' },
+        { id: '2', left: 'Post-order', right: 'Children first → root' },
+        { id: '3', left: 'Level-order (BFS)', right: 'Level by level using a queue' },
+        { id: '4', left: 'In-order', right: 'Primarily defined for binary trees' },
+      ],
+      explanation: 'Pre-order visits root before subtrees. Post-order processes children before root. In-order is a binary-tree concept.',
+    },
+  ],
+  challenges: [
+    {
+      id: 'tree-n-ary-c1',
+      type: 'trace',
+      difficulty: 'medium',
+      question: 'Tree: Root→[A, B, C], A→[D, E], B→[F]. Pre-order traversal (root, then each child subtree left-to-right). What is the visit order?',
+      options: [
+        { id: 'a', text: 'Root, A, D, E, B, F, C' },
+        { id: 'b', text: 'D, E, A, F, B, C, Root' },
+        { id: 'c', text: 'Root, A, B, C, D, E, F' },
+        { id: 'd', text: 'C, B, F, A, E, D, Root' },
+      ],
+      correct: ['a'],
+      explanation: 'Pre-order: visit Root, then fully traverse A\'s subtree (A, D, E), then B\'s (B, F), then C.',
+    },
+    {
+      id: 'tree-n-ary-c2',
+      type: 'design',
+      difficulty: 'hard',
+      question: 'You must serialize an n-ary tree to send over a network and deserialize it on another machine. Which approach is common?',
+      options: [
+        { id: 'a', text: 'Level-order with null markers, or pre-order with sentinel nulls' },
+        { id: 'b', text: 'Store only the root value — children are reconstructed automatically' },
+        { id: 'c', text: 'Convert to a hash map keyed by random UUIDs only' },
+        { id: 'd', text: 'Serialization is impossible for trees' },
+      ],
+      correct: ['a'],
+      explanation: 'LeetCode-style serialization uses level-order with nulls or pre-order with markers to encode structure and values.',
+    },
+  ],
+} satisfies QuizPack

@@ -1,6 +1,7 @@
 import { get, set, del, keys } from 'idb-keyval'
+import type { QuizProgressStore } from '../../../quizzes/types'
 
-export const STORAGE_VERSION = 'dsa-annotations-v1'
+export const STORAGE_VERSION = 'dsa-annotations-v2'
 
 export interface Highlight {
   id: string
@@ -42,6 +43,7 @@ export interface UserDataExport {
   notes: Note[]
   playgroundSnippets: PlaygroundSnippet[]
   playgroundState?: { go: string; csharp: string }
+  quizProgress?: QuizProgressStore
 }
 
 const PREFIX = 'dsa:'
@@ -87,12 +89,40 @@ export async function setHighlightsVisible(visible: boolean) {
   await set(`${PREFIX}highlights-visible`, visible)
 }
 
+export async function getQuizProgress(): Promise<QuizProgressStore> {
+  return (await get(`${PREFIX}quiz-progress`)) ?? {
+    topics: {},
+    streak: 0,
+    lastActiveDate: null,
+    studyMode: false,
+  }
+}
+
+export async function setQuizProgress(progress: QuizProgressStore) {
+  await set(`${PREFIX}quiz-progress`, progress)
+}
+
+export async function updateQuizStreak(store: QuizProgressStore): Promise<QuizProgressStore> {
+  const today = new Date().toISOString().slice(0, 10)
+  if (store.lastActiveDate === today) return store
+
+  const yesterday = new Date()
+  yesterday.setDate(yesterday.getDate() - 1)
+  const yesterdayStr = yesterday.toISOString().slice(0, 10)
+
+  const streak = store.lastActiveDate === yesterdayStr ? store.streak + 1 : 1
+  const updated = { ...store, streak, lastActiveDate: today }
+  await setQuizProgress(updated)
+  return updated
+}
+
 export async function exportUserData(): Promise<UserDataExport> {
-  const [highlights, notes, snippets, playgroundState] = await Promise.all([
+  const [highlights, notes, snippets, playgroundState, quizProgress] = await Promise.all([
     getHighlights(),
     getNotes(),
     getSnippets(),
     getPlaygroundState(),
+    getQuizProgress(),
   ])
   return {
     version: STORAGE_VERSION,
@@ -101,6 +131,7 @@ export async function exportUserData(): Promise<UserDataExport> {
     notes,
     playgroundSnippets: snippets,
     playgroundState,
+    quizProgress,
   }
 }
 
@@ -137,6 +168,21 @@ export async function importUserData(
 
   if (data.playgroundState) {
     await setPlaygroundState(data.playgroundState)
+  }
+
+  if (data.quizProgress) {
+    if (mode === 'merge') {
+      const existing = await getQuizProgress()
+      const mergedTopics = { ...existing.topics, ...data.quizProgress.topics }
+      await setQuizProgress({
+        ...existing,
+        ...data.quizProgress,
+        topics: mergedTopics,
+        streak: Math.max(existing.streak, data.quizProgress.streak),
+      })
+    } else {
+      await setQuizProgress(data.quizProgress)
+    }
   }
 }
 

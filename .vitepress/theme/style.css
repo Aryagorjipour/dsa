@@ -99,6 +99,11 @@ html.dark mark.dsa-hl-green { background: rgba(21, 128, 61, 0.35); }
 html.dark mark.dsa-hl-blue { background: rgba(29, 78, 216, 0.35); }
 html.dark mark.dsa-hl-pink { background: rgba(157, 23, 77, 0.35); }
 
+/* Playground full-page layout */
+.VPPage .playground-page {
+  width: 100%;
+}
+
 /* Code block playground action */
 .vp-doc pre {
   position: relative;

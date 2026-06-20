@@ -1,6 +1,7 @@
 <script setup>
 import { onMounted, onUnmounted, watch } from 'vue'
 import { useRoute } from 'vitepress'
+import { buildPlaygroundUrl } from '../utils/playgroundUrl'
 
 const route = useRoute()
 let observer = null
@@ -39,13 +40,7 @@ function injectButtons() {
     btn.title = 'Open this code in the Playground'
     btn.addEventListener('click', e => {
       e.stopPropagation()
-      const params = new URLSearchParams({
-        from: route.path,
-        lang,
-        code: encodeURIComponent(code),
-      })
-      const base = import.meta.env.BASE_URL || '/dsa/'
-      window.location.href = `${base}playground?${params.toString()}`
+      window.location.href = buildPlaygroundUrl({ from: route.path, lang, code })
     })
 
     pre.style.position = 'relative'

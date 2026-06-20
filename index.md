@@ -37,7 +37,7 @@ A no-hand-waving, deeply practical handbook written for developers who want to t
 - [x] Project Lab — learn by building real systems
 - [x] Interactive Playground with Wandbox runner
 - [x] Local notes & text highlighting
-- [ ] Quizzes and challenges (future)
+- [x] Quizzes and challenges
 - [ ] More language ports (future)
 
 ## How to Contribute

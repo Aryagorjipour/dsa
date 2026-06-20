@@ -1,4 +1,5 @@
 <script setup>
+import { defineAsyncComponent } from 'vue'
 import DefaultTheme from 'vitepress/theme'
 import DSAExplorer from './components/DSAExplorer.vue'
 import PageTools from './components/PageTools.vue'
@@ -13,6 +14,8 @@ import CodeBlockActions from './components/CodeBlockActions.vue'
 import HeadingNotes from './components/HeadingNotes.vue'
 import SettingsDrawer from './components/SettingsDrawer.vue'
 import { useFocusMode } from './composables/useFocusMode'
+
+const QuizSection = defineAsyncComponent(() => import('./components/QuizSection.vue'))
 
 const { Layout } = DefaultTheme
 const { isFocusMode, toggleFocusMode } = useFocusMode()
@@ -38,6 +41,7 @@ const { isFocusMode, toggleFocusMode } = useFocusMode()
     </template>
 
     <template #doc-after>
+      <QuizSection />
       <PageTools />
     </template>
 

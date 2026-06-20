@@ -41,7 +41,7 @@ async function handleImport(e) {
 }
 
 async function handleClear() {
-  if (!confirm('Delete all notes, highlights, and playground data? This cannot be undone.')) return
+  if (!confirm('Delete all notes, highlights, quiz progress, and playground data? This cannot be undone.')) return
   await clearAllUserData()
   await loadAnnotations()
   showToast('All personal data cleared')

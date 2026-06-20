@@ -1,0 +1,145 @@
+import type { QuizPack } from '../types'
+
+export default {
+  pagePath: '/data-structures/34-rtree',
+  topicId: 'rtree',
+  title: 'R-Tree',
+  quiz: [
+    {
+      id: 'rt-q1',
+      type: 'mcq',
+      difficulty: 'easy',
+      question: 'What does an R-tree index?',
+      options: [
+        { id: 'a', text: 'Multi-dimensional rectangles and bounding boxes for spatial queries' },
+        { id: 'b', text: 'Sorted suffixes of a text string' },
+        { id: 'c', text: 'Approximate stream frequencies' },
+        { id: 'd', text: 'String chunks in a balanced binary tree' },
+      ],
+      correct: ['a'],
+      explanation: 'R-trees store rectangles (MBRs) and group nearby objects with bounding boxes at higher tree levels.',
+    },
+    {
+      id: 'rt-q2',
+      type: 'true-false',
+      difficulty: 'easy',
+      question: 'PostGIS (PostgreSQL) uses GiST indexes, which belong to the R-tree family.',
+      correct: true,
+      explanation: 'PostGIS, MySQL, Oracle Spatial, SQL Server, and MongoDB geospatial indexes use R-tree variants.',
+    },
+    {
+      id: 'rt-q3',
+      type: 'complexity',
+      difficulty: 'medium',
+      question: 'What is the average-case time complexity of an R-tree range query returning k results?',
+      options: [
+        { id: 'a', text: 'O(log n + k)' },
+        { id: 'b', text: 'O(n²)' },
+        { id: 'c', text: 'O(1)' },
+        { id: 'd', text: 'O(m log n) where m is pattern length' },
+      ],
+      correct: ['a'],
+      explanation: 'Range query traverses O(log n) levels and collects k leaf entries. Worst case can be O(n).',
+    },
+    {
+      id: 'rt-q4',
+      type: 'fill-blank',
+      difficulty: 'medium',
+      question: 'R-trees group objects using MBRs — Minimum ___ Rectangles.',
+      correct: ['Bounding'],
+      aliases: ['bounding', 'bounding box'],
+      explanation: 'Each node stores minimum bounding rectangles that enclose all child entries.',
+    },
+    {
+      id: 'rt-q5',
+      type: 'scenario',
+      difficulty: 'medium',
+      question: 'A map app stores millions of restaurant bounding boxes. "Find all restaurants in this viewport rectangle." Best index?',
+      options: [
+        { id: 'a', text: 'R-tree' },
+        { id: 'b', text: 'Suffix array' },
+        { id: 'c', text: 'Gap buffer' },
+        { id: 'd', text: 'HyperLogLog' },
+      ],
+      correct: ['a'],
+      explanation: 'R-trees are the dominant structure for spatial databases and GIS — exactly this "objects in a region" problem.',
+    },
+    {
+      id: 'rt-q6',
+      type: 'matching',
+      difficulty: 'hard',
+      question: 'Match spatial structures to their strengths.',
+      pairs: [
+        { id: '1', left: 'Quadtree', right: 'Points, simpler 2D partitioning' },
+        { id: '2', left: 'R-tree', right: 'Rectangles, production spatial DBs' },
+        { id: '3', left: 'KD-tree', right: 'Point nearest-neighbor (low dim)' },
+        { id: '4', left: 'R*-tree', right: 'Improved R-tree split heuristics' },
+      ],
+      explanation: 'The chapter compares quadtrees (points), R-trees (rectangles/DBs), and KD-trees (point NN). R*-tree improves averages.',
+    },
+    {
+      id: 'rt-q7',
+      type: 'code-analysis',
+      difficulty: 'hard',
+      question: 'How does ChooseLeaf pick where to insert a new rectangle?',
+      code: `double enlargement = Area(Rect.Union(node.Bounds[i], bounds)) - Area(node.Bounds[i]);
+if (enlargement < bestEnlargement) {
+    bestEnlargement = enlargement;
+    best = i;
+}`,
+      codeLang: 'csharp',
+      options: [
+        { id: 'a', text: 'Picks the child whose bounding box requires the minimum area enlargement to include the new rectangle' },
+        { id: 'b', text: 'Always inserts into the leftmost child' },
+        { id: 'c', text: 'Picks the child with the most entries' },
+        { id: 'd', text: 'Randomly selects a child' },
+      ],
+      correct: ['a'],
+      explanation: 'ChooseLeaf minimizes bounding-box growth — a key R-tree heuristic for keeping regions compact.',
+    },
+    {
+      id: 'rt-q8',
+      type: 'mcq-multi',
+      difficulty: 'medium',
+      question: 'Which systems use R-tree variants for geospatial queries? (Select all)',
+      options: [
+        { id: 'a', text: 'PostGIS / PostgreSQL GiST indexes' },
+        { id: 'b', text: 'MongoDB $geoWithin queries' },
+        { id: 'c', text: 'QGIS and ArcGIS' },
+        { id: 'd', text: 'Redis PFADD cardinality commands' },
+      ],
+      correct: ['a', 'b', 'c'],
+      explanation: 'Major GIS databases and mapping software use R-trees. Redis PFADD is HyperLogLog, not spatial indexing.',
+    },
+  ],
+  challenges: [
+    {
+      id: 'rt-c1',
+      type: 'trace',
+      difficulty: 'medium',
+      question: 'RangeQuery checks a node\'s bounding boxes against the query rectangle. A box does NOT intersect. What happens?',
+      options: [
+        { id: 'a', text: 'That entire subtree is pruned — no children are searched' },
+        { id: 'b', text: 'All children are searched anyway' },
+        { id: 'c', text: 'The R-tree is rebuilt from scratch' },
+        { id: 'd', text: 'The query fails with an error' },
+      ],
+      correct: ['a'],
+      explanation: 'Search skips non-intersecting entries. This pruning is what makes R-tree range queries efficient.',
+    },
+    {
+      id: 'rt-c2',
+      type: 'design',
+      difficulty: 'hard',
+      question: 'You have millions of individual GPS points (not rectangles) and need nearest-neighbor in 2D. Best choice?',
+      options: [
+        { id: 'a', text: 'KD-tree — optimized for point nearest-neighbor in low dimensions' },
+        { id: 'b', text: 'R-tree — always superior for any spatial data' },
+        { id: 'c', text: 'Suffix array' },
+        { id: 'd', text: 'Count-Min Sketch' },
+      ],
+      correct: ['a'],
+      explanation: 'R-trees excel at rectangle/MBR indexing for spatial DBs. KD-trees are the classic choice for point nearest-neighbor.',
+    },
+  ],
+} satisfies QuizPack

@@ -1,5 +1,7 @@
-<script setup>
-import { ref, onMounted, onUnmounted } from 'vue'
+<script setup lang="ts">
+import { ref, onMounted, onUnmounted, watch, nextTick } from 'vue'
+import { useRoute } from 'vitepress'
+import { normalizePagePath } from '../utils/normalizePagePath'
 import { EditorView, keymap } from '@codemirror/view'
 import { EditorState } from '@codemirror/state'
 import { basicSetup } from 'codemirror'
@@ -21,9 +23,27 @@ const {
   persist, DEFAULT_GO, DEFAULT_CSHARP,
 } = usePlayground()
 
+const route = useRoute()
 const snippets = ref([])
 const pageTitle = ref('Playground')
 const isDark = ref(false)
+
+function parseCodeParam(raw: string | null): string | null {
+  if (!raw) return null
+  try {
+    let decoded = decodeURIComponent(raw)
+    if (decoded.includes('%')) {
+      try {
+        decoded = decodeURIComponent(decoded)
+      } catch {
+        /* use single-decoded value */
+      }
+    }
+    return decoded
+  } catch {
+    return raw
+  }
+}
 
 const lightTheme = EditorView.theme({
   '&': { backgroundColor: '#fafafa', color: '#383a42' },
@@ -82,13 +102,17 @@ async function switchLang(newLang) {
 }
 
 async function loadFromPage() {
+  if (typeof window === 'undefined') return
+
   const params = new URLSearchParams(window.location.search)
-  const from = params.get('from') || ''
-  const codeParam = params.get('code')
+  const from = normalizePagePath(params.get('from') || '')
+  const codeParam = parseCodeParam(params.get('code'))
   const langParam = params.get('lang')
 
-  if (from) {
+  if (from && from !== '/') {
     pageTitle.value = from.split('/').pop()?.replace(/-/g, ' ') || 'Playground'
+  } else {
+    pageTitle.value = 'Playground'
   }
 
   if (langParam === 'go' || langParam === 'csharp') {
@@ -96,14 +120,13 @@ async function loadFromPage() {
   }
 
   if (codeParam) {
-    try {
-      code.value = decodeURIComponent(codeParam)
-      createEditor()
-      return
-    } catch { /* fall through */ }
+    code.value = codeParam
+    await nextTick()
+    createEditor()
+    return
   }
 
-  if (from) {
+  if (from && from !== '/') {
     try {
       const base = import.meta.env.BASE_URL || '/dsa/'
       const res = await fetch(`${base}examples-manifest.json`)
@@ -112,6 +135,7 @@ async function loadFromPage() {
         const examples = manifest[from]
         if (examples?.[lang.value]) {
           code.value = examples[lang.value]
+          await nextTick()
           createEditor()
           return
         }
@@ -120,6 +144,7 @@ async function loadFromPage() {
   }
 
   await loadPersisted()
+  await nextTick()
   createEditor()
 }
 
@@ -167,6 +192,17 @@ onMounted(async () => {
   snippets.value = await getSnippets()
   await loadFromPage()
 })
+
+if (typeof window !== 'undefined') {
+  watch(
+    () => window.location.search,
+    async () => {
+      if (normalizePagePath(route.path).endsWith('/playground')) {
+        await loadFromPage()
+      }
+    }
+  )
+}
 
 onUnmounted(() => {
   editorView?.destroy()
@@ -235,7 +271,7 @@ onUnmounted(() => {
 .playground-page {
   max-width: 1100px;
   margin: 0 auto;
-  padding: 24px 0;
+  padding: 32px 24px 48px;
 }
 
 .playground-header {

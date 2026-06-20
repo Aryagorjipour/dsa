@@ -23,7 +23,14 @@ Thank you for your interest! This handbook aims to be one of the best practical 
 - Update [`projects/_metadata.yaml`](projects/_metadata.yaml) and the sidebar in `.vitepress/config.mts`.
 - Add cross-links from related handbook chapters using the `::: tip Project Lab` callout format.
 
-### 5. Suggesting New Topics
+### 5. Adding Quizzes & Challenges
+- Create a topic file in `quizzes/topics/` (see an existing file for the schema).
+- Run `npm run sync:quizzes` to regenerate `quizzes/registry.ts` from topic files.
+- Aim for 8 quiz questions + 2 challenges per topic, mixed difficulty.
+- Questions must align with that chapter's content — no generic trivia.
+- Run `npm run docs:build` to verify the site compiles.
+
+### 6. Suggesting New Topics
 Open an issue using the "New Topic Suggestion" template.
 
 ## Development

@@ -6,6 +6,7 @@ import { defineAsyncComponent } from 'vue'
 
 const PlaygroundPage = defineAsyncComponent(() => import('./components/PlaygroundPage.vue'))
 const MyNotesView = defineAsyncComponent(() => import('./components/MyNotesView.vue'))
+const QuizDashboard = defineAsyncComponent(() => import('./components/QuizDashboard.vue'))
 import Layout from './Layout.vue'
 import { blockIdPlugin } from './plugins/block-id'
 
@@ -17,6 +18,7 @@ export default {
     app.component('DSAExplorer', DSAExplorer)
     app.component('PlaygroundPage', PlaygroundPage)
     app.component('MyNotesView', MyNotesView)
+    app.component('QuizDashboard', QuizDashboard)
   },
   markdown: {
     config(md) {

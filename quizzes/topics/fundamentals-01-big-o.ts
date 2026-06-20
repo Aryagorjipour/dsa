@@ -1,0 +1,148 @@
+import type { QuizPack } from '../types'
+
+export default {
+  pagePath: '/fundamentals/01-big-o',
+  topicId: 'big-o',
+  title: 'Big O Notation',
+  quiz: [
+    {
+      id: 'bigo-q1',
+      type: 'mcq',
+      difficulty: 'easy',
+      question: 'What does Big O notation primarily describe?',
+      options: [
+        { id: 'a', text: 'How runtime or memory grows as input size increases' },
+        { id: 'b', text: 'The exact number of milliseconds a function takes' },
+        { id: 'c', text: 'Which programming language is fastest' },
+        { id: 'd', text: 'The number of lines of code in an algorithm' },
+      ],
+      correct: ['a'],
+      explanation: 'Big O describes the growth rate (shape) of resource usage as n grows, ignoring constants and lower-order terms.',
+      misconception: 'Exact timing depends on hardware and language; Big O is about asymptotic growth.',
+    },
+    {
+      id: 'bigo-q2',
+      type: 'complexity',
+      difficulty: 'easy',
+      question: 'What is the time complexity of accessing an element by index in an array?',
+      options: [
+        { id: 'a', text: 'O(1)' },
+        { id: 'b', text: 'O(log n)' },
+        { id: 'c', text: 'O(n)' },
+        { id: 'd', text: 'O(n²)' },
+      ],
+      correct: ['a'],
+      explanation: 'Array index access is direct addressing — one arithmetic step regardless of array size.',
+    },
+    {
+      id: 'bigo-q3',
+      type: 'fill-blank',
+      difficulty: 'medium',
+      question: 'The expression 3n² + 100n + 50 simplifies to O(___) in Big O notation.',
+      correct: ['n^2', 'n²', 'n2'],
+      aliases: ['quadratic', 'n squared'],
+      explanation: 'We keep only the dominant term (n²) and drop coefficients and lower-order terms.',
+      misconception: 'The +100n and +50 become negligible when n is large; only n² dominates.',
+    },
+    {
+      id: 'bigo-q4',
+      type: 'true-false',
+      difficulty: 'medium',
+      question: 'An O(n log n) algorithm is always faster than an O(n²) algorithm for every input size n.',
+      correct: false,
+      explanation: 'For small n, constants matter. O(n²) with a tiny constant can beat O(n log n) with a large constant on small inputs.',
+      misconception: 'Big O describes behavior as n → ∞, not performance on tiny inputs.',
+    },
+    {
+      id: 'bigo-q5',
+      type: 'ordering',
+      difficulty: 'medium',
+      question: 'Order these complexity classes from fastest growing to slowest growing (worst at top):',
+      items: [
+        { id: 'a', text: 'O(n)' },
+        { id: 'b', text: 'O(2^n)' },
+        { id: 'c', text: 'O(n log n)' },
+        { id: 'd', text: 'O(n²)' },
+      ],
+      correct: ['b', 'd', 'c', 'a'],
+      explanation: 'Exponential (2^n) grows fastest, then quadratic, then linearithmic, then linear.',
+    },
+    {
+      id: 'bigo-q6',
+      type: 'code-analysis',
+      difficulty: 'medium',
+      question: 'What is the time complexity of this loop?',
+      code: `for (int i = 0; i < n; i++) {
+    for (int j = 0; j < n; j++) {
+        sum += arr[i][j];
+    }
+}`,
+      codeLang: 'csharp',
+      options: [
+        { id: 'a', text: 'O(n)' },
+        { id: 'b', text: 'O(n log n)' },
+        { id: 'c', text: 'O(n²)' },
+        { id: 'd', text: 'O(1)' },
+      ],
+      correct: ['c'],
+      explanation: 'Nested loops each running n times give n × n = n² iterations.',
+    },
+    {
+      id: 'bigo-q7',
+      type: 'scenario',
+      difficulty: 'hard',
+      question: 'You need to sort 10 million records. Which complexity class is generally acceptable for a production sort?',
+      options: [
+        { id: 'a', text: 'O(n²) — bubble sort is fine at scale' },
+        { id: 'b', text: 'O(n log n) — merge sort or quicksort' },
+        { id: 'c', text: 'O(2^n) — try every permutation' },
+        { id: 'd', text: 'O(n!) — generate all orderings' },
+      ],
+      correct: ['b'],
+      explanation: 'O(n log n) sorting (merge, quick, timsort) is the practical standard for large datasets.',
+      misconception: 'O(n²) on 10M items is roughly 10¹⁴ operations — far too slow.',
+    },
+    {
+      id: 'bigo-q8',
+      type: 'matching',
+      difficulty: 'easy',
+      question: 'Match each operation to its typical time complexity:',
+      pairs: [
+        { id: '1', left: 'Hash map lookup (average)', right: 'O(1)' },
+        { id: '2', left: 'Binary search on sorted array', right: 'O(log n)' },
+        { id: '3', left: 'Linear scan of unsorted list', right: 'O(n)' },
+      ],
+      explanation: 'These are the three most common complexity classes you will analyze daily.',
+    },
+  ],
+  challenges: [
+    {
+      id: 'bigo-c1',
+      type: 'trace',
+      difficulty: 'medium',
+      question: 'A function runs in O(log n). If n doubles from 1,000 to 2,000, roughly how much does the operation count increase?',
+      options: [
+        { id: 'a', text: 'By about 1 step (a constant addition)' },
+        { id: 'b', text: 'It doubles' },
+        { id: 'c', text: 'It squares' },
+        { id: 'd', text: 'It stays exactly the same' },
+      ],
+      correct: ['a'],
+      explanation: 'log₂(2000) − log₂(1000) ≈ 1. Doubling input adds only one step in logarithmic growth.',
+    },
+    {
+      id: 'bigo-c2',
+      type: 'design',
+      difficulty: 'hard',
+      question: 'You are building a autocomplete that must handle 1M queries/second on a 500K-word dictionary. Which lookup structure do you prioritize?',
+      options: [
+        { id: 'a', text: 'Sorted array + binary search — O(log n) per query' },
+        { id: 'b', text: 'Hash map or trie — O(1) or O(k) prefix lookup' },
+        { id: 'c', text: 'Unsorted linked list — O(n) scan' },
+        { id: 'd', text: 'Nested loops comparing every pair of words' },
+      ],
+      correct: ['b'],
+      explanation: 'At 1M QPS, O(n) or O(log n) per query on 500K words is too slow. Hash maps and tries are built for this.',
+    },
+  ],
+} satisfies QuizPack

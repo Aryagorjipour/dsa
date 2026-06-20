@@ -1,0 +1,193 @@
+import type { QuizPack } from './types'
+
+export interface QuizIndexEntry {
+  pagePath: string
+  topicId: string
+  title: string
+  section: 'Fundamentals' | 'Data Structures' | 'Algorithms'
+  quizCount: number
+  challengeCount: number
+}
+
+type QuizLoader = () => Promise<{ default: QuizPack }>
+
+const LOADERS: Record<string, QuizLoader> = {
+  '/fundamentals/01-big-o': () => import('./topics/fundamentals-01-big-o'),
+  '/data-structures/01-array': () => import('./topics/ds-01-array'),
+  '/data-structures/02-dynamic-array': () => import('./topics/ds-02-dynamic-array'),
+  '/data-structures/03-linked-list': () => import('./topics/ds-03-linked-list'),
+  '/data-structures/04-stack': () => import('./topics/ds-04-stack'),
+  '/data-structures/05-queue': () => import('./topics/ds-05-queue'),
+  '/data-structures/06-deque': () => import('./topics/ds-06-deque'),
+  '/data-structures/07-ring-buffer': () => import('./topics/ds-07-ring-buffer'),
+  '/data-structures/08-hash-set': () => import('./topics/ds-08-hash-set'),
+  '/data-structures/09-hash-map': () => import('./topics/ds-09-hash-map'),
+  '/data-structures/10-lru-cache': () => import('./topics/ds-10-lru-cache'),
+  '/data-structures/11-lfu-cache': () => import('./topics/ds-11-lfu-cache'),
+  '/data-structures/12-tree-n-ary': () => import('./topics/ds-12-tree-n-ary'),
+  '/data-structures/13-binary-search-tree': () => import('./topics/ds-13-binary-search-tree'),
+  '/data-structures/14-red-black-tree': () => import('./topics/ds-14-red-black-tree'),
+  '/data-structures/15-heap': () => import('./topics/ds-15-heap'),
+  '/data-structures/16-priority-queue': () => import('./topics/ds-16-priority-queue'),
+  '/data-structures/17-trie': () => import('./topics/ds-17-trie'),
+  '/data-structures/18-btree-bplustree': () => import('./topics/ds-18-btree-bplustree'),
+  '/data-structures/19-skip-list': () => import('./topics/ds-19-skip-list'),
+  '/data-structures/20-segment-tree': () => import('./topics/ds-20-segment-tree'),
+  '/data-structures/21-fenwick-tree': () => import('./topics/ds-21-fenwick-tree'),
+  '/data-structures/22-merkle-tree': () => import('./topics/ds-22-merkle-tree'),
+  '/data-structures/23-graph': () => import('./topics/ds-23-graph'),
+  '/data-structures/24-bloom-filter': () => import('./topics/ds-24-bloom-filter'),
+  '/data-structures/25-disjoint-set-union-find': () => import('./topics/ds-25-disjoint-set-union-find'),
+  '/data-structures/26-hyperloglog': () => import('./topics/ds-26-hyperloglog'),
+  '/data-structures/27-count-min-sketch': () => import('./topics/ds-27-count-min-sketch'),
+  '/data-structures/28-cuckoo-filter': () => import('./topics/ds-28-cuckoo-filter'),
+  '/data-structures/29-rope': () => import('./topics/ds-29-rope'),
+  '/data-structures/30-gap-buffer': () => import('./topics/ds-30-gap-buffer'),
+  '/data-structures/31-suffix-array': () => import('./topics/ds-31-suffix-array'),
+  '/data-structures/32-quadtree': () => import('./topics/ds-32-quadtree'),
+  '/data-structures/33-kd-tree': () => import('./topics/ds-33-kd-tree'),
+  '/data-structures/34-rtree': () => import('./topics/ds-34-rtree'),
+  '/algorithms/06-linear-search': () => import('./topics/algo-06-linear-search'),
+  '/algorithms/07-binary-search': () => import('./topics/algo-07-binary-search'),
+  '/algorithms/08-pseudocode-binary-search': () => import('./topics/algo-08-pseudocode-binary-search'),
+  '/algorithms/09-exponential-search': () => import('./topics/algo-09-exponential-search'),
+  '/algorithms/10-bubble-sort': () => import('./topics/algo-10-bubble-sort'),
+  '/algorithms/11-insertion-sort': () => import('./topics/algo-11-insertion-sort'),
+  '/algorithms/12-merge-sort': () => import('./topics/algo-12-merge-sort'),
+  '/algorithms/13-quicksort': () => import('./topics/algo-13-quicksort'),
+  '/algorithms/14-heapsort': () => import('./topics/algo-14-heapsort'),
+  '/algorithms/15-timsort': () => import('./topics/algo-15-timsort'),
+  '/algorithms/16-counting-sort': () => import('./topics/algo-16-counting-sort'),
+  '/algorithms/17-radix-sort': () => import('./topics/algo-17-radix-sort'),
+  '/algorithms/18-hashing': () => import('./topics/algo-18-hashing'),
+  '/algorithms/19-quickselect': () => import('./topics/algo-19-quickselect'),
+  '/algorithms/20-reservoir-sampling': () => import('./topics/algo-20-reservoir-sampling'),
+  '/algorithms/21-bst-operations': () => import('./topics/algo-21-bst-operations'),
+  '/algorithms/22-bst-operations': () => import('./topics/algo-22-bst-operations'),
+  '/algorithms/23-self-balancing-trees': () => import('./topics/algo-23-self-balancing-trees'),
+  '/algorithms/24-trie-operations': () => import('./topics/algo-24-trie-operations'),
+  '/algorithms/25-bfs': () => import('./topics/algo-25-bfs'),
+  '/algorithms/26-dfs': () => import('./topics/algo-26-dfs'),
+  '/algorithms/27-topological-sort': () => import('./topics/algo-27-topological-sort'),
+  '/algorithms/28-dijkstra': () => import('./topics/algo-28-dijkstra'),
+  '/algorithms/29-bellman-ford': () => import('./topics/algo-29-bellman-ford'),
+  '/algorithms/30-floyd-warshall': () => import('./topics/algo-30-floyd-warshall'),
+  '/algorithms/31-mst-kruskal-prim': () => import('./topics/algo-31-mst-kruskal-prim'),
+  '/algorithms/32-astar': () => import('./topics/algo-32-astar'),
+  '/algorithms/33-dp-fundamentals': () => import('./topics/algo-33-dp-fundamentals'),
+  '/algorithms/34-0-1-knapsack': () => import('./topics/algo-34-0-1-knapsack'),
+  '/algorithms/35-lcs': () => import('./topics/algo-35-lcs'),
+  '/algorithms/36-edit-distance': () => import('./topics/algo-36-edit-distance'),
+  '/algorithms/37-matrix-chain-multiplication': () => import('./topics/algo-37-matrix-chain-multiplication'),
+  '/algorithms/38-longest-increasing-subsequence': () => import('./topics/algo-38-longest-increasing-subsequence'),
+  '/algorithms/39-kmp': () => import('./topics/algo-39-kmp'),
+  '/algorithms/40-rabin-karp': () => import('./topics/algo-40-rabin-karp'),
+  '/algorithms/41-boyer-moore': () => import('./topics/algo-41-boyer-moore'),
+  '/algorithms/42-z-algorithm': () => import('./topics/algo-42-z-algorithm'),
+  '/algorithms/43-aho-corasick': () => import('./topics/algo-43-aho-corasick'),
+  '/algorithms/44-backtracking': () => import('./topics/algo-44-backtracking'),
+  '/algorithms/45-bit-manipulation': () => import('./topics/algo-45-bit-manipulation'),
+  '/algorithms/46-bloom-filter-alg': () => import('./topics/algo-46-bloom-filter-alg'),
+  '/algorithms/47-consistent-hashing': () => import('./topics/algo-47-consistent-hashing'),
+  '/algorithms/48-rate-limiting': () => import('./topics/algo-48-rate-limiting'),
+}
+
+export const QUIZ_INDEX: QuizIndexEntry[] = [
+  { pagePath: '/fundamentals/01-big-o', topicId: 'big-o', title: 'Big O Notation', section: 'Fundamentals', quizCount: 8, challengeCount: 2 },
+  { pagePath: '/data-structures/01-array', topicId: 'array', title: 'Array', section: 'Data Structures', quizCount: 8, challengeCount: 2 },
+  { pagePath: '/data-structures/02-dynamic-array', topicId: 'dynamic-array', title: 'Dynamic Array', section: 'Data Structures', quizCount: 8, challengeCount: 2 },
+  { pagePath: '/data-structures/03-linked-list', topicId: 'linked-list', title: 'Linked List', section: 'Data Structures', quizCount: 8, challengeCount: 2 },
+  { pagePath: '/data-structures/04-stack', topicId: 'stack', title: 'Stack', section: 'Data Structures', quizCount: 8, challengeCount: 2 },
+  { pagePath: '/data-structures/05-queue', topicId: 'queue', title: 'Queue', section: 'Data Structures', quizCount: 8, challengeCount: 2 },
+  { pagePath: '/data-structures/06-deque', topicId: 'deque', title: 'Deque', section: 'Data Structures', quizCount: 8, challengeCount: 2 },
+  { pagePath: '/data-structures/07-ring-buffer', topicId: 'ring-buffer', title: 'Ring Buffer', section: 'Data Structures', quizCount: 8, challengeCount: 2 },
+  { pagePath: '/data-structures/08-hash-set', topicId: 'hash-set', title: 'Hash Set', section: 'Data Structures', quizCount: 8, challengeCount: 2 },
+  { pagePath: '/data-structures/09-hash-map', topicId: 'hash-map', title: 'Hash Map', section: 'Data Structures', quizCount: 8, challengeCount: 2 },
+  { pagePath: '/data-structures/10-lru-cache', topicId: 'lru-cache', title: 'LRU Cache', section: 'Data Structures', quizCount: 8, challengeCount: 2 },
+  { pagePath: '/data-structures/11-lfu-cache', topicId: 'lfu-cache', title: 'LFU Cache', section: 'Data Structures', quizCount: 8, challengeCount: 2 },
+  { pagePath: '/data-structures/12-tree-n-ary', topicId: 'tree-n-ary', title: 'N-ary Tree', section: 'Data Structures', quizCount: 8, challengeCount: 2 },
+  { pagePath: '/data-structures/13-binary-search-tree', topicId: 'bst', title: 'Binary Search Tree', section: 'Data Structures', quizCount: 8, challengeCount: 2 },
+  { pagePath: '/data-structures/14-red-black-tree', topicId: 'red-black-tree', title: 'Red-Black Tree', section: 'Data Structures', quizCount: 8, challengeCount: 2 },
+  { pagePath: '/data-structures/15-heap', topicId: 'heap', title: 'Heap', section: 'Data Structures', quizCount: 8, challengeCount: 2 },
+  { pagePath: '/data-structures/16-priority-queue', topicId: 'priority-queue', title: 'Priority Queue', section: 'Data Structures', quizCount: 8, challengeCount: 2 },
+  { pagePath: '/data-structures/17-trie', topicId: 'trie', title: 'Trie', section: 'Data Structures', quizCount: 8, challengeCount: 2 },
+  { pagePath: '/data-structures/18-btree-bplustree', topicId: 'btree-bplustree', title: 'B-Tree and B+ Tree', section: 'Data Structures', quizCount: 8, challengeCount: 2 },
+  { pagePath: '/data-structures/19-skip-list', topicId: 'skip-list', title: 'Skip List', section: 'Data Structures', quizCount: 8, challengeCount: 2 },
+  { pagePath: '/data-structures/20-segment-tree', topicId: 'segment-tree', title: 'Segment Tree', section: 'Data Structures', quizCount: 8, challengeCount: 2 },
+  { pagePath: '/data-structures/21-fenwick-tree', topicId: 'fenwick-tree', title: 'Fenwick Tree', section: 'Data Structures', quizCount: 8, challengeCount: 2 },
+  { pagePath: '/data-structures/22-merkle-tree', topicId: 'merkle-tree', title: 'Merkle Tree', section: 'Data Structures', quizCount: 8, challengeCount: 2 },
+  { pagePath: '/data-structures/23-graph', topicId: 'graph', title: 'Graph', section: 'Data Structures', quizCount: 8, challengeCount: 2 },
+  { pagePath: '/data-structures/24-bloom-filter', topicId: 'bloom-filter', title: 'Bloom Filter', section: 'Data Structures', quizCount: 8, challengeCount: 2 },
+  { pagePath: '/data-structures/25-disjoint-set-union-find', topicId: 'disjoint-set-union-find', title: 'Disjoint Set (Union-Find)', section: 'Data Structures', quizCount: 8, challengeCount: 2 },
+  { pagePath: '/data-structures/26-hyperloglog', topicId: 'hyperloglog', title: 'HyperLogLog', section: 'Data Structures', quizCount: 8, challengeCount: 2 },
+  { pagePath: '/data-structures/27-count-min-sketch', topicId: 'count-min-sketch', title: 'Count-Min Sketch', section: 'Data Structures', quizCount: 8, challengeCount: 2 },
+  { pagePath: '/data-structures/28-cuckoo-filter', topicId: 'cuckoo-filter', title: 'Cuckoo Filter', section: 'Data Structures', quizCount: 8, challengeCount: 2 },
+  { pagePath: '/data-structures/29-rope', topicId: 'rope', title: 'Rope', section: 'Data Structures', quizCount: 8, challengeCount: 2 },
+  { pagePath: '/data-structures/30-gap-buffer', topicId: 'gap-buffer', title: 'Gap Buffer', section: 'Data Structures', quizCount: 8, challengeCount: 2 },
+  { pagePath: '/data-structures/31-suffix-array', topicId: 'suffix-array', title: 'Suffix Array', section: 'Data Structures', quizCount: 8, challengeCount: 2 },
+  { pagePath: '/data-structures/32-quadtree', topicId: 'quadtree', title: 'Quadtree', section: 'Data Structures', quizCount: 8, challengeCount: 2 },
+  { pagePath: '/data-structures/33-kd-tree', topicId: 'kd-tree', title: 'KD Tree', section: 'Data Structures', quizCount: 8, challengeCount: 2 },
+  { pagePath: '/data-structures/34-rtree', topicId: 'rtree', title: 'R-Tree', section: 'Data Structures', quizCount: 8, challengeCount: 2 },
+  { pagePath: '/algorithms/06-linear-search', topicId: 'linear-search', title: 'Linear Search', section: 'Algorithms', quizCount: 8, challengeCount: 2 },
+  { pagePath: '/algorithms/07-binary-search', topicId: 'binary-search', title: 'Binary Search', section: 'Algorithms', quizCount: 8, challengeCount: 2 },
+  { pagePath: '/algorithms/08-pseudocode-binary-search', topicId: 'pseudocode-binary-search', title: 'Pseudocode Binary Search and Variants', section: 'Algorithms', quizCount: 8, challengeCount: 2 },
+  { pagePath: '/algorithms/09-exponential-search', topicId: 'exponential-search', title: 'Exponential Search', section: 'Algorithms', quizCount: 8, challengeCount: 2 },
+  { pagePath: '/algorithms/10-bubble-sort', topicId: 'bubble-sort', title: 'Bubble Sort', section: 'Algorithms', quizCount: 8, challengeCount: 2 },
+  { pagePath: '/algorithms/11-insertion-sort', topicId: 'insertion-sort', title: 'Insertion Sort', section: 'Algorithms', quizCount: 8, challengeCount: 2 },
+  { pagePath: '/algorithms/12-merge-sort', topicId: 'merge-sort', title: 'Merge Sort', section: 'Algorithms', quizCount: 8, challengeCount: 2 },
+  { pagePath: '/algorithms/13-quicksort', topicId: 'quicksort', title: 'Quicksort', section: 'Algorithms', quizCount: 8, challengeCount: 2 },
+  { pagePath: '/algorithms/14-heapsort', topicId: 'heapsort', title: 'Heapsort', section: 'Algorithms', quizCount: 8, challengeCount: 2 },
+  { pagePath: '/algorithms/15-timsort', topicId: 'timsort', title: 'Timsort', section: 'Algorithms', quizCount: 8, challengeCount: 2 },
+  { pagePath: '/algorithms/16-counting-sort', topicId: 'counting-sort', title: 'Counting Sort', section: 'Algorithms', quizCount: 8, challengeCount: 2 },
+  { pagePath: '/algorithms/17-radix-sort', topicId: 'radix-sort', title: 'Radix Sort', section: 'Algorithms', quizCount: 8, challengeCount: 2 },
+  { pagePath: '/algorithms/18-hashing', topicId: 'hashing', title: 'Hashing', section: 'Algorithms', quizCount: 8, challengeCount: 2 },
+  { pagePath: '/algorithms/19-quickselect', topicId: 'quickselect', title: 'Quickselect', section: 'Algorithms', quizCount: 8, challengeCount: 2 },
+  { pagePath: '/algorithms/20-reservoir-sampling', topicId: 'reservoir-sampling', title: 'Reservoir Sampling', section: 'Algorithms', quizCount: 8, challengeCount: 2 },
+  { pagePath: '/algorithms/21-bst-operations', topicId: 'bst-operations', title: 'BST Operations', section: 'Algorithms', quizCount: 8, challengeCount: 2 },
+  { pagePath: '/algorithms/22-bst-operations', topicId: 'bst-operations-22', title: 'BST Operations', section: 'Algorithms', quizCount: 8, challengeCount: 2 },
+  { pagePath: '/algorithms/23-self-balancing-trees', topicId: 'self-balancing-trees', title: 'Self-Balancing Trees', section: 'Algorithms', quizCount: 8, challengeCount: 2 },
+  { pagePath: '/algorithms/24-trie-operations', topicId: 'trie-operations', title: 'Trie Operations', section: 'Algorithms', quizCount: 8, challengeCount: 2 },
+  { pagePath: '/algorithms/25-bfs', topicId: 'bfs', title: 'BFS', section: 'Algorithms', quizCount: 8, challengeCount: 2 },
+  { pagePath: '/algorithms/26-dfs', topicId: 'dfs', title: 'DFS', section: 'Algorithms', quizCount: 8, challengeCount: 2 },
+  { pagePath: '/algorithms/27-topological-sort', topicId: 'topological-sort', title: 'Topological Sort', section: 'Algorithms', quizCount: 8, challengeCount: 2 },
+  { pagePath: '/algorithms/28-dijkstra', topicId: 'dijkstra', title: 'Dijkstra', section: 'Algorithms', quizCount: 8, challengeCount: 2 },
+  { pagePath: '/algorithms/29-bellman-ford', topicId: 'bellman-ford', title: 'Bellman-Ford', section: 'Algorithms', quizCount: 8, challengeCount: 2 },
+  { pagePath: '/algorithms/30-floyd-warshall', topicId: 'floyd-warshall', title: 'Floyd-Warshall', section: 'Algorithms', quizCount: 8, challengeCount: 2 },
+  { pagePath: '/algorithms/31-mst-kruskal-prim', topicId: 'mst', title: 'MST (Kruskal + Prim)', section: 'Algorithms', quizCount: 8, challengeCount: 2 },
+  { pagePath: '/algorithms/32-astar', topicId: 'astar', title: 'A*', section: 'Algorithms', quizCount: 8, challengeCount: 2 },
+  { pagePath: '/algorithms/33-dp-fundamentals', topicId: 'dp-fundamentals', title: 'DP Fundamentals', section: 'Algorithms', quizCount: 8, challengeCount: 3 },
+  { pagePath: '/algorithms/34-0-1-knapsack', topicId: '0-1-knapsack', title: '0/1 Knapsack', section: 'Algorithms', quizCount: 8, challengeCount: 2 },
+  { pagePath: '/algorithms/35-lcs', topicId: 'lcs', title: 'Longest Common Subsequence', section: 'Algorithms', quizCount: 8, challengeCount: 2 },
+  { pagePath: '/algorithms/36-edit-distance', topicId: 'edit-distance', title: 'Edit Distance (Levenshtein)', section: 'Algorithms', quizCount: 8, challengeCount: 2 },
+  { pagePath: '/algorithms/37-matrix-chain-multiplication', topicId: 'matrix-chain-multiplication', title: 'Matrix Chain Multiplication', section: 'Algorithms', quizCount: 8, challengeCount: 2 },
+  { pagePath: '/algorithms/38-longest-increasing-subsequence', topicId: 'longest-increasing-subsequence', title: 'Longest Increasing Subsequence', section: 'Algorithms', quizCount: 8, challengeCount: 2 },
+  { pagePath: '/algorithms/39-kmp', topicId: 'kmp', title: 'Knuth-Morris-Pratt (KMP)', section: 'Algorithms', quizCount: 8, challengeCount: 2 },
+  { pagePath: '/algorithms/40-rabin-karp', topicId: 'rabin-karp', title: 'Rabin-Karp', section: 'Algorithms', quizCount: 8, challengeCount: 2 },
+  { pagePath: '/algorithms/41-boyer-moore', topicId: 'boyer-moore', title: 'Boyer-Moore', section: 'Algorithms', quizCount: 8, challengeCount: 2 },
+  { pagePath: '/algorithms/42-z-algorithm', topicId: 'z-algorithm', title: 'Z-Algorithm', section: 'Algorithms', quizCount: 8, challengeCount: 2 },
+  { pagePath: '/algorithms/43-aho-corasick', topicId: 'aho-corasick', title: 'Aho-Corasick', section: 'Algorithms', quizCount: 8, challengeCount: 2 },
+  { pagePath: '/algorithms/44-backtracking', topicId: 'backtracking', title: 'Backtracking', section: 'Algorithms', quizCount: 8, challengeCount: 2 },
+  { pagePath: '/algorithms/45-bit-manipulation', topicId: 'bit-manipulation', title: 'Bit Manipulation', section: 'Algorithms', quizCount: 8, challengeCount: 2 },
+  { pagePath: '/algorithms/46-bloom-filter-alg', topicId: 'bloom-filter-alg', title: 'Bloom Filter Algorithms', section: 'Algorithms', quizCount: 8, challengeCount: 2 },
+  { pagePath: '/algorithms/47-consistent-hashing', topicId: 'consistent-hashing', title: 'Consistent Hashing', section: 'Algorithms', quizCount: 8, challengeCount: 2 },
+  { pagePath: '/algorithms/48-rate-limiting', topicId: 'rate-limiting', title: 'Rate Limiting Algorithms', section: 'Algorithms', quizCount: 8, challengeCount: 2 },
+]
+
+export function totalQuizQuestions(): number {
+  return QUIZ_INDEX.reduce((sum, e) => sum + e.quizCount + e.challengeCount, 0)
+}
+
+export function hasQuiz(pagePath: string): boolean {
+  return pagePath in LOADERS
+}
+
+export async function loadQuizPack(pagePath: string): Promise<QuizPack | null> {
+  const loader = LOADERS[pagePath]
+  if (!loader) return null
+  const mod = await loader()
+  return mod.default
+}
+
+export function getQuizIndexEntry(pagePath: string): QuizIndexEntry | undefined {
+  return QUIZ_INDEX.find(e => e.pagePath === pagePath)
+}
