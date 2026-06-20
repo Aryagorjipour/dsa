@@ -2,6 +2,7 @@
 import { ref, onMounted } from 'vue'
 import { useRoute } from 'vitepress'
 import { useAnnotations, loadAnnotations } from '../composables/useAnnotations'
+import { handbookLink } from '../utils/handbookLink'
 
 const route = useRoute()
 const { pageNotes, pageHighlights, toggleHighlightsVisible, highlightsVisible, removeNote } = useAnnotations()
@@ -60,7 +61,7 @@ function scrollToHighlight(note) {
           <button class="note-delete" aria-label="Delete note" @click="removeNote(note.id)">✕</button>
         </li>
       </ul>
-      <a href="/my-notes" class="all-notes-link">View all notes →</a>
+      <a :href="handbookLink('/my-notes')" class="all-notes-link">View all notes →</a>
     </div>
   </div>
 </template>

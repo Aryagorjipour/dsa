@@ -1,6 +1,6 @@
 <script setup>
 import { computed, onMounted, onUnmounted, watch } from 'vue'
-import { withBase } from 'vitepress'
+import { handbookLink } from '../utils/handbookLink'
 import QuizQuestion from './QuizQuestion.vue'
 import { useQuiz } from '../composables/useQuiz'
 import { buildPlaygroundUrl } from '../utils/playgroundUrl'
@@ -139,7 +139,7 @@ function playgroundUrl() {
           >
             Study mode
           </button>
-          <a :href="withBase('/quizzes')" class="tool-btn link">All progress</a>
+          <a :href="handbookLink('/quizzes')" class="tool-btn link">All progress</a>
         </div>
       </div>
 

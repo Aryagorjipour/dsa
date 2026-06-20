@@ -1,6 +1,6 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
-import { withBase } from 'vitepress'
+import { handbookLink } from '../utils/handbookLink'
 import { QUIZ_INDEX, totalQuizQuestions } from '../../../quizzes/registry'
 import { MASTERY_THRESHOLD } from '../../../quizzes/types'
 import { loadQuizData, computeGlobalStats } from '../composables/useQuiz'
@@ -32,7 +32,7 @@ const topicRows = computed(() => {
       percent,
       mastered,
       started,
-      link: withBase(entry.pagePath) + '#quiz',
+      link: handbookLink(entry.pagePath) + '#quiz',
     }
   })
 })

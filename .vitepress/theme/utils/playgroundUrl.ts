@@ -1,4 +1,4 @@
-import { withBase } from 'vitepress'
+import { handbookLink } from './handbookLink'
 import { normalizePagePath } from './normalizePagePath'
 
 export interface PlaygroundLinkOptions {
@@ -22,5 +22,5 @@ export function buildPlaygroundUrl(options: PlaygroundLinkOptions = {}): string 
   }
 
   const qs = params.toString()
-  return withBase(`/playground${qs ? `?${qs}` : ''}`)
+  return handbookLink(`/playground${qs ? `?${qs}` : ''}`)
 }

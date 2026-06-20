@@ -1,5 +1,6 @@
 <script setup>
 import { useChapterNav } from '../composables/useChapterNav'
+import { handbookLink } from '../utils/handbookLink'
 
 const { breadcrumbs } = useChapterNav()
 </script>
@@ -8,7 +9,7 @@ const { breadcrumbs } = useChapterNav()
   <nav v-if="breadcrumbs.length > 1" class="dsa-breadcrumbs" aria-label="Breadcrumb">
     <ol>
       <li v-for="(crumb, i) in breadcrumbs" :key="i">
-        <a v-if="crumb.link && i < breadcrumbs.length - 1" :href="crumb.link">{{ crumb.text }}</a>
+        <a v-if="crumb.link && i < breadcrumbs.length - 1" :href="handbookLink(crumb.link)">{{ crumb.text }}</a>
         <span v-else aria-current="page">{{ crumb.text }}</span>
         <span v-if="i < breadcrumbs.length - 1" class="sep" aria-hidden="true">›</span>
       </li>

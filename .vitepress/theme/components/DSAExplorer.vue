@@ -2,6 +2,7 @@
 import { ref, computed } from 'vue'
 import { useFocusMode } from '../composables/useFocusMode'
 import { getExplorerTree } from '../../sidebar'
+import { handbookLink } from '../utils/handbookLink'
 
 const collapsed = ref(true)
 const { isFocusMode, toggleFocusMode } = useFocusMode()
@@ -28,7 +29,7 @@ const tree = computed(() => getExplorerTree())
           <div class="folder">{{ section.name }}</div>
           <ul>
             <li v-for="item in section.children" :key="item.link">
-              <a :href="item.link">{{ item.text }}</a>
+              <a :href="handbookLink(item.link)">{{ item.text }}</a>
             </li>
           </ul>
         </li>

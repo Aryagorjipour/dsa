@@ -3,6 +3,7 @@ import { computed } from 'vue'
 import { useData, useRoute } from 'vitepress'
 import { showToast } from '../composables/useToast'
 import { buildPlaygroundUrl } from '../utils/playgroundUrl'
+import { handbookLink } from '../utils/handbookLink'
 import { normalizePagePath } from '../utils/normalizePagePath'
 
 const { page } = useData()
@@ -67,8 +68,8 @@ Start your explanation now.`
     <div class="actions">
       <button class="btn" @click="sharePage">Share</button>
       <button class="btn" @click="giveToAI">{{ isProjectPage ? 'Mentor Mode' : 'Give to AI' }}</button>
-      <a v-if="isProjectPage" href="/projects/README" class="btn">Project Lab</a>
-      <a v-if="isProjectPage" href="/projects/contributing" class="btn">Contribute</a>
+      <a v-if="isProjectPage" :href="handbookLink('/projects/README')" class="btn">Project Lab</a>
+      <a v-if="isProjectPage" :href="handbookLink('/projects/contributing')" class="btn">Contribute</a>
       <a
         v-if="!isProjectPage"
         :href="playgroundUrl()"
