@@ -8,6 +8,11 @@
   gap: 0;
 }
 
+/* Custom ChapterNav replaces VitePress built-in prev/next pager */
+.VPDocFooter .prev-next {
+  display: none;
+}
+
 .VPHero {
   padding-top: 80px;
 }

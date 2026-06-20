@@ -2,6 +2,7 @@
 import { watch, onMounted } from 'vue'
 import { useRoute } from 'vitepress'
 import { useAnnotations, loadAnnotations } from '../composables/useAnnotations'
+import { assignBlockIds } from '../utils/assignBlockIds'
 import { applyHighlightToDOM } from '../utils/highlightRestorer'
 
 const route = useRoute()
@@ -9,6 +10,7 @@ const { pageHighlights, highlightsVisible, loaded } = useAnnotations()
 
 function restoreHighlights() {
   if (!highlightsVisible.value) return
+  assignBlockIds()
   document.querySelectorAll('mark.dsa-hl').forEach(el => {
     const parent = el.parentNode
     if (!parent) return

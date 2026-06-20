@@ -60,6 +60,10 @@ Start your explanation now.`
 
 <template>
   <div class="page-tools">
+    <p class="annotation-hint">
+      Select text to highlight or add a note. Hover a section heading and click
+      <strong>+</strong> for a section note. Your notes appear in the sidebar.
+    </p>
     <div class="actions">
       <button class="btn" @click="sharePage">Share</button>
       <button class="btn" @click="giveToAI">{{ isProjectPage ? 'Mentor Mode' : 'Give to AI' }}</button>
@@ -85,6 +89,13 @@ Start your explanation now.`
   margin: 40px 0 20px;
   padding-top: 16px;
   border-top: 1px solid var(--vp-c-divider);
+}
+
+.annotation-hint {
+  font-size: 13px;
+  color: var(--vp-c-text-2);
+  line-height: 1.5;
+  margin: 0 0 12px;
 }
 
 .actions {

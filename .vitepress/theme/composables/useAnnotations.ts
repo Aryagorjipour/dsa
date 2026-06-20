@@ -1,5 +1,6 @@
 import { ref, computed } from 'vue'
 import { useRoute } from 'vitepress'
+import { pagePathKey, pathsMatch } from '../utils/pagePathKey'
 import {
   type Highlight,
   type Note,
@@ -32,12 +33,14 @@ export async function loadAnnotations() {
 export function useAnnotations() {
   const route = useRoute()
 
+  const currentPagePath = computed(() => pagePathKey(route.path))
+
   const pageHighlights = computed(() =>
-    highlights.value.filter(h => h.pagePath === route.path)
+    highlights.value.filter(h => pathsMatch(h.pagePath, route.path))
   )
 
   const pageNotes = computed(() =>
-    notes.value.filter(n => n.pagePath === route.path)
+    notes.value.filter(n => pathsMatch(n.pagePath, route.path))
   )
 
   async function addHighlight(data: Omit<Highlight, 'id' | 'createdAt'>) {
@@ -98,6 +101,7 @@ export function useAnnotations() {
     notes,
     highlightsVisible,
     loaded,
+    currentPagePath,
     pageHighlights,
     pageNotes,
     addHighlight,

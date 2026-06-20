@@ -65,18 +65,26 @@ export function applyHighlightToDOM(highlight: Highlight): boolean {
     if (!pos) return false
   }
 
-  try {
-    const range = document.createRange()
-    range.setStart(pos.startNode, pos.startOff)
-    range.setEnd(pos.endNode, pos.endOff)
+  const range = document.createRange()
+  range.setStart(pos.startNode, pos.startOff)
+  range.setEnd(pos.endNode, pos.endOff)
 
-    const mark = document.createElement('mark')
-    mark.className = `dsa-hl dsa-hl-${highlight.color}`
-    mark.dataset.highlightId = highlight.id
+  const mark = document.createElement('mark')
+  mark.className = `dsa-hl dsa-hl-${highlight.color}`
+  mark.dataset.highlightId = highlight.id
+
+  try {
     range.surroundContents(mark)
     return true
   } catch {
-    return false
+    try {
+      const fragment = range.extractContents()
+      mark.appendChild(fragment)
+      range.insertNode(mark)
+      return true
+    } catch {
+      return false
+    }
   }
 }
 

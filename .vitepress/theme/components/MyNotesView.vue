@@ -1,5 +1,6 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
+import { withBase } from 'vitepress'
 import { useAnnotations, loadAnnotations } from '../composables/useAnnotations'
 
 const { notes, removeNote } = useAnnotations()
@@ -50,7 +51,7 @@ function formatDate(ts) {
       <h3>{{ section }}</h3>
       <ul>
         <li v-for="note in items" :key="note.id">
-          <a :href="note.pagePath" class="note-link">
+          <a :href="withBase(note.pagePath)" class="note-link">
             <span class="note-title">{{ note.title || 'Untitled' }}</span>
             <span class="note-body">{{ note.body }}</span>
             <span class="note-meta">{{ formatDate(note.updatedAt) }} · {{ note.pagePath }}</span>

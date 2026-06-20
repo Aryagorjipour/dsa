@@ -5,7 +5,7 @@ import { useAnnotations } from '../composables/useAnnotations'
 import { showToast } from '../composables/useToast'
 
 const route = useRoute()
-const { addNote } = useAnnotations()
+const { addNote, currentPagePath } = useAnnotations()
 
 function injectHeadingButtons() {
   const doc = document.querySelector('.vp-doc')
@@ -29,7 +29,7 @@ function injectHeadingButtons() {
       const body = prompt(`Note for "${title}":`, '')
       if (body === null || !body.trim()) return
       await addNote({
-        pagePath: route.path,
+        pagePath: currentPagePath.value,
         anchorType: 'heading',
         anchorId: id,
         title,

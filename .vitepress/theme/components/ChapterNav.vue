@@ -1,4 +1,5 @@
 <script setup>
+import { withBase } from 'vitepress'
 import { useChapterNav } from '../composables/useChapterNav'
 
 const { prev, next } = useChapterNav()
@@ -6,12 +7,12 @@ const { prev, next } = useChapterNav()
 
 <template>
   <nav v-if="prev || next" class="chapter-nav" aria-label="Chapter navigation">
-    <a v-if="prev" :href="prev.link" class="chapter-nav-link prev">
+    <a v-if="prev" :href="withBase(prev.link)" class="chapter-nav-link prev">
       <span class="label">Previous</span>
       <span class="title">{{ prev.text }}</span>
     </a>
     <div v-else class="chapter-nav-spacer" />
-    <a v-if="next" :href="next.link" class="chapter-nav-link next">
+    <a v-if="next" :href="withBase(next.link)" class="chapter-nav-link next">
       <span class="label">Next</span>
       <span class="title">{{ next.text }}</span>
     </a>

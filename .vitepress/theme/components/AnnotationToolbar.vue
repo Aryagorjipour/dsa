@@ -1,12 +1,11 @@
 <script setup>
 import { ref, onMounted, onUnmounted } from 'vue'
-import { useRoute } from 'vitepress'
 import { useAnnotations } from '../composables/useAnnotations'
+import { assignBlockIds } from '../utils/assignBlockIds'
 import { getSelectionAnchor } from '../utils/highlightRestorer'
 import { applyHighlightToDOM } from '../utils/highlightRestorer'
 
-const route = useRoute()
-const { addHighlight, addNote, highlightsVisible } = useAnnotations()
+const { addHighlight, addNote, highlightsVisible, currentPagePath } = useAnnotations()
 
 const visible = ref(false)
 const x = ref(0)
@@ -31,6 +30,7 @@ function handleSelection() {
     return
   }
 
+  assignBlockIds()
   const anchor = getSelectionAnchor()
   if (!anchor) {
     hide()
@@ -50,7 +50,7 @@ async function highlight(color) {
   if (!anchor) return
 
   const hl = await addHighlight({
-    pagePath: route.path,
+    pagePath: currentPagePath.value,
     anchorType: 'text-range',
     blockId: anchor.blockId,
     startOffset: anchor.startOffset,
@@ -72,7 +72,7 @@ async function addNoteFromSelection() {
   if (!anchor) return
 
   const hl = await addHighlight({
-    pagePath: route.path,
+    pagePath: currentPagePath.value,
     anchorType: 'text-range',
     blockId: anchor.blockId,
     startOffset: anchor.startOffset,
@@ -88,7 +88,7 @@ async function addNoteFromSelection() {
   const body = prompt('Add a note for this highlight:', '')
   if (body !== null && body.trim()) {
     await addNote({
-      pagePath: route.path,
+      pagePath: currentPagePath.value,
       anchorType: 'highlight',
       anchorId: hl.id,
       title: anchor.textSnapshot.slice(0, 60),
