@@ -1,4 +1,4 @@
-/* Minimal custom styles for DSA Handbook */
+/* DSA Handbook custom styles */
 :root {
   --vp-c-brand-1: #6366f1;
   --vp-c-brand-2: #4f46e5;
@@ -8,44 +8,10 @@
   font-weight: 600;
 }
 
-/* Nice landing hero adjustments */
 .VPHero {
   padding-top: 80px;
 }
 
-/* Explorer on the right - basic styling */
-.dsa-explorer {
-  font-size: 13px;
-  line-height: 1.5;
-  padding: 8px 4px;
-}
-
-.dsa-explorer ul {
-  list-style: none;
-  padding-left: 12px;
-  margin: 2px 0;
-}
-
-.dsa-explorer > ul {
-  padding-left: 0;
-}
-
-.dsa-explorer a {
-  color: var(--vp-c-text-2);
-  text-decoration: none;
-}
-
-.dsa-explorer a:hover {
-  color: var(--vp-c-brand-1);
-}
-
-.dsa-explorer .folder {
-  font-weight: 600;
-  color: var(--vp-c-text-1);
-  margin-top: 8px;
-}
-
-/* Make the header logo bigger and more visible */
 .VPNavBarTitle .logo,
 .VPNavBarTitle .logo img {
   height: 42px !important;
@@ -53,20 +19,40 @@
   width: auto !important;
 }
 
-/* If using the component somewhere else */
 .dsa-logo {
   height: 42px;
   width: auto;
 }
 
-/* Focus Mode - hide sidebars for pure content focus */
+/* Reading typography */
+.vp-doc p {
+  line-height: 1.75;
+}
+
+.vp-doc h2 {
+  margin-top: 2.5rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--vp-c-divider);
+}
+
+.vp-doc table {
+  width: 100%;
+  font-size: 14px;
+}
+
+.vp-doc table th {
+  background: var(--vp-c-bg-soft);
+}
+
+/* Focus Mode */
 html.focus-mode .VPSidebar,
-html.focus-mode .dsa-explorer {
+html.focus-mode .dsa-explorer,
+html.focus-mode .notes-panel {
   display: none !important;
 }
 
 html.focus-mode .VPDoc {
-  max-width: 860px;
+  max-width: 48rem;
   margin: 0 auto;
 }
 
@@ -74,9 +60,8 @@ html.focus-mode .VPContent {
   padding-left: 0 !important;
 }
 
-/* Optional: subtle indicator */
 html.focus-mode::before {
-  content: "Focus Mode • Press Esc or ⌘F to exit";
+  content: "Focus Mode · Shift+F or Esc to exit";
   position: fixed;
   bottom: 12px;
   left: 50%;
@@ -89,58 +74,94 @@ html.focus-mode::before {
   border: 1px solid var(--vp-c-divider);
   z-index: 100;
   opacity: 0.85;
+  pointer-events: none;
 }
 
-.dsa-explorer .explorer-content.is-collapsed {
-  max-height: 0 !important;
-  overflow: hidden;
-  padding: 0;
-  margin: 0;
+/* Text highlights */
+mark.dsa-hl {
+  border-radius: 2px;
+  padding: 0 1px;
+  cursor: pointer;
 }
 
-.explorer-content {
-  max-height: 380px;
-  overflow-y: auto;
-  transition: max-height 0.22s ease;
+mark.dsa-hl-yellow { background: rgba(254, 240, 138, 0.6); }
+mark.dsa-hl-green { background: rgba(187, 247, 208, 0.6); }
+mark.dsa-hl-blue { background: rgba(191, 219, 254, 0.6); }
+mark.dsa-hl-pink { background: rgba(251, 207, 232, 0.6); }
+
+html.highlights-hidden mark.dsa-hl {
+  background: transparent !important;
+  color: inherit;
 }
 
-.explorer-footer {
-  display: flex;
-  gap: 6px;
-  margin-top: 8px;
+html.dark mark.dsa-hl-yellow { background: rgba(161, 98, 7, 0.35); }
+html.dark mark.dsa-hl-green { background: rgba(21, 128, 61, 0.35); }
+html.dark mark.dsa-hl-blue { background: rgba(29, 78, 216, 0.35); }
+html.dark mark.dsa-hl-pink { background: rgba(157, 23, 77, 0.35); }
+
+/* Code block playground action */
+.vp-doc pre {
+  position: relative;
 }
 
-.focus-btn, .collapse-btn {
-  font-size: 11px;
+.dsa-code-action {
+  position: absolute;
+  top: 6px;
+  right: 6px;
   padding: 2px 8px;
+  font-size: 11px;
   border: 1px solid var(--vp-c-divider);
-  background: transparent;
+  background: var(--vp-c-bg-elv);
   color: var(--vp-c-text-2);
   border-radius: 4px;
   cursor: pointer;
-  flex: 1;
+  opacity: 0;
+  transition: opacity 0.15s;
+  z-index: 2;
 }
 
-.focus-btn:hover, .collapse-btn:hover {
-  background: var(--vp-c-bg-alt);
+.vp-doc pre:hover .dsa-code-action {
+  opacity: 1;
 }
 
-.focus-btn-small {
-  font-size: 11px;
-  padding: 1px 8px;
-  border: 1px solid var(--vp-c-brand-1);
-  background: var(--vp-c-bg);
+.dsa-code-action:hover {
   color: var(--vp-c-brand-1);
+  border-color: var(--vp-c-brand-1);
+}
+
+/* Heading note buttons */
+.vp-doc h2.dsa-heading-with-note,
+.vp-doc h3.dsa-heading-with-note {
+  position: relative;
+  padding-right: 28px;
+}
+
+.dsa-heading-note-btn {
+  position: absolute;
+  right: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 22px;
+  height: 22px;
+  padding: 0;
+  border: 1px solid var(--vp-c-divider);
+  background: var(--vp-c-bg-soft);
+  color: var(--vp-c-text-3);
   border-radius: 4px;
+  font-size: 14px;
+  line-height: 1;
   cursor: pointer;
-  white-space: nowrap;
+  opacity: 0;
+  transition: opacity 0.15s;
 }
 
-.focus-btn-small.active {
-  background: var(--vp-c-brand-1);
-  color: white;
+.vp-doc h2:hover .dsa-heading-note-btn,
+.vp-doc h3:hover .dsa-heading-note-btn,
+.dsa-heading-note-btn:focus {
+  opacity: 1;
 }
 
-.focus-btn-small:hover {
-  opacity: 0.9;
+.dsa-heading-note-btn:hover {
+  color: var(--vp-c-brand-1);
+  border-color: var(--vp-c-brand-1);
 }

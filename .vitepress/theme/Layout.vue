@@ -2,64 +2,62 @@
 import DefaultTheme from 'vitepress/theme'
 import DSAExplorer from './components/DSAExplorer.vue'
 import PageTools from './components/PageTools.vue'
-import { ref, onMounted, onUnmounted } from 'vue'
+import NotesPanel from './components/NotesPanel.vue'
+import Breadcrumbs from './components/Breadcrumbs.vue'
+import ChapterNav from './components/ChapterNav.vue'
+import ReadingProgress from './components/ReadingProgress.vue'
+import Toast from './components/Toast.vue'
+import AnnotationToolbar from './components/AnnotationToolbar.vue'
+import AnnotationRestorer from './components/AnnotationRestorer.vue'
+import CodeBlockActions from './components/CodeBlockActions.vue'
+import HeadingNotes from './components/HeadingNotes.vue'
+import SettingsDrawer from './components/SettingsDrawer.vue'
+import { useFocusMode } from './composables/useFocusMode'
 
 const { Layout } = DefaultTheme
-const isFocusMode = ref(false)
-
-function toggleGlobalFocus() {
-  isFocusMode.value = !isFocusMode.value
-  if (isFocusMode.value) {
-    document.documentElement.classList.add('focus-mode')
-  } else {
-    document.documentElement.classList.remove('focus-mode')
-  }
-}
-
-function handleKey(e) {
-  if ((e.key.toLowerCase() === 'f') && !e.target.matches('input, textarea')) {
-    e.preventDefault()
-    toggleGlobalFocus()
-  }
-  if (e.key === 'Escape' && isFocusMode.value) {
-    toggleGlobalFocus()
-  }
-}
-
-onMounted(() => {
-  document.addEventListener('keydown', handleKey)
-  const observer = new MutationObserver(() => {
-    isFocusMode.value = document.documentElement.classList.contains('focus-mode')
-  })
-  observer.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] })
-})
-
-onUnmounted(() => {
-  document.removeEventListener('keydown', handleKey)
-})
+const { isFocusMode, toggleFocusMode } = useFocusMode()
 </script>
 
 <template>
   <Layout>
-    <!-- Inject our explorer into the right aside area -->
-    <template #aside-outline-before>
+    <template #nav-bar-content-after>
+      <SettingsDrawer />
+    </template>
+
+    <template #doc-before>
+      <Breadcrumbs />
+    </template>
+
+    <template #aside-outline-after>
+      <NotesPanel />
       <DSAExplorer />
     </template>
 
-    <!-- Page tools (Share, AI, Playground) at the end of every doc -->
+    <template #doc-footer-before>
+      <ChapterNav />
+    </template>
+
     <template #doc-after>
       <PageTools />
     </template>
 
-    <!-- Floating Focus button - always visible and prominent when not focused -->
-    <div 
-      v-if="!isFocusMode" 
+    <ReadingProgress />
+    <Toast />
+    <AnnotationToolbar />
+    <AnnotationRestorer />
+    <CodeBlockActions />
+    <HeadingNotes />
+
+    <button
+      v-if="!isFocusMode"
       class="floating-focus"
-      @click="toggleGlobalFocus"
-      title="Focus Mode - Hide sidebars for distraction-free reading (press F)"
+      aria-label="Enter focus mode (Shift+F)"
+      title="Focus Mode — hide sidebars for distraction-free reading (Shift+F)"
+      @click="toggleFocusMode"
     >
-      👁 Focus
-    </div>
+      <span class="focus-icon" aria-hidden="true">◐</span>
+      Focus
+    </button>
   </Layout>
 </template>
 
@@ -74,15 +72,30 @@ onUnmounted(() => {
   border-radius: 9999px;
   font-size: 13px;
   font-weight: 600;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
   cursor: pointer;
   z-index: 100;
   display: flex;
   align-items: center;
   gap: 6px;
+  border: none;
   transition: transform 0.1s;
 }
+
 .floating-focus:hover {
-  transform: scale(1.05);
+  transform: scale(1.04);
+}
+
+.focus-icon {
+  font-size: 14px;
+}
+
+@media (max-width: 640px) {
+  .floating-focus {
+    bottom: 16px;
+    right: 16px;
+    padding: 6px 12px;
+    font-size: 12px;
+  }
 }
 </style>

@@ -11,8 +11,9 @@
     "verify:coverage": "python3 scripts/audit_coverage.py --strict",
     "verify:coverage:write": "python3 scripts/audit_coverage.py --write",
     "verify": "npm run verify:coverage:write && npm run verify:coverage && npm run verify:examples && npm run docs:build",
-    "docs:dev": "vitepress dev",
-    "docs:build": "vitepress build",
+    "docs:manifest": "node scripts/generate-examples-manifest.mjs",
+    "docs:dev": "npm run docs:manifest && vitepress dev",
+    "docs:build": "npm run docs:manifest && vitepress build",
     "docs:preview": "vitepress preview"
   },
   "keywords": [],
@@ -21,5 +22,16 @@
   "type": "commonjs",
   "devDependencies": {
     "vitepress": "^1.6.4"
+  },
+  "dependencies": {
+    "@babel/runtime": "^8.0.0",
+    "@codemirror/commands": "^6.10.3",
+    "@codemirror/lang-cpp": "^6.0.3",
+    "@codemirror/lang-go": "^6.0.1",
+    "@codemirror/language": "^6.12.3",
+    "@codemirror/state": "^6.6.0",
+    "@codemirror/view": "^6.43.1",
+    "codemirror": "^6.0.2",
+    "idb-keyval": "^6.2.5"
   }
 }
