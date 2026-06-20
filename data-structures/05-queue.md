@@ -192,4 +192,9 @@ Queues are fundamental to:
 
 Master both the array-backed circular version and the linked version conceptually.
 
+
+::: tip Project Lab
+**Build it yourself:** [Task Queue System](/projects/tier-2/06-task-queue-system) — ring buffer, priority queue, and dependency-aware scheduling.
+:::
+
 **Next:** [06 - Deque](06-deque.md) — the Swiss Army knife of linear structures.

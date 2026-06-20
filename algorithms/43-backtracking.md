@@ -40,3 +40,6 @@ Classic problems:
 ## Summary
 
 Backtracking is brute force with intelligence. The difference between "impossibly slow" and "surprisingly fast" is often good pruning.
+::: tip Project Lab
+**Build it yourself:** [Constraint Solver](/projects/tier-4/22-constraint-solver) — Sudoku, N-Queens, and mini-SAT with backtracking.
+:::

@@ -54,3 +54,6 @@ Every public API you have ever used:
 Rate limiting is one of the most important "applied algorithms" in building reliable internet services.
 
 It combines classic algorithms with distributed systems data structures (Redis, etc.).
+::: tip Project Lab
+**Build it yourself:** [API Rate Limiter](/projects/tier-4/18-api-rate-limiter) — token bucket, sliding window, and HTTP middleware.
+:::

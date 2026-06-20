@@ -249,4 +249,8 @@ It is one of the highest-ROI structures you can add to any system that has memor
 
 Once you implement it once from scratch, you will understand caching deeply for the rest of your career.
 
+::: tip Project Lab
+**Build it yourself:** [Cache with Eviction Policies](/projects/tier-2/05-cache-with-eviction) — LRU, LFU, and benchmarkable eviction policies in a swappable cache system.
+:::
+
 **Next:** [11 - LFU Cache](11-lfu-cache.md)

@@ -269,6 +269,11 @@ But it is still the **best first filter** we have.
 
 ---
 
+
+::: tip Project Lab
+**Build it yourself:** [Sorting Benchmarker](/projects/tier-1/02-sorting-benchmarker) — measure Big O predictions against real hardware.
+:::
+
 **Next:** We will use Big O heavily when we talk about every data structure and algorithm.
 
 Let's build actual things now.

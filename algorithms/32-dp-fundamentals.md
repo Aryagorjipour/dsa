@@ -62,3 +62,6 @@ It is about:
 - Computing bottom-up or top-down with caching
 
 Master state definition and the rest follows.
+::: tip Project Lab
+**Build it yourself:** [Dynamic Programming Toolkit](/projects/tier-3/14-dp-toolkit) — knapsack, LCS, edit distance, and LIS in one CLI.
+:::

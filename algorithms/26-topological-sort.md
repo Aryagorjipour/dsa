@@ -49,3 +49,6 @@ if (order.Count != nodes.Count) // cycle
 ## Summary
 
 Topological sort is the algorithm that makes "do things in the right dependency order" possible at scale in every build tool and package manager you use.
+::: tip Project Lab
+**Build it yourself:** [Task Queue System](/projects/tier-2/06-task-queue-system) — Kahn's algorithm for dependency ordering.
+:::

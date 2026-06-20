@@ -232,4 +232,9 @@ If you ever work on:
 
 It is one of the most "systems-y" data structures that still appears constantly in application code.
 
+
+::: tip Project Lab
+**Build it yourself:** [Task Queue System](/projects/tier-2/06-task-queue-system) and [API Rate Limiter](/projects/tier-4/18-api-rate-limiter) — ring buffers for zero-allocation queues.
+:::
+
 **Next:** [08 - Hash Set](08-hash-set.md)

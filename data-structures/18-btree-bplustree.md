@@ -157,4 +157,9 @@ They are the reason you can have a table with 50 million rows and still do a loo
 
 If you understand B+ trees deeply, you will understand a huge portion of how databases actually work under the hood.
 
+
+::: tip Project Lab
+**Build it yourself:** [Persistent Key-Value Store](/projects/tier-3/11-key-value-store) — B+ Tree pages, WAL, and Bloom-filtered lookups.
+:::
+
 **Next:** [19 - Skip List](19-skip-list.md)

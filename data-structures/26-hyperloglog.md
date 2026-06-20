@@ -107,4 +107,9 @@ It lets companies count unique things at planetary scale with almost no memory.
 
 If you ever work in analytics, big data, or high-scale web systems, you will encounter it.
 
+
+::: tip Project Lab
+**Build it yourself:** [Stream Analytics Pipeline](/projects/tier-4/19-stream-analytics-pipeline) — cardinality estimation at streaming scale.
+:::
+
 **Next:** [27 - Count-Min Sketch](27-count-min-sketch.md)

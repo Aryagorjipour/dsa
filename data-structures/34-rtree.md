@@ -88,3 +88,6 @@ You now have a comprehensive understanding of 30+ fundamental and advanced data 
 We will start with the algorithms fundamentals we haven't fully expanded yet if needed, then dive deep into searching, sorting, graphs, dynamic programming, string algorithms, and more — each with their motivating problems and full code.
 
 Let's go to the algorithms!
+::: tip Project Lab
+**Build it yourself:** [Geospatial Index](/projects/tier-4/21-geospatial-index) — R-tree range and nearest-neighbor queries.
+:::

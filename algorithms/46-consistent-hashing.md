@@ -36,3 +36,6 @@ When a node is added/removed, only the keys in a small arc need to move.
 ## Summary
 
 Consistent hashing is the reason you can add cache servers to your cluster without causing a thundering herd or massive data movement.
+::: tip Project Lab
+**Build it yourself:** [Distributed Cache](/projects/tier-4/17-distributed-cache) — virtual nodes, key migration, and per-node LRU.
+:::

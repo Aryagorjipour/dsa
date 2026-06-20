@@ -100,3 +100,6 @@ If h is **admissible** (never overestimates), A* is optimal.
 ## Summary
 
 A* is the workhorse of real-world pathfinding when you have a reasonable way to estimate "how far is the goal from here".
+::: tip Project Lab
+**Build it yourself:** [Route Planner](/projects/tier-2/08-route-planner) — grid pathfinding with admissible heuristics.
+:::

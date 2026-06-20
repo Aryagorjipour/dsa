@@ -152,6 +152,21 @@ This handbook now has comprehensive coverage for all 0-34 DS and 0-47 Algos as r
 
 ---
 
+## Project Lab — Learn by Building
+
+The handbook teaches **what** each structure and algorithm does. [Project Lab](/projects/README) teaches **how they compose into real systems**.
+
+22 build-your-own projects across four tiers — from a search library and hash map to distributed caches, search engines, and geospatial indexes. Each spec includes architecture, milestones with hints, and C#/Go guidance.
+
+- [Project Lab Overview](/projects/README)
+- [Discover by Category](/projects/discover/by-category)
+- [Discover by Data Structure](/projects/discover/by-data-structure)
+- [Discover by Algorithm](/projects/discover/by-algorithm)
+
+Start with Tier 1 if you are new to building systems from scratch.
+
+---
+
 ## The Mindset Shift You Need
 
 Most people treat DSA like a checklist of interview trivia.

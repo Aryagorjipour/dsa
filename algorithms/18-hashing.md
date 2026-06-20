@@ -63,3 +63,6 @@ It is the foundation for:
 - Deduplication at scale
 
 Master hashing here before advanced uses.
+::: tip Project Lab
+**Build it yourself:** [Hash Map from Scratch](/projects/tier-1/04-hash-map-from-scratch) — FNV-1a, collision resolution, and resizing.
+:::

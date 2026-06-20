@@ -264,4 +264,9 @@ Segment tree = binary tree over array ranges that lets you query and update rang
 
 It is one of the most powerful "array + range" tools in the algorithmic toolbox.
 
+
+::: tip Project Lab
+**Build it yourself:** [Time-Series Analytics Engine](/projects/tier-3/12-time-series-analytics) — range queries and updates on streaming metrics.
+:::
+
 **Next:** [21 - Fenwick Tree (Binary Indexed Tree)](21-fenwick-tree.md)

@@ -42,3 +42,6 @@ With binary heap: O((V + E) log V)
 ## Summary
 
 Dijkstra = the foundation of almost all real-world shortest path routing with non-negative costs.
+::: tip Project Lab
+**Build it yourself:** [Route Planner](/projects/tier-2/08-route-planner) — Dijkstra, A*, and all-pairs shortest paths.
+:::

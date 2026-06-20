@@ -199,3 +199,6 @@ Together they are the foundation of:
 - Many beautiful algorithms we will see later.
 
 Next up: Divide and Conquer.
+::: tip Project Lab
+**Build it yourself:** [Stack Calculator](/projects/tier-1/03-stack-calculator) and [DP Toolkit](/projects/tier-3/14-dp-toolkit) — recursion in parsers and dynamic programming.
+:::

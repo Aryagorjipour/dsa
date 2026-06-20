@@ -233,4 +233,9 @@ If your problem involves:
 
 Master them. Then learn their evil twins (when they aren't fast enough): trees, tries, and the probabilistic structures we'll see later (Bloom, HyperLogLog, Count-Min, etc.).
 
+
+::: tip Project Lab
+**Build it yourself:** [Hash Map from Scratch](/projects/tier-1/04-hash-map-from-scratch) — separate chaining, open addressing, Robin Hood hashing, and HashDoS awareness.
+:::
+
 **Next:** Caches! [10 - LRU Cache](10-lru-cache.md)

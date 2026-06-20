@@ -200,4 +200,9 @@ If your problem says:
 
 ...your brain should immediately think **Stack**.
 
+
+::: tip Project Lab
+**Build it yourself:** [Stack-Based Expression Evaluator](/projects/tier-1/03-stack-calculator) — infix/postfix parsing, evaluation, and recursive descent.
+:::
+
 **Next:** [05 - Queue](05-queue.md)

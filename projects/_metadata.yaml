@@ -1,0 +1,267 @@
+# Machine-readable index for Project Lab discovery pages and cross-linking.
+# Update this file when adding or changing projects.
+
+projects:
+  - id: 1
+    slug: tier-1/01-search-library
+    title: Search Library
+    tier: 1
+    difficulty: beginner
+    status: complete
+    categories: [fundamentals]
+    data_structures: [array]
+    algorithms: [linear-search, binary-search, exponential-search]
+    fundamentals: [big-o]
+    prerequisites: []
+
+  - id: 2
+    slug: tier-1/02-sorting-benchmarker
+    title: Sorting Benchmarker
+    tier: 1
+    difficulty: beginner
+    status: complete
+    categories: [fundamentals]
+    data_structures: [array, dynamic-array]
+    algorithms: [bubble-sort, insertion-sort, merge-sort, quicksort, heapsort, timsort, counting-sort, radix-sort]
+    fundamentals: [big-o, divide-and-conquer]
+    prerequisites: []
+
+  - id: 3
+    slug: tier-1/03-stack-calculator
+    title: Stack-Based Expression Evaluator
+    tier: 1
+    difficulty: beginner
+    status: complete
+    categories: [fundamentals, linear]
+    data_structures: [stack, linked-list, dynamic-array]
+    algorithms: []
+    fundamentals: [recursion, big-o]
+    prerequisites: []
+
+  - id: 4
+    slug: tier-1/04-hash-map-from-scratch
+    title: Hash Map from Scratch
+    tier: 1
+    difficulty: intermediate
+    status: complete
+    categories: [hash]
+    data_structures: [hash-map, hash-set, array, linked-list, dynamic-array]
+    algorithms: [hashing]
+    fundamentals: [big-o]
+    prerequisites: []
+
+  - id: 5
+    slug: tier-2/05-cache-with-eviction
+    title: Cache with Eviction Policies
+    tier: 2
+    difficulty: intermediate
+    status: complete
+    categories: [linear, hash]
+    data_structures: [lru-cache, lfu-cache, hash-map, linked-list, heap, priority-queue]
+    algorithms: []
+    fundamentals: [big-o]
+    prerequisites: [tier-1/04-hash-map-from-scratch]
+
+  - id: 6
+    slug: tier-2/06-task-queue-system
+    title: Task Queue System
+    tier: 2
+    difficulty: intermediate
+    status: complete
+    categories: [linear, graphs]
+    data_structures: [queue, deque, ring-buffer, heap, priority-queue]
+    algorithms: [topological-sort]
+    fundamentals: [big-o]
+    prerequisites: [tier-1/03-stack-calculator]
+
+  - id: 7
+    slug: tier-2/07-autocomplete-engine
+    title: Autocomplete Engine
+    tier: 2
+    difficulty: intermediate
+    status: complete
+    categories: [trees]
+    data_structures: [trie, priority-queue]
+    algorithms: [trie-operations, bfs, dfs]
+    fundamentals: [big-o]
+    prerequisites: [tier-1/04-hash-map-from-scratch]
+
+  - id: 8
+    slug: tier-2/08-route-planner
+    title: Route Planner
+    tier: 2
+    difficulty: intermediate
+    status: complete
+    categories: [graphs]
+    data_structures: [graph, priority-queue]
+    algorithms: [bfs, dfs, dijkstra, bellman-ford, floyd-warshall, astar]
+    fundamentals: [big-o, greedy]
+    prerequisites: []
+
+  - id: 9
+    slug: tier-2/09-statistical-sampler
+    title: Statistical Sampler
+    tier: 2
+    difficulty: intermediate
+    status: complete
+    categories: [fundamentals, linear]
+    data_structures: [array]
+    algorithms: [quickselect, reservoir-sampling]
+    fundamentals: [two-pointers, sliding-window, big-o]
+    prerequisites: [tier-1/02-sorting-benchmarker]
+
+  - id: 10
+    slug: tier-3/10-in-memory-db-index
+    title: In-Memory Database Index
+    tier: 3
+    difficulty: advanced
+    status: complete
+    categories: [trees]
+    data_structures: [bst, red-black-tree, tree-n-ary]
+    algorithms: [bst-operations, self-balancing-trees, binary-search]
+    fundamentals: [big-o]
+    prerequisites: [tier-1/01-search-library]
+
+  - id: 11
+    slug: tier-3/11-key-value-store
+    title: Persistent Key-Value Store
+    tier: 3
+    difficulty: advanced
+    status: complete
+    categories: [trees, hash]
+    data_structures: [btree-bplustree, skip-list, bloom-filter]
+    algorithms: [hashing, bloom-filter-alg]
+    fundamentals: [big-o]
+    prerequisites: [tier-1/04-hash-map-from-scratch]
+
+  - id: 12
+    slug: tier-3/12-time-series-analytics
+    title: Time-Series Analytics Engine
+    tier: 3
+    difficulty: advanced
+    status: complete
+    categories: [trees]
+    data_structures: [segment-tree, fenwick-tree]
+    algorithms: []
+    fundamentals: [two-pointers, sliding-window, greedy, big-o]
+    prerequisites: [tier-1/02-sorting-benchmarker]
+
+  - id: 13
+    slug: tier-3/13-full-text-search-engine
+    title: Full-Text Search Engine
+    tier: 3
+    difficulty: advanced
+    status: complete
+    categories: [trees]
+    data_structures: [trie, suffix-array]
+    algorithms: [kmp, rabin-karp, boyer-moore, z-algorithm, aho-corasick, trie-operations]
+    fundamentals: [big-o]
+    prerequisites: [tier-2/07-autocomplete-engine]
+
+  - id: 14
+    slug: tier-3/14-dp-toolkit
+    title: Dynamic Programming Toolkit
+    tier: 3
+    difficulty: advanced
+    status: complete
+    categories: [fundamentals]
+    data_structures: []
+    algorithms: [dp-fundamentals, knapsack, lcs, edit-distance, matrix-chain, lis]
+    fundamentals: [recursion, big-o]
+    prerequisites: [tier-1/03-stack-calculator]
+
+  - id: 15
+    slug: tier-3/15-network-optimizer
+    title: Network Optimizer
+    tier: 3
+    difficulty: advanced
+    status: complete
+    categories: [graphs]
+    data_structures: [graph, disjoint-set]
+    algorithms: [mst-kruskal-prim, topological-sort, bfs, dfs]
+    fundamentals: [greedy, big-o]
+    prerequisites: [tier-2/08-route-planner]
+
+  - id: 16
+    slug: tier-4/16-mini-version-control
+    title: Mini Version Control System
+    tier: 4
+    difficulty: expert
+    status: complete
+    categories: [trees, graphs, advanced]
+    data_structures: [merkle-tree]
+    algorithms: [hashing, dfs, backtracking]
+    fundamentals: [big-o]
+    prerequisites: [tier-1/04-hash-map-from-scratch]
+
+  - id: 17
+    slug: tier-4/17-distributed-cache
+    title: Distributed Cache
+    tier: 4
+    difficulty: expert
+    status: complete
+    categories: [hash, advanced]
+    data_structures: [lru-cache, bloom-filter, cuckoo-filter]
+    algorithms: [consistent-hashing, hashing, bloom-filter-alg]
+    fundamentals: [big-o]
+    prerequisites: [tier-2/05-cache-with-eviction, tier-1/04-hash-map-from-scratch]
+
+  - id: 18
+    slug: tier-4/18-api-rate-limiter
+    title: API Rate Limiter
+    tier: 4
+    difficulty: expert
+    status: complete
+    categories: [linear, advanced]
+    data_structures: [ring-buffer, deque, queue]
+    algorithms: [rate-limiting]
+    fundamentals: [two-pointers, sliding-window, big-o]
+    prerequisites: [tier-2/06-task-queue-system]
+
+  - id: 19
+    slug: tier-4/19-stream-analytics-pipeline
+    title: Stream Analytics Pipeline
+    tier: 4
+    difficulty: expert
+    status: complete
+    categories: [hash, advanced]
+    data_structures: [hyperloglog, count-min-sketch, bloom-filter, cuckoo-filter]
+    algorithms: [reservoir-sampling, bloom-filter-alg]
+    fundamentals: [big-o]
+    prerequisites: [tier-2/09-statistical-sampler]
+
+  - id: 20
+    slug: tier-4/20-text-editor-engine
+    title: Text Editor Engine
+    tier: 4
+    difficulty: expert
+    status: complete
+    categories: [trees, advanced]
+    data_structures: [rope, gap-buffer, trie]
+    algorithms: [edit-distance, backtracking, trie-operations]
+    fundamentals: [big-o]
+    prerequisites: [tier-2/07-autocomplete-engine]
+
+  - id: 21
+    slug: tier-4/21-geospatial-index
+    title: Geospatial Index
+    tier: 4
+    difficulty: expert
+    status: complete
+    categories: [trees, advanced]
+    data_structures: [quadtree, kd-tree, rtree]
+    algorithms: [binary-search]
+    fundamentals: [big-o, divide-and-conquer]
+    prerequisites: [tier-2/08-route-planner]
+
+  - id: 22
+    slug: tier-4/22-constraint-solver
+    title: Constraint Solver
+    tier: 4
+    difficulty: expert
+    status: complete
+    categories: [fundamentals, graphs, advanced]
+    data_structures: []
+    algorithms: [backtracking, bit-manipulation, dfs]
+    fundamentals: [recursion, greedy, big-o]
+    prerequisites: [tier-1/03-stack-calculator]

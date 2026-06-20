@@ -12,6 +12,11 @@ const output = ref('')
 const running = ref(false)
 
 const title = computed(() => page.value.title || 'DSA Topic')
+const isProjectPage = computed(() => route.path.includes('/projects/tier-'))
+const projectSlug = computed(() => {
+  const m = route.path.match(/tier-\d\/(\d+-[a-z0-9-]+)/)
+  return m ? m[1] : ''
+})
 
 // Simple mapping for related examples based on path/title
 const exampleMap = {
@@ -164,7 +169,20 @@ function sharePage() {
 }
 
 function giveToAI() {
-  const prompt = `You are an expert tutor on Data Structures and Algorithms.
+  const prompt = isProjectPage.value
+    ? `You are a senior software architect mentoring a developer through a "Build Your Own X" project from the DSA Handbook Project Lab.
+
+Project: ${title.value}
+Page: ${window.location.href}
+
+Act as a Socratic tutor. Help me design and implement this project WITHOUT giving complete solutions. For each milestone:
+- Ask what I've tried so far
+- Point out design trade-offs
+- Suggest what handbook chapters to re-read
+- Give small hints, not full code
+
+Start by asking which milestone I'm on and what I've built so far.`
+    : `You are an expert tutor on Data Structures and Algorithms.
 
 Please explain the following topic from the "DSA Handbook" in a clear, beginner-friendly way. Include:
 - The core problem it solves
@@ -194,11 +212,29 @@ onMounted(() => {
   <div class="page-tools">
     <div class="actions">
       <button @click="sharePage" class="btn">🔗 Share</button>
-      <button @click="giveToAI" class="btn">🤖 Give to AI</button>
-      <button @click="() => { showPlayground = true; loadExample() }" class="btn primary">
+      <button @click="giveToAI" class="btn">{{ isProjectPage ? '🤖 Mentor Mode' : '🤖 Give to AI' }}</button>
+      <a
+        v-if="isProjectPage"
+        href="/projects/README"
+        class="btn"
+      >📋 Project Lab</a>
+      <a
+        v-if="isProjectPage"
+        href="/projects/contributing"
+        class="btn"
+      >➕ Contribute</a>
+      <button
+        v-if="!isProjectPage"
+        @click="() => { showPlayground = true; loadExample() }"
+        class="btn primary"
+      >
         ▶️ Play in Wandbox
       </button>
     </div>
+    <p v-if="isProjectPage" class="project-hint">
+      This is a build specification — implement it yourself. Check
+      <code>projects-starters/</code> in the repo for interface stubs.
+    </p>
 
     <!-- Playground Modal -->
     <div v-if="showPlayground" class="playground-modal" @click.self="showPlayground = false">
@@ -326,5 +362,14 @@ onMounted(() => {
   font-size: 12px;
   color: var(--vp-c-text-2);
   margin-top: 8px;
+}
+.project-hint {
+  font-size: 12px;
+  color: var(--vp-c-text-2);
+  margin-top: 10px;
+  line-height: 1.5;
+}
+.project-hint code {
+  font-size: 11px;
 }
 </style>

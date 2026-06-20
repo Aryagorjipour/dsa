@@ -186,4 +186,9 @@ Trie = tree where path from root spells a string.
 
 It is the go-to structure whenever you care about **prefixes** or need to store a dictionary of strings efficiently for lookup and autocomplete-style operations.
 
+
+::: tip Project Lab
+**Build it yourself:** [Autocomplete Engine](/projects/tier-2/07-autocomplete-engine) — prefix search, frequency ranking, and fuzzy suggestions.
+:::
+
 **Next:** [18 - B-Tree and B+ Tree](18-btree-bplustree.md) — the kings of database storage.

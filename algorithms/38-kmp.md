@@ -42,3 +42,6 @@ The LPS computation + the main search loop are both elegant and worth implementi
 ## Summary
 
 KMP = the first major linear-time string matching algorithm that doesn't depend on the alphabet size.
+::: tip Project Lab
+**Build it yourself:** [Full-Text Search Engine](/projects/tier-3/13-full-text-search-engine) — KMP, Rabin-Karp, Boyer-Moore, and Aho-Corasick.
+:::

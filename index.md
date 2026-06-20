@@ -10,6 +10,9 @@ hero:
       text: Start Reading
       link: /fundamentals/00-what-is-a-data-structure
     - theme: alt
+      text: Project Lab
+      link: /projects/README
+    - theme: alt
       text: View on GitHub
       link: https://github.com/Aryagorjipour/dsa
 ---
@@ -23,6 +26,7 @@ A no-hand-waving, deeply practical handbook written for developers who want to t
 - **Fundamentals** — Big O, recursion, divide & conquer, greedy, two pointers
 - **34 Data Structures** — from basic arrays to advanced structures like Segment Trees, HyperLogLog, and R-Trees
 - **47+ Algorithms** — with real motivating problems for each one
+- **Project Lab** — 22 build-your-own systems spanning caches, search engines, route planners, and distributed infrastructure
 - **Full C# and Go code** — no pseudocode, no "left as exercise"
 - **Real-world context** — where these are actually used (Redis, databases, .NET, Go runtimes, etc.)
 
@@ -30,6 +34,7 @@ A no-hand-waving, deeply practical handbook written for developers who want to t
 
 - [x] Complete written handbook with problems + implementations
 - [x] Beautiful documentation website
+- [x] Project Lab — learn by building real systems
 - [ ] Interactive playgrounds (future)
 - [ ] Quizzes and challenges (future)
 - [ ] More language ports (future)

@@ -73,6 +73,18 @@ const tree = [
       { name: 'Production Use Cases', path: '/resources/production-use-cases' },
       { name: 'Further Reading', path: '/resources/further-reading' },
     ]
+  },
+  {
+    name: 'Project Lab',
+    children: [
+      { name: 'Overview', path: '/projects/README' },
+      { name: 'Discover by Category', path: '/projects/discover/by-category' },
+      { name: 'Tier 1: Search Library', path: '/projects/tier-1/01-search-library' },
+      { name: 'Tier 2: Cache & Eviction', path: '/projects/tier-2/05-cache-with-eviction' },
+      { name: 'Tier 2: Route Planner', path: '/projects/tier-2/08-route-planner' },
+      { name: 'Tier 3: KV Store', path: '/projects/tier-3/11-key-value-store' },
+      { name: 'Tier 4: Distributed Cache', path: '/projects/tier-4/17-distributed-cache' },
+    ]
   }
 ]
 

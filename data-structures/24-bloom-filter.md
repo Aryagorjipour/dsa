@@ -146,4 +146,9 @@ It powers a huge amount of the "fast path" decisions in modern databases, caches
 
 See [`resources/further-reading.md`](../resources/further-reading.md) for the original Bloom paper and modern variants.
 
+
+::: tip Project Lab
+**Build it yourself:** [Persistent KV Store](/projects/tier-3/11-key-value-store), [Distributed Cache](/projects/tier-4/17-distributed-cache), and [Stream Analytics](/projects/tier-4/19-stream-analytics-pipeline).
+:::
+
 **Next:** [25 - Disjoint Set (Union-Find)](25-disjoint-set-union-find.md)

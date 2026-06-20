@@ -17,7 +17,13 @@ Thank you for your interest! This handbook aims to be one of the best practical 
 - Add new images to the `images/` folder.
 - Reference them in the relevant chapter using `![Description](/images/name.png)`.
 
-### 4. Suggesting New Topics
+### 4. Adding Project Lab Specs
+- Follow the guide in [`projects/contributing.md`](projects/contributing.md).
+- Copy [`projects/_template.md`](projects/_template.md) and fill all 10 sections.
+- Update [`projects/_metadata.yaml`](projects/_metadata.yaml) and the sidebar in `.vitepress/config.mts`.
+- Add cross-links from related handbook chapters using the `::: tip Project Lab` callout format.
+
+### 5. Suggesting New Topics
 Open an issue using the "New Topic Suggestion" template.
 
 ## Development

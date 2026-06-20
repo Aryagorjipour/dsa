@@ -82,4 +82,9 @@ Quadtree = recursive 2D space division into four quadrants.
 
 It is one of the fundamental tools in games and any system that needs to deal with "nearby things in 2D".
 
+
+::: tip Project Lab
+**Build it yourself:** [Geospatial Index](/projects/tier-4/21-geospatial-index) — quadtrees, KD-trees, and R-trees for spatial queries.
+:::
+
 **Next:** [33 - KD Tree](33-kd-tree.md)

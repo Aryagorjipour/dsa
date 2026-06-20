@@ -22,8 +22,9 @@ export default defineConfig({
     logo: '/images/logo.svg',
 
     nav: [
+      { text: 'Handbook', link: '/README' },
+      { text: 'Project Lab', link: '/projects/README' },
       { text: 'GitHub', link: 'https://github.com/Aryagorjipour/dsa' },
-      { text: 'Handbook', link: '/README' }
     ],
 
     sidebar: [
@@ -144,6 +145,63 @@ export default defineConfig({
           { text: 'Visualizations', link: '/resources/visualizations' },
           { text: 'Production Use Cases', link: '/resources/production-use-cases' },
           { text: 'Implementations', link: '/resources/implementations' },
+        ]
+      },
+      {
+        text: 'Project Lab',
+        collapsed: true,
+        items: [
+          { text: 'Overview', link: '/projects/README' },
+          { text: 'Discover by Category', link: '/projects/discover/by-category' },
+          { text: 'Discover by Data Structure', link: '/projects/discover/by-data-structure' },
+          { text: 'Discover by Algorithm', link: '/projects/discover/by-algorithm' },
+          { text: 'Contributing', link: '/projects/contributing' },
+          {
+            text: 'Tier 1 — Foundations',
+            collapsed: false,
+            items: [
+              { text: '1. Search Library', link: '/projects/tier-1/01-search-library' },
+              { text: '2. Sorting Benchmarker', link: '/projects/tier-1/02-sorting-benchmarker' },
+              { text: '3. Stack-Based Expression Evaluator', link: '/projects/tier-1/03-stack-calculator' },
+              { text: '4. Hash Map from Scratch', link: '/projects/tier-1/04-hash-map-from-scratch' },
+            ]
+          },
+          {
+            text: 'Tier 2 — Core Systems',
+            collapsed: false,
+            items: [
+              { text: '5. Cache with Eviction Policies', link: '/projects/tier-2/05-cache-with-eviction' },
+              { text: '6. Task Queue System', link: '/projects/tier-2/06-task-queue-system' },
+              { text: '7. Autocomplete Engine', link: '/projects/tier-2/07-autocomplete-engine' },
+              { text: '8. Route Planner', link: '/projects/tier-2/08-route-planner' },
+              { text: '9. Statistical Sampler', link: '/projects/tier-2/09-statistical-sampler' },
+            ]
+          },
+          {
+            text: 'Tier 3 — Advanced Systems',
+            collapsed: false,
+            items: [
+              { text: '10. In-Memory Database Index', link: '/projects/tier-3/10-in-memory-db-index' },
+              { text: '11. Persistent Key-Value Store', link: '/projects/tier-3/11-key-value-store' },
+              { text: '12. Time-Series Analytics Engine', link: '/projects/tier-3/12-time-series-analytics' },
+              { text: '13. Full-Text Search Engine', link: '/projects/tier-3/13-full-text-search-engine' },
+              { text: '14. Dynamic Programming Toolkit', link: '/projects/tier-3/14-dp-toolkit' },
+              { text: '15. Network Optimizer', link: '/projects/tier-3/15-network-optimizer' },
+            ]
+          },
+          {
+            text: 'Tier 4 — Expert / Production',
+            collapsed: false,
+            items: [
+              { text: '16. Mini Version Control System', link: '/projects/tier-4/16-mini-version-control' },
+              { text: '17. Distributed Cache', link: '/projects/tier-4/17-distributed-cache' },
+              { text: '18. API Rate Limiter', link: '/projects/tier-4/18-api-rate-limiter' },
+              { text: '19. Stream Analytics Pipeline', link: '/projects/tier-4/19-stream-analytics-pipeline' },
+              { text: '20. Text Editor Engine', link: '/projects/tier-4/20-text-editor-engine' },
+              { text: '21. Geospatial Index', link: '/projects/tier-4/21-geospatial-index' },
+              { text: '22. Constraint Solver', link: '/projects/tier-4/22-constraint-solver' },
+            ]
+          },
         ]
       }
     ],
