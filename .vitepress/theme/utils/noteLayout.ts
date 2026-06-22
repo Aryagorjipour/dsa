@@ -91,10 +91,29 @@ export function isMarginNotesMobile(): boolean {
   return window.innerWidth <= MARGIN_NOTES_MOBILE_MAX
 }
 
-export function getNoteDocumentY(note: Note, highlights: Highlight[]): number {
+const LINE_TOLERANCE_PX = 6
+
+export interface NoteSortKey {
+  y: number
+  x: number
+}
+
+export function getNoteSortKey(note: Note, highlights: Highlight[]): NoteSortKey {
   const anchor = getNoteAnchor(note, highlights)
-  if (!anchor) return Number.POSITIVE_INFINITY
-  return anchor.rect.top + window.scrollY
+  if (!anchor) return { y: Number.POSITIVE_INFINITY, x: Number.POSITIVE_INFINITY }
+  return {
+    y: anchor.rect.top + window.scrollY,
+    x: anchor.rect.left + window.scrollX,
+  }
+}
+
+export function getNoteDocumentY(note: Note, highlights: Highlight[]): number {
+  return getNoteSortKey(note, highlights).y
+}
+
+function compareNoteSortKeys(a: NoteSortKey, b: NoteSortKey): number {
+  if (Math.abs(a.y - b.y) > LINE_TOLERANCE_PX) return a.y - b.y
+  return a.x - b.x
 }
 
 function pickSide(anchorRect: DOMRect, bounds: LayoutBounds): 'left' | 'right' {
@@ -119,7 +138,9 @@ function isBoxInView(top: number, height: number, topBound: number): boolean {
 }
 
 export function sortNotesByPagePosition(notes: Note[], highlights: Highlight[]): Note[] {
-  return [...notes].sort((a, b) => getNoteDocumentY(a, highlights) - getNoteDocumentY(b, highlights))
+  return [...notes].sort((a, b) =>
+    compareNoteSortKeys(getNoteSortKey(a, highlights), getNoteSortKey(b, highlights)),
+  )
 }
 
 export function layoutMarginNotes(

@@ -17,6 +17,7 @@ import PageNotesRail from './components/PageNotesRail.vue'
 import SettingsDrawer from './components/SettingsDrawer.vue'
 import KeyboardShortcutsSheet from './components/KeyboardShortcutsSheet.vue'
 import { useFocusMode } from './composables/useFocusMode'
+import { usePageNotesRail } from './composables/usePageNotesRail'
 import { useKeyboardShortcuts } from './composables/useKeyboardShortcuts'
 import DSALogo from './components/DSALogo.vue'
 
@@ -24,6 +25,7 @@ const QuizSection = defineAsyncComponent(() => import('./components/QuizSection.
 
 const { Layout } = DefaultTheme
 const { isFocusMode, toggleFocusMode } = useFocusMode()
+const { isOpen: pageNotesOpen } = usePageNotesRail()
 useKeyboardShortcuts()
 </script>
 
@@ -70,6 +72,7 @@ useKeyboardShortcuts()
   <button
     v-if="isFocusMode"
     class="floating-focus is-exit"
+    :class="{ 'beside-page-notes': pageNotesOpen }"
     aria-label="Exit focus mode (Shift+F or Esc)"
     title="Exit Focus Mode (Shift+F or Esc)"
     @click="toggleFocusMode"
@@ -80,6 +83,7 @@ useKeyboardShortcuts()
   <button
     v-else
     class="floating-focus"
+    :class="{ 'beside-page-notes': pageNotesOpen }"
     aria-label="Enter focus mode (Shift+F)"
     title="Focus Mode — fullscreen reading, hides nav and sidebars (Shift+F)"
     @click="toggleFocusMode"
@@ -103,12 +107,17 @@ useKeyboardShortcuts()
   font-weight: 600;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
   cursor: pointer;
-  z-index: 100;
+  z-index: 111;
   display: flex;
   align-items: center;
   gap: 6px;
   border: none;
-  transition: transform 0.1s;
+  transition: transform 0.1s, left 0.2s, right 0.2s;
+}
+
+.floating-focus.beside-page-notes {
+  right: auto;
+  left: 196px;
 }
 
 .floating-focus:hover {
@@ -132,6 +141,10 @@ useKeyboardShortcuts()
     right: 16px;
     padding: 6px 12px;
     font-size: 12px;
+  }
+
+  .floating-focus.beside-page-notes {
+    left: 148px;
   }
 }
 </style>
