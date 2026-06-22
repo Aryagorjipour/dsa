@@ -14,7 +14,7 @@ import { showToast } from '../composables/useToast'
 
 const route = useRoute()
 const { page } = useData()
-const { isFocusMode } = useFocusMode()
+const { isFocusMode, toggleFocusMode } = useFocusMode()
 const {
   isOpen,
   activeNoteId,
@@ -203,27 +203,40 @@ watch(placements, () => nextTick(setupResizeObserver))
 <template>
   <Teleport to="body">
     <template v-if="marginNotesEnabled">
-      <button
-        type="button"
-        class="page-notes-toggle"
-        :class="{ open: isOpen }"
-        :aria-expanded="isOpen"
-        aria-label="Toggle page notes on this page"
-        title="Show notes beside their passages (Shift+N)"
-        @click="onToggle"
-      >
-        <span class="toggle-icon" aria-hidden="true">📝</span>
-        <span class="toggle-label">
-          {{ isOpen ? 'Hide notes' : 'Page notes' }}
-          <span v-if="pageNotes.length" class="toggle-count">{{ pageNotes.length }}</span>
-        </span>
-        <kbd class="toggle-kbd">⇧N</kbd>
-      </button>
-
-      <p v-if="isOpen" class="page-notes-hint" aria-live="polite">
-        Notes follow page order · <kbd>Esc</kbd> to close
-        <a :href="handbookLink('/my-notes')" class="hint-link">All notes</a>
-      </p>
+      <div class="page-bottom-dock-wrap">
+        <p v-if="isOpen" class="page-notes-hint" aria-live="polite">
+          Notes follow page order · <kbd>Esc</kbd> to close
+          <a :href="handbookLink('/my-notes')" class="hint-link">All notes</a>
+        </p>
+        <div class="page-bottom-dock">
+          <button
+            type="button"
+            class="page-notes-toggle"
+            :class="{ open: isOpen }"
+            :aria-expanded="isOpen"
+            aria-label="Toggle page notes on this page"
+            title="Show notes beside their passages (Shift+N)"
+            @click="onToggle"
+          >
+            <span class="toggle-icon" aria-hidden="true">📝</span>
+            <span class="toggle-label">
+              {{ isOpen ? 'Hide notes' : 'Page notes' }}
+              <span v-if="pageNotes.length" class="toggle-count">{{ pageNotes.length }}</span>
+            </span>
+            <kbd class="toggle-kbd">⇧N</kbd>
+          </button>
+          <button
+            type="button"
+            class="dock-focus-btn"
+            aria-label="Enter focus mode (Shift+F)"
+            title="Focus Mode — fullscreen reading, hides nav and sidebars (Shift+F)"
+            @click="toggleFocusMode"
+          >
+            <span class="focus-icon" aria-hidden="true">◐</span>
+            Focus
+          </button>
+        </div>
+      </div>
 
       <article
         v-for="p in placements"
@@ -260,12 +273,29 @@ watch(placements, () => nextTick(setupResizeObserver))
 </template>
 
 <style scoped>
-.page-notes-toggle {
+.page-bottom-dock-wrap {
   position: fixed;
   bottom: 24px;
   left: 24px;
-  z-index: 110;
+  z-index: 111;
   display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+  max-width: calc(100vw - 48px);
+}
+
+.page-bottom-dock {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: nowrap;
+}
+
+.page-notes-toggle {
+  position: static;
+  display: flex;
+  flex-shrink: 0;
   align-items: center;
   gap: 8px;
   padding: 8px 14px;
@@ -317,11 +347,33 @@ watch(placements, () => nextTick(setupResizeObserver))
   line-height: 1.3;
 }
 
+.dock-focus-btn {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 14px;
+  border-radius: 9999px;
+  border: none;
+  background: var(--vp-c-brand-1);
+  color: #fff;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+  transition: transform 0.1s;
+}
+
+.dock-focus-btn:hover {
+  transform: scale(1.04);
+}
+
+.dock-focus-btn .focus-icon {
+  font-size: 14px;
+}
+
 .page-notes-hint {
-  position: fixed;
-  bottom: 72px;
-  left: 24px;
-  z-index: 109;
+  position: static;
   margin: 0;
   padding: 6px 10px;
   border-radius: 8px;

@@ -1,5 +1,6 @@
 <script setup>
-import { defineAsyncComponent } from 'vue'
+import { computed, defineAsyncComponent } from 'vue'
+import { useRoute, useData } from 'vitepress'
 import DefaultTheme from 'vitepress/theme'
 import DSAExplorer from './components/DSAExplorer.vue'
 import PageTools from './components/PageTools.vue'
@@ -17,16 +18,27 @@ import PageNotesRail from './components/PageNotesRail.vue'
 import SettingsDrawer from './components/SettingsDrawer.vue'
 import KeyboardShortcutsSheet from './components/KeyboardShortcutsSheet.vue'
 import { useFocusMode } from './composables/useFocusMode'
-import { usePageNotesRail } from './composables/usePageNotesRail'
 import { useKeyboardShortcuts } from './composables/useKeyboardShortcuts'
+import { normalizePagePath } from './utils/normalizePagePath'
+import { isMarginNotesMobile } from './utils/noteLayout'
 import DSALogo from './components/DSALogo.vue'
 
 const QuizSection = defineAsyncComponent(() => import('./components/QuizSection.vue'))
 
+const route = useRoute()
+const { page } = useData()
 const { Layout } = DefaultTheme
 const { isFocusMode, toggleFocusMode } = useFocusMode()
-const { isOpen: pageNotesOpen } = usePageNotesRail()
 useKeyboardShortcuts()
+
+const showPageNotesDock = computed(() => {
+  if (isFocusMode.value || isMarginNotesMobile()) return false
+  if (page.value.frontmatter.layout === 'home') return false
+  const path = normalizePagePath(route.path)
+  return !['/my-notes', '/playground', '/quizzes'].some(
+    p => path === p || path.startsWith(p + '/'),
+  )
+})
 </script>
 
 <template>
@@ -72,7 +84,6 @@ useKeyboardShortcuts()
   <button
     v-if="isFocusMode"
     class="floating-focus is-exit"
-    :class="{ 'beside-page-notes': pageNotesOpen }"
     aria-label="Exit focus mode (Shift+F or Esc)"
     title="Exit Focus Mode (Shift+F or Esc)"
     @click="toggleFocusMode"
@@ -81,9 +92,8 @@ useKeyboardShortcuts()
     Exit Focus
   </button>
   <button
-    v-else
+    v-else-if="!showPageNotesDock"
     class="floating-focus"
-    :class="{ 'beside-page-notes': pageNotesOpen }"
     aria-label="Enter focus mode (Shift+F)"
     title="Focus Mode — fullscreen reading, hides nav and sidebars (Shift+F)"
     @click="toggleFocusMode"
@@ -112,12 +122,7 @@ useKeyboardShortcuts()
   align-items: center;
   gap: 6px;
   border: none;
-  transition: transform 0.1s, left 0.2s, right 0.2s;
-}
-
-.floating-focus.beside-page-notes {
-  right: auto;
-  left: 196px;
+  transition: transform 0.1s;
 }
 
 .floating-focus:hover {
@@ -143,8 +148,5 @@ useKeyboardShortcuts()
     font-size: 12px;
   }
 
-  .floating-focus.beside-page-notes {
-    left: 148px;
-  }
 }
 </style>
