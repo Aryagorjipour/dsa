@@ -53,7 +53,10 @@ html.focus-mode .VPDocAside,
 html.focus-mode .dsa-explorer,
 html.focus-mode .notes-panel,
 html.focus-mode .reading-progress,
-html.focus-mode .dsa-breadcrumbs {
+html.focus-mode .dsa-breadcrumbs,
+html.focus-mode .page-notes-toggle,
+html.focus-mode .page-notes-rail,
+html.focus-mode .note-connectors {
   display: none !important;
 }
 

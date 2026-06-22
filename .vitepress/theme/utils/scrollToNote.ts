@@ -164,6 +164,13 @@ export function scrollToNote(
   return scrollToElement(() => findNoteTarget(note, highlights), scrollOpts)
 }
 
+export function getNoteAnchorElement(
+  note: Note,
+  highlights: Highlight[] = [],
+): Element | null {
+  return findNoteTarget(note, highlights)
+}
+
 export function scrollToHash(
   hash: string,
   highlights: Highlight[] = [],

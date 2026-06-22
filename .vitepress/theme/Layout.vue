@@ -13,6 +13,7 @@ import AnnotationRestorer from './components/AnnotationRestorer.vue'
 import NoteDialog from './components/NoteDialog.vue'
 import CodeBlockActions from './components/CodeBlockActions.vue'
 import HeadingNotes from './components/HeadingNotes.vue'
+import PageNotesRail from './components/PageNotesRail.vue'
 import SettingsDrawer from './components/SettingsDrawer.vue'
 import { useFocusMode } from './composables/useFocusMode'
 import DSALogo from './components/DSALogo.vue'
@@ -60,6 +61,7 @@ const { isFocusMode, toggleFocusMode } = useFocusMode()
   <AnnotationRestorer />
   <CodeBlockActions />
   <HeadingNotes />
+  <PageNotesRail />
 
   <button
     v-if="isFocusMode"

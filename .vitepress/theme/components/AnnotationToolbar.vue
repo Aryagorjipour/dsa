@@ -24,6 +24,7 @@ const mode = ref('select')
 const x = ref(0)
 const y = ref(0)
 const activeHighlightId = ref(null)
+const activeHighlightQuote = ref('')
 /** Saved when toolbar opens — selection is gone by the time buttons are clicked. */
 const pendingAnchor = ref(null)
 /** True while the pointer is down on the toolbar — blocks outside-click hide. */
@@ -40,6 +41,7 @@ function hide() {
   visible.value = false
   mode.value = 'select'
   activeHighlightId.value = null
+  activeHighlightQuote.value = ''
   pendingAnchor.value = null
 }
 
@@ -123,6 +125,7 @@ function showHighlightMenu(mark) {
   const rect = mark.getBoundingClientRect()
   pendingAnchor.value = null
   activeHighlightId.value = id
+  activeHighlightQuote.value = mark.textContent?.trim() || ''
   mode.value = 'highlight'
   x.value = rect.left + rect.width / 2
   y.value = Math.max(8, rect.top - 8)
@@ -309,6 +312,7 @@ function onDocumentMouseDown(e) {
   if (!(e.target instanceof Element)) return
   if (e.target.closest('.annotation-toolbar')) return
   if (e.target.closest('.note-dialog, .note-dialog-backdrop')) return
+  if (e.target.closest('.page-notes-rail, .page-notes-toggle')) return
   if (e.target.closest('mark.dsa-hl')) return
   if (toolbarPressing.value) return
 
@@ -391,23 +395,32 @@ watch(() => route.path, () => {
       </template>
 
       <template v-else>
-        <button
-          type="button"
-          class="action-btn"
-          title="Add or edit note"
-          @click.stop="editHighlightNote"
-        >
-          {{ noteForHighlight(activeHighlightId) ? 'Edit note' : 'Add note' }}
-        </button>
-        <span class="divider" />
-        <button
-          type="button"
-          class="action-btn danger"
-          title="Remove highlight"
-          @click.stop="removeActiveHighlight"
-        >
-          Remove
-        </button>
+        <div class="toolbar-body">
+          <p v-if="activeHighlightQuote" class="toolbar-quote">“{{ activeHighlightQuote }}”</p>
+          <div v-if="noteForHighlight(activeHighlightId)" class="toolbar-note">
+            <span class="toolbar-note-label">Your note</span>
+            <p class="toolbar-note-text">{{ noteForHighlight(activeHighlightId).body }}</p>
+          </div>
+          <p v-else class="toolbar-no-note">No note yet — add one below.</p>
+        </div>
+        <footer class="toolbar-footer">
+          <button
+            type="button"
+            class="action-btn"
+            title="Add or edit note"
+            @click.stop="editHighlightNote"
+          >
+            {{ noteForHighlight(activeHighlightId) ? 'Edit note' : 'Add note' }}
+          </button>
+          <button
+            type="button"
+            class="action-btn danger"
+            title="Remove highlight"
+            @click.stop="removeActiveHighlight"
+          >
+            Remove
+          </button>
+        </footer>
       </template>
     </div>
   </Teleport>
@@ -423,10 +436,68 @@ watch(() => route.path, () => {
   padding: 4px 8px;
   background: var(--vp-c-bg-elv);
   border: 1px solid var(--vp-c-divider);
-  border-radius: 8px;
+  border-radius: 10px;
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
   z-index: 250;
   user-select: none;
+}
+
+.annotation-toolbar.highlight {
+  flex-direction: column;
+  align-items: stretch;
+  min-width: 240px;
+  max-width: min(340px, calc(100vw - 24px));
+  padding: 0;
+  overflow: hidden;
+}
+
+.toolbar-body {
+  padding: 10px 12px 8px;
+}
+
+.toolbar-quote {
+  margin: 0 0 8px;
+  font-size: 12px;
+  line-height: 1.45;
+  color: var(--vp-c-text-2);
+  font-style: italic;
+  border-left: 3px solid var(--vp-c-brand-1);
+  padding-left: 8px;
+}
+
+.toolbar-note-label {
+  display: block;
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--vp-c-brand-1);
+  font-weight: 700;
+  margin-bottom: 4px;
+}
+
+.toolbar-note-text {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--vp-c-text-1);
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.toolbar-no-note {
+  margin: 0;
+  font-size: 12px;
+  color: var(--vp-c-text-3);
+}
+
+.toolbar-footer {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 4px;
+  padding: 6px 8px;
+  border-top: 1px solid var(--vp-c-divider);
+  background: var(--vp-c-bg-soft);
 }
 
 .color-btn {

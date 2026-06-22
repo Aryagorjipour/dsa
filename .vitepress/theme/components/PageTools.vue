@@ -85,8 +85,9 @@ Start your explanation now.`
 <template>
   <div id="dsa-page-tools" class="page-tools">
     <p class="annotation-hint">
-      Select text to highlight or add a note. Click a highlight to edit or remove it.
+      Select text to highlight or add a note. Click a highlight to view, edit, or remove it.
       Hover a section heading and click <strong>+</strong> for a section note.
+      Press <kbd>Shift+N</kbd> to open all notes on this page.
     </p>
     <div class="actions">
       <button class="btn" @click="addPageNote">Add page note</button>
@@ -121,6 +122,15 @@ Start your explanation now.`
   color: var(--vp-c-text-2);
   line-height: 1.5;
   margin: 0 0 12px;
+}
+
+.annotation-hint kbd {
+  font-size: 11px;
+  padding: 1px 5px;
+  border-radius: 4px;
+  border: 1px solid var(--vp-c-divider);
+  background: var(--vp-c-bg-soft);
+  font-family: inherit;
 }
 
 .actions {
