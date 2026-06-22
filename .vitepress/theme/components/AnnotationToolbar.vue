@@ -5,12 +5,7 @@ import { useAnnotations } from '../composables/useAnnotations'
 import { openNoteDialog } from '../composables/useNoteDialog'
 import { showToast } from '../composables/useToast'
 import { assignBlockIds } from '../utils/assignBlockIds'
-import {
-  getSelectionAnchor,
-  applyHighlightToDOM,
-  removeHighlightFromDOM,
-  rangeTouchesInlineCode,
-} from '../utils/highlightRestorer'
+import { getSelectionAnchor, applyHighlightToDOM, removeHighlightFromDOM } from '../utils/highlightRestorer'
 
 const route = useRoute()
 const {
@@ -93,14 +88,6 @@ function updateToolbar() {
 
   const anchor = captureSelectionAnchor()
   if (!anchor) {
-    try {
-      const range = sel.getRangeAt(0)
-      if (!range.collapsed && range.toString().trim() && rangeTouchesInlineCode(range)) {
-        showToast('Inline code cannot be highlighted — select the surrounding text')
-      }
-    } catch {
-      /* ignore */
-    }
     hide()
     return
   }

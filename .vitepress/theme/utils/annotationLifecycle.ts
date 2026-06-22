@@ -1,7 +1,7 @@
 import type { Router } from 'vitepress'
 import type { Highlight } from '../composables/useStorage'
 import { assignBlockIds } from './assignBlockIds'
-import { cleanupHighlightArtifacts, ensureHighlightInDOM } from './highlightRestorer'
+import { ensureHighlightInDOM } from './highlightRestorer'
 import { normalizePagePath } from './normalizePagePath'
 import { scrollToHash } from './scrollToNote'
 
@@ -52,16 +52,13 @@ function clearExistingMarks(): void {
     parent.removeChild(el)
     parent.normalize()
   })
-  cleanupHighlightArtifacts()
 }
 
-function applyHighlights(highlights: Highlight[]): number {
+function applyHighlights(highlights: Highlight[]): void {
   assignBlockIds()
   for (const hl of highlights) {
     ensureHighlightInDOM(hl)
   }
-  cleanupHighlightArtifacts()
-  return countAppliedMarks(highlights)
 }
 
 function scrollToNoteHash(highlights: Highlight[]): void {
@@ -110,8 +107,6 @@ export function setupAnnotationRouter(router: Router): void {
 
 async function runRestore(token: number, expectedPath: string, scrollHash: boolean): Promise<void> {
   let cleared = false
-  let lastApplied = -1
-  let stalledAttempts = 0
 
   for (let attempt = 0; attempt < MAX_ATTEMPTS; attempt++) {
     if (token !== restoreToken) return
@@ -133,16 +128,10 @@ async function runRestore(token: number, expectedPath: string, scrollHash: boole
         if (token !== restoreToken) return
       }
 
-      const applied = applyHighlights(highlights)
+      applyHighlights(highlights)
 
+      const applied = countAppliedMarks(highlights)
       if (applied < highlights.length) {
-        if (applied === lastApplied) {
-          stalledAttempts++
-          if (stalledAttempts >= 2) break
-        } else {
-          stalledAttempts = 0
-        }
-        lastApplied = applied
         await delay(attemptDelay(attempt))
         continue
       }
