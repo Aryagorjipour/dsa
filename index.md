@@ -32,13 +32,35 @@ A no-hand-waving, deeply practical handbook written for developers who want to t
 
 ## Roadmap
 
+### Done
+
 - [x] Complete written handbook with problems + implementations
-- [x] Beautiful documentation website
-- [x] Project Lab — learn by building real systems
-- [x] Interactive Playground with Wandbox runner
-- [x] Local notes & text highlighting
-- [x] Quizzes and challenges
-- [ ] More language ports (future)
+- [x] Beautiful documentation website (VitePress, dark mode, GitHub Pages)
+- [x] Project Lab — 22 build-your-own system specs
+- [x] Interactive Playground with Wandbox runner (Go & C#)
+- [x] Per-topic quizzes, streak tracking, and quiz dashboard
+- [x] Local notes & highlights — stored in your browser, no account required
+- [x] Cross-browser highlighting (Chrome, Firefox, Zen) with color picker
+- [x] Page notes, section notes (heading **+**), and highlight-linked notes
+- [x] **My Notes** hub — search and browse every note across the handbook
+- [x] Jump to the exact passage — notes scroll to their source on the page
+- [x] **Page notes panel** (`Shift+N`) — margin rail with arrows pointing to each note
+- [x] Click a highlight to preview your note, then edit or remove
+- [x] Focus mode (`Shift+F`) — fullscreen reading, hides nav and sidebars
+- [x] Reading progress bar on handbook pages
+- [x] Export / import notes, highlights, and quiz progress (Settings drawer)
+- [x] Chapter navigation, breadcrumbs, and quick-jump explorer
+
+### Up next
+
+- [ ] Note tags and filters (by topic, color, or type)
+- [ ] Full-text search across all your notes
+- [ ] Spaced-repetition mode — turn notes into review cards
+- [ ] Printable / PDF export of a chapter with your annotations
+- [ ] PWA offline support for reading on the go
+- [ ] Keyboard shortcuts cheat sheet (`?` overlay)
+- [ ] More language ports in the Playground (Python, Rust, …)
+- [ ] Community-contributed diagrams and walkthrough videos
 
 ## How to Contribute
 
