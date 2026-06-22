@@ -26,6 +26,8 @@ const y = ref(0)
 const activeHighlightId = ref(null)
 /** Saved when toolbar opens — selection is gone by the time buttons are clicked. */
 const pendingAnchor = ref(null)
+/** True while the pointer is down on the toolbar — blocks outside-click hide. */
+const toolbarPressing = ref(false)
 
 const colors = [
   { id: 'yellow', label: 'Yellow' },
@@ -60,6 +62,18 @@ function selectionInsideHighlight() {
   }
 }
 
+function captureSelectionAnchor() {
+  if (mode.value === 'highlight') return null
+  if (selectionInsideHighlight()) return null
+
+  assignBlockIds()
+  const anchor = getSelectionAnchor()
+  if (!anchor) return null
+
+  pendingAnchor.value = { ...anchor }
+  return anchor
+}
+
 function updateToolbar() {
   if (mode.value === 'highlight') return
   if (visible.value && pendingAnchor.value) return
@@ -70,13 +84,7 @@ function updateToolbar() {
     return
   }
 
-  if (selectionInsideHighlight()) {
-    hide()
-    return
-  }
-
-  assignBlockIds()
-  const anchor = getSelectionAnchor()
+  const anchor = captureSelectionAnchor()
   if (!anchor) {
     hide()
     return
@@ -91,7 +99,6 @@ function updateToolbar() {
   }
 
   const rect = range.getBoundingClientRect()
-  pendingAnchor.value = { ...anchor }
   x.value = rect.left + rect.width / 2
   y.value = Math.max(8, rect.top - 8)
   mode.value = 'select'
@@ -131,6 +138,7 @@ async function applyColor(color) {
     return
   }
 
+  try {
   const hl = await addHighlight({
     pagePath: currentPagePath.value,
     anchorType: 'text-range',
@@ -149,6 +157,10 @@ async function applyColor(color) {
   window.getSelection()?.removeAllRanges()
   hide()
   showToast('Highlight saved')
+  } catch (err) {
+    console.error('[dsa] highlight failed', err)
+    showToast('Could not save highlight')
+  }
 }
 
 async function addNoteFromSelection() {
@@ -159,6 +171,7 @@ async function addNoteFromSelection() {
     return
   }
 
+  try {
   const hl = await addHighlight({
     pagePath: currentPagePath.value,
     anchorType: 'text-range',
@@ -191,6 +204,10 @@ async function addNoteFromSelection() {
       body,
     })
     showToast('Note saved')
+  }
+  } catch (err) {
+    console.error('[dsa] note failed', err)
+    showToast('Could not save note')
   }
 }
 
@@ -257,6 +274,8 @@ function onSelectionChange() {
 
 function onMouseUp(e) {
   if (isIgnoredTarget(e.target)) return
+  // Capture anchor immediately while the selection still exists.
+  captureSelectionAnchor()
   scheduleUpdate()
 }
 
@@ -270,13 +289,34 @@ function onClick(e) {
   showHighlightMenu(mark)
 }
 
+let toolbarPressTimer = 0
+
+function onToolbarPointerDown() {
+  if (toolbarPressTimer) clearTimeout(toolbarPressTimer)
+  toolbarPressing.value = true
+}
+
+function onToolbarPointerUp() {
+  if (toolbarPressTimer) clearTimeout(toolbarPressTimer)
+  // Keep the guard through the synthesized click event.
+  toolbarPressTimer = window.setTimeout(() => {
+    toolbarPressTimer = 0
+    toolbarPressing.value = false
+  }, 300)
+}
+
 function onDocumentMouseDown(e) {
   if (!(e.target instanceof Element)) return
   if (e.target.closest('.annotation-toolbar')) return
   if (e.target.closest('.note-dialog, .note-dialog-backdrop')) return
   if (e.target.closest('mark.dsa-hl')) return
+  if (toolbarPressing.value) return
 
-  hide()
+  // Defer so toolbar button handlers run first (pointerdown/click).
+  requestAnimationFrame(() => {
+    if (toolbarPressing.value) return
+    hide()
+  })
 }
 
 function onKeyDown(e) {
@@ -300,6 +340,7 @@ onMounted(() => {
 
 onUnmounted(() => {
   if (debounceTimer) clearTimeout(debounceTimer)
+  if (toolbarPressTimer) clearTimeout(toolbarPressTimer)
   document.removeEventListener('selectionchange', onSelectionChange)
   document.removeEventListener('mouseup', onMouseUp)
   document.removeEventListener('click', onClick, true)
@@ -322,6 +363,9 @@ watch(() => route.path, () => {
       :style="{ left: x + 'px', top: y + 'px' }"
       role="toolbar"
       :aria-label="mode === 'highlight' ? 'Highlight actions' : 'Highlight options'"
+      @pointerdown.stop="onToolbarPointerDown"
+      @pointerup="onToolbarPointerUp"
+      @pointercancel="onToolbarPointerUp"
       @mousedown.stop
     >
       <template v-if="mode === 'select'">
@@ -333,14 +377,14 @@ watch(() => route.path, () => {
           :class="c.id"
           :aria-label="`Highlight ${c.label}`"
           :title="c.label"
-          @pointerdown.prevent.stop="applyColor(c.id)"
+          @click.stop="applyColor(c.id)"
         />
         <span class="divider" />
         <button
           type="button"
           class="action-btn"
           title="Add note"
-          @pointerdown.prevent.stop="addNoteFromSelection"
+          @click.stop="addNoteFromSelection"
         >
           Note
         </button>
@@ -351,7 +395,7 @@ watch(() => route.path, () => {
           type="button"
           class="action-btn"
           title="Add or edit note"
-          @pointerdown.prevent.stop="editHighlightNote"
+          @click.stop="editHighlightNote"
         >
           {{ noteForHighlight(activeHighlightId) ? 'Edit note' : 'Add note' }}
         </button>
@@ -360,7 +404,7 @@ watch(() => route.path, () => {
           type="button"
           class="action-btn danger"
           title="Remove highlight"
-          @pointerdown.prevent.stop="removeActiveHighlight"
+          @click.stop="removeActiveHighlight"
         >
           Remove
         </button>
