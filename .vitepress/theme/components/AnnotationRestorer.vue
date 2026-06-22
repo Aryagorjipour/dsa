@@ -1,5 +1,5 @@
 <script setup>
-import { watch, onMounted } from 'vue'
+import { watch, onMounted, nextTick } from 'vue'
 import { useRoute } from 'vitepress'
 import { useAnnotations, loadAnnotations } from '../composables/useAnnotations'
 import { assignBlockIds } from '../utils/assignBlockIds'
@@ -28,11 +28,17 @@ function restoreHighlights() {
 
 onMounted(async () => {
   await loadAnnotations()
-  setTimeout(restoreHighlights, 200)
+  nextTick(() => {
+    assignBlockIds()
+    setTimeout(restoreHighlights, 200)
+  })
 })
 
 watch(() => route.path, () => {
-  setTimeout(restoreHighlights, 300)
+  nextTick(() => {
+    assignBlockIds()
+    setTimeout(restoreHighlights, 300)
+  })
 })
 
 watch(pageHighlights, restoreHighlights)

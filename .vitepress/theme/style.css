@@ -149,7 +149,7 @@ html.dark mark.dsa-hl-pink { background: rgba(157, 23, 77, 0.35); }
   font-size: 14px;
   line-height: 1;
   cursor: pointer;
-  opacity: 0;
+  opacity: 0.45;
   transition: opacity 0.15s;
 }
 

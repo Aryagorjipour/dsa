@@ -1,16 +1,18 @@
 <script setup>
-import { ref, onMounted, onUnmounted } from 'vue'
+import { ref, onMounted, onUnmounted, watch, nextTick } from 'vue'
+import { useRoute } from 'vitepress'
 import { useAnnotations } from '../composables/useAnnotations'
 import { assignBlockIds } from '../utils/assignBlockIds'
 import { getSelectionAnchor } from '../utils/highlightRestorer'
 import { applyHighlightToDOM } from '../utils/highlightRestorer'
 
+const route = useRoute()
 const { addHighlight, addNote, highlightsVisible, currentPagePath } = useAnnotations()
 
 const visible = ref(false)
 const x = ref(0)
 const y = ref(0)
-const selectedText = ref('')
+const toolbarInteracting = ref(false)
 
 const colors = [
   { id: 'yellow', label: 'Yellow' },
@@ -23,9 +25,18 @@ function hide() {
   visible.value = false
 }
 
-function handleSelection() {
+function isIgnoredTarget(target) {
+  if (!(target instanceof Element)) return false
+  return !!target.closest(
+    'input, textarea, select, [contenteditable="true"], .annotation-toolbar, pre, code, .vp-code-group, .language-'
+  )
+}
+
+function updateToolbar() {
+  if (toolbarInteracting.value) return
+
   const sel = window.getSelection()
-  if (!sel || sel.isCollapsed) {
+  if (!sel || sel.isCollapsed || sel.rangeCount === 0) {
     hide()
     return
   }
@@ -37,12 +48,28 @@ function handleSelection() {
     return
   }
 
-  const range = sel.getRangeAt(0)
+  let range
+  try {
+    range = sel.getRangeAt(0)
+  } catch {
+    hide()
+    return
+  }
+
   const rect = range.getBoundingClientRect()
   x.value = rect.left + rect.width / 2
-  y.value = rect.top - 8
-  selectedText.value = anchor.textSnapshot.slice(0, 40)
+  y.value = Math.max(8, rect.top - 8)
   visible.value = true
+}
+
+let debounceTimer = null
+
+function scheduleUpdate() {
+  if (debounceTimer) clearTimeout(debounceTimer)
+  debounceTimer = setTimeout(() => {
+    debounceTimer = null
+    updateToolbar()
+  }, 30)
 }
 
 async function highlight(color) {
@@ -100,15 +127,52 @@ async function addNoteFromSelection() {
   hide()
 }
 
-onMounted(() => {
-  document.addEventListener('mouseup', handleSelection)
-  document.addEventListener('keydown', e => {
-    if (e.key === 'Escape') hide()
+function onSelectionChange() {
+  scheduleUpdate()
+}
+
+function onMouseUp(e) {
+  if (isIgnoredTarget(e.target)) return
+  scheduleUpdate()
+}
+
+function onKeyDown(e) {
+  if (e.key === 'Escape') hide()
+}
+
+function onToolbarPointerDown() {
+  toolbarInteracting.value = true
+}
+
+function onToolbarPointerUp() {
+  setTimeout(() => {
+    toolbarInteracting.value = false
+  }, 250)
+}
+
+function preparePage() {
+  nextTick(() => {
+    assignBlockIds()
   })
+}
+
+onMounted(() => {
+  preparePage()
+  document.addEventListener('selectionchange', onSelectionChange)
+  document.addEventListener('mouseup', onMouseUp)
+  document.addEventListener('keydown', onKeyDown)
 })
 
 onUnmounted(() => {
-  document.removeEventListener('mouseup', handleSelection)
+  if (debounceTimer) clearTimeout(debounceTimer)
+  document.removeEventListener('selectionchange', onSelectionChange)
+  document.removeEventListener('mouseup', onMouseUp)
+  document.removeEventListener('keydown', onKeyDown)
+})
+
+watch(() => route.path, () => {
+  hide()
+  preparePage()
 })
 </script>
 
@@ -120,6 +184,8 @@ onUnmounted(() => {
       :style="{ left: x + 'px', top: y + 'px' }"
       role="toolbar"
       aria-label="Highlight options"
+      @mousedown="onToolbarPointerDown"
+      @mouseup="onToolbarPointerUp"
     >
       <button
         v-for="c in colors"

@@ -23,6 +23,7 @@ const { isFocusMode, toggleFocusMode } = useFocusMode()
 </script>
 
 <template>
+  <div class="dsa-theme-root">
   <Layout>
     <template #nav-bar-title-before>
       <DSALogo />
@@ -49,25 +50,26 @@ const { isFocusMode, toggleFocusMode } = useFocusMode()
       <QuizSection />
       <PageTools />
     </template>
-
-    <ReadingProgress />
-    <Toast />
-    <AnnotationToolbar />
-    <AnnotationRestorer />
-    <CodeBlockActions />
-    <HeadingNotes />
-
-    <button
-      v-if="!isFocusMode"
-      class="floating-focus"
-      aria-label="Enter focus mode (Shift+F)"
-      title="Focus Mode — hide sidebars for distraction-free reading (Shift+F)"
-      @click="toggleFocusMode"
-    >
-      <span class="focus-icon" aria-hidden="true">◐</span>
-      Focus
-    </button>
   </Layout>
+
+  <ReadingProgress />
+  <Toast />
+  <AnnotationToolbar />
+  <AnnotationRestorer />
+  <CodeBlockActions />
+  <HeadingNotes />
+
+  <button
+    v-if="!isFocusMode"
+    class="floating-focus"
+    aria-label="Enter focus mode (Shift+F)"
+    title="Focus Mode — hide sidebars for distraction-free reading (Shift+F)"
+    @click="toggleFocusMode"
+  >
+    <span class="focus-icon" aria-hidden="true">◐</span>
+    Focus
+  </button>
+  </div>
 </template>
 
 <style scoped>

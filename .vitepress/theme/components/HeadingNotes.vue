@@ -50,15 +50,23 @@ function cleanup() {
   })
 }
 
+function scheduleInject() {
+  requestAnimationFrame(() => {
+    injectHeadingButtons()
+    // Firefox can paint .vp-doc slightly after route change; retry once.
+    setTimeout(injectHeadingButtons, 100)
+  })
+}
+
 onMounted(() => {
-  setTimeout(injectHeadingButtons, 150)
+  scheduleInject()
 })
 
 onUnmounted(() => cleanup())
 
 watch(() => route.path, () => {
   cleanup()
-  setTimeout(injectHeadingButtons, 200)
+  scheduleInject()
 })
 </script>
 

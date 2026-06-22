@@ -5,9 +5,11 @@ import { showToast } from '../composables/useToast'
 import { buildPlaygroundUrl } from '../utils/playgroundUrl'
 import { handbookLink } from '../utils/handbookLink'
 import { normalizePagePath } from '../utils/normalizePagePath'
+import { useAnnotations } from '../composables/useAnnotations'
 
 const { page } = useData()
 const route = useRoute()
+const { addNote, currentPagePath } = useAnnotations()
 
 const title = computed(() => page.value.title || 'DSA Topic')
 const isProjectPage = computed(() => normalizePagePath(route.path).includes('/projects/tier-'))
@@ -19,6 +21,18 @@ function playgroundUrl() {
 function sharePage() {
   navigator.clipboard.writeText(window.location.href)
   showToast('Link copied to clipboard')
+}
+
+async function addPageNote() {
+  const body = prompt('Add a note for this page:', '')
+  if (body === null || !body.trim()) return
+  await addNote({
+    pagePath: currentPagePath.value,
+    anchorType: 'free',
+    title: title.value,
+    body: body.trim(),
+  })
+  showToast('Page note saved — see sidebar')
 }
 
 function giveToAI() {
@@ -66,6 +80,7 @@ Start your explanation now.`
       <strong>+</strong> for a section note. Your notes appear in the sidebar.
     </p>
     <div class="actions">
+      <button class="btn" @click="addPageNote">Add page note</button>
       <button class="btn" @click="sharePage">Share</button>
       <button class="btn" @click="giveToAI">{{ isProjectPage ? 'Mentor Mode' : 'Give to AI' }}</button>
       <a v-if="isProjectPage" :href="handbookLink('/projects/README')" class="btn">Project Lab</a>

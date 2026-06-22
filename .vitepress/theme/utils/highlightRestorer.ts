@@ -1,11 +1,12 @@
 import type { Highlight } from '../composables/useStorage'
+import { ensureBlockId, findContentBlock } from './assignBlockIds'
 
 function getTextNodes(element: Node): Text[] {
   const nodes: Text[] = []
   const walker = document.createTreeWalker(element, NodeFilter.SHOW_TEXT)
   let node: Node | null
   while ((node = walker.nextNode())) {
-    if (node.textContent?.trim()) nodes.push(node as Text)
+    if (node.textContent?.length) nodes.push(node as Text)
   }
   return nodes
 }
@@ -104,15 +105,22 @@ export function getSelectionAnchor(): {
   textSnapshot: string
 } | null {
   const sel = window.getSelection()
-  if (!sel || sel.isCollapsed || !sel.rangeCount) return null
+  if (!sel || sel.isCollapsed || sel.rangeCount === 0) return null
 
-  const range = sel.getRangeAt(0)
+  let range: Range
+  try {
+    range = sel.getRangeAt(0)
+  } catch {
+    return null
+  }
+
   const doc = document.querySelector('.vp-doc')
   if (!doc?.contains(range.commonAncestorContainer)) return null
 
-  const block = (range.startContainer as Element).closest?.('[data-dsa-block]')
-    ?? (range.startContainer.parentElement)?.closest?.('[data-dsa-block]')
+  const block = findContentBlock(range.startContainer)
   if (!block) return null
+
+  const blockId = ensureBlockId(block)
 
   const preRange = document.createRange()
   preRange.selectNodeContents(block)
@@ -124,7 +132,7 @@ export function getSelectionAnchor(): {
   if (!textSnapshot.trim()) return null
 
   return {
-    blockId: block.getAttribute('data-dsa-block') || '',
+    blockId,
     startOffset,
     endOffset,
     textSnapshot,
