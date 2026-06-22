@@ -1,5 +1,28 @@
 import type { Highlight } from '../composables/useStorage'
-import { ensureBlockId, findContentBlock } from './assignBlockIds'
+import { assignBlockIds, ensureBlockId, findContentBlock } from './assignBlockIds'
+
+function escapeAttr(value: string): string {
+  if (typeof CSS !== 'undefined' && typeof CSS.escape === 'function') {
+    return CSS.escape(value)
+  }
+  return value.replace(/\\/g, '\\\\').replace(/"/g, '\\"')
+}
+
+function findHighlightMark(id: string): HTMLElement | null {
+  return document.querySelector(`mark[data-highlight-id="${escapeAttr(id)}"]`)
+}
+
+function resolveBlock(highlight: Highlight): Element | null {
+  const matches = document.querySelectorAll(`[data-dsa-block="${escapeAttr(highlight.blockId)}"]`)
+  if (matches.length === 0) return null
+  if (matches.length === 1) return matches[0]
+
+  const snap = highlight.textSnapshot
+  for (const el of matches) {
+    if (snap && (el.textContent || '').includes(snap)) return el
+  }
+  return matches[0]
+}
 
 function getTextNodes(element: Node): Text[] {
   const nodes: Text[] = []
@@ -49,8 +72,14 @@ function fuzzyFindSnapshot(block: Element, snapshot: string): { start: number; e
   return null
 }
 
+export function ensureHighlightInDOM(highlight: Highlight): boolean {
+  assignBlockIds()
+  if (findHighlightMark(highlight.id)) return true
+  return applyHighlightToDOM(highlight)
+}
+
 export function applyHighlightToDOM(highlight: Highlight): boolean {
-  const block = document.querySelector(`[data-dsa-block="${highlight.blockId}"]`)
+  const block = resolveBlock(highlight)
   if (!block) return false
 
   let start = highlight.startOffset
@@ -90,7 +119,7 @@ export function applyHighlightToDOM(highlight: Highlight): boolean {
 }
 
 export function removeHighlightFromDOM(id: string) {
-  const mark = document.querySelector(`mark[data-highlight-id="${id}"]`)
+  const mark = findHighlightMark(id)
   if (!mark?.parentNode) return
   const parent = mark.parentNode
   while (mark.firstChild) parent.insertBefore(mark.firstChild, mark)

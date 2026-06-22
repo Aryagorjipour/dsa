@@ -5,15 +5,17 @@ import { handbookLink } from '../utils/handbookLink'
 import { scrollToNote } from '../utils/scrollToNote'
 import { showToast } from '../composables/useToast'
 
-const { pageNotes, pageHighlights, toggleHighlightsVisible, highlightsVisible, removeNote } = useAnnotations()
+const { pageNotes, pageHighlights, highlights, loaded, toggleHighlightsVisible, highlightsVisible, removeNote } = useAnnotations()
 const collapsed = ref(false)
 
-onMounted(() => {
-  loadAnnotations()
+onMounted(async () => {
+  await loadAnnotations()
 })
 
 async function goToNote(note) {
-  const ok = await scrollToNote(note)
+  if (!loaded.value) await loadAnnotations()
+
+  const ok = await scrollToNote(note, { highlights: highlights.value })
   if (!ok) showToast('Could not find this note on the page')
 }
 </script>

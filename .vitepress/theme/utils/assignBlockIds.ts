@@ -15,7 +15,22 @@ export const CONTENT_BLOCK_TAGS = new Set([
   'H6',
 ])
 
+/** Keep runtime IDs above any build-time data-dsa-block values on the page. */
+export function syncBlockCounter(doc: Element): void {
+  let max = -1
+  doc.querySelectorAll('[data-dsa-block]').forEach(el => {
+    const n = parseInt(el.getAttribute('data-dsa-block') || '', 10)
+    if (!Number.isNaN(n) && n > max) max = n
+  })
+  const next = max + 1
+  const current = parseInt(doc.getAttribute('data-dsa-block-next') || '', 10)
+  if (Number.isNaN(current) || current < next) {
+    doc.setAttribute('data-dsa-block-next', String(next))
+  }
+}
+
 function nextBlockCounter(doc: Element): number {
+  syncBlockCounter(doc)
   const current = parseInt(doc.getAttribute('data-dsa-block-next') || '0', 10)
   doc.setAttribute('data-dsa-block-next', String(current + 1))
   return current
@@ -54,6 +69,8 @@ export function findContentBlock(node: Node | null): Element | null {
 export function assignBlockIds(): void {
   const doc = document.querySelector('.vp-doc')
   if (!doc) return
+
+  syncBlockCounter(doc)
 
   doc.querySelectorAll(BLOCK_SELECTOR).forEach(el => {
     if (!(el instanceof Element)) return

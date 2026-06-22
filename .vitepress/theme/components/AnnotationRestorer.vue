@@ -3,7 +3,7 @@ import { watch, onMounted, onUnmounted, nextTick } from 'vue'
 import { useRoute } from 'vitepress'
 import { useAnnotations, loadAnnotations } from '../composables/useAnnotations'
 import { assignBlockIds } from '../utils/assignBlockIds'
-import { applyHighlightToDOM } from '../utils/highlightRestorer'
+import { ensureHighlightInDOM } from '../utils/highlightRestorer'
 import { scrollToHash } from '../utils/scrollToNote'
 
 const route = useRoute()
@@ -12,7 +12,7 @@ const { pageHighlights, highlightsVisible, loaded } = useAnnotations()
 function followNoteHash() {
   const hash = window.location.hash
   if (!hash) return
-  scrollToHash(hash)
+  scrollToHash(hash, pageHighlights.value)
 }
 
 function restoreHighlights() {
@@ -31,7 +31,7 @@ function restoreHighlights() {
 
   requestAnimationFrame(() => {
     for (const hl of pageHighlights.value) {
-      applyHighlightToDOM(hl)
+      ensureHighlightInDOM(hl)
     }
     followNoteHash()
   })
