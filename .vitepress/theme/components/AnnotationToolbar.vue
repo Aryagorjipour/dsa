@@ -24,7 +24,8 @@ const mode = ref('select')
 const x = ref(0)
 const y = ref(0)
 const activeHighlightId = ref(null)
-const toolbarInteracting = ref(false)
+/** Saved when toolbar opens — selection is gone by the time buttons are clicked. */
+const pendingAnchor = ref(null)
 
 const colors = [
   { id: 'yellow', label: 'Yellow' },
@@ -37,6 +38,7 @@ function hide() {
   visible.value = false
   mode.value = 'select'
   activeHighlightId.value = null
+  pendingAnchor.value = null
 }
 
 function isIgnoredTarget(target) {
@@ -59,11 +61,12 @@ function selectionInsideHighlight() {
 }
 
 function updateToolbar() {
-  if (toolbarInteracting.value || mode.value === 'highlight') return
+  if (mode.value === 'highlight') return
+  if (visible.value && pendingAnchor.value) return
 
   const sel = window.getSelection()
   if (!sel || sel.isCollapsed || sel.rangeCount === 0) {
-    hide()
+    if (!pendingAnchor.value) hide()
     return
   }
 
@@ -88,6 +91,7 @@ function updateToolbar() {
   }
 
   const rect = range.getBoundingClientRect()
+  pendingAnchor.value = { ...anchor }
   x.value = rect.left + rect.width / 2
   y.value = Math.max(8, rect.top - 8)
   mode.value = 'select'
@@ -97,6 +101,7 @@ function updateToolbar() {
 let debounceTimer = null
 
 function scheduleUpdate() {
+  if (visible.value && pendingAnchor.value) return
   if (debounceTimer) clearTimeout(debounceTimer)
   debounceTimer = setTimeout(() => {
     debounceTimer = null
@@ -109,18 +114,22 @@ function showHighlightMenu(mark) {
   if (!id) return
 
   const rect = mark.getBoundingClientRect()
+  pendingAnchor.value = null
   activeHighlightId.value = id
   mode.value = 'highlight'
   x.value = rect.left + rect.width / 2
   y.value = Math.max(8, rect.top - 8)
   visible.value = true
-  toolbarInteracting.value = true
   window.getSelection()?.removeAllRanges()
 }
 
-async function highlight(color) {
-  const anchor = getSelectionAnchor()
-  if (!anchor) return
+async function applyColor(color) {
+  const anchor = pendingAnchor.value
+  if (!anchor) {
+    showToast('Selection lost — try selecting again')
+    hide()
+    return
+  }
 
   const hl = await addHighlight({
     pagePath: currentPagePath.value,
@@ -133,7 +142,8 @@ async function highlight(color) {
   })
 
   if (highlightsVisible.value) {
-    applyHighlightToDOM(hl)
+    const ok = applyHighlightToDOM(hl)
+    if (!ok) showToast('Could not paint highlight — saved anyway')
   }
 
   window.getSelection()?.removeAllRanges()
@@ -141,15 +151,13 @@ async function highlight(color) {
   showToast('Highlight saved')
 }
 
-function noteForHighlight(highlightId) {
-  return pageNotes.value.find(
-    n => n.anchorType === 'highlight' && n.anchorId === highlightId
-  )
-}
-
 async function addNoteFromSelection() {
-  const anchor = getSelectionAnchor()
-  if (!anchor) return
+  const anchor = pendingAnchor.value
+  if (!anchor) {
+    showToast('Selection lost — try selecting again')
+    hide()
+    return
+  }
 
   const hl = await addHighlight({
     pagePath: currentPagePath.value,
@@ -184,6 +192,12 @@ async function addNoteFromSelection() {
     })
     showToast('Note saved')
   }
+}
+
+function noteForHighlight(highlightId) {
+  return pageNotes.value.find(
+    n => n.anchorType === 'highlight' && n.anchorId === highlightId
+  )
 }
 
 async function editHighlightNote() {
@@ -237,6 +251,7 @@ async function removeActiveHighlight() {
 }
 
 function onSelectionChange() {
+  if (visible.value && pendingAnchor.value) return
   scheduleUpdate()
 }
 
@@ -261,24 +276,11 @@ function onDocumentMouseDown(e) {
   if (e.target.closest('.note-dialog, .note-dialog-backdrop')) return
   if (e.target.closest('mark.dsa-hl')) return
 
-  if (visible.value) {
-    hide()
-    toolbarInteracting.value = false
-  }
+  hide()
 }
 
 function onKeyDown(e) {
   if (e.key === 'Escape') hide()
-}
-
-function onToolbarPointerDown() {
-  toolbarInteracting.value = true
-}
-
-function onToolbarPointerUp() {
-  setTimeout(() => {
-    toolbarInteracting.value = false
-  }, 250)
 }
 
 function preparePage() {
@@ -320,32 +322,46 @@ watch(() => route.path, () => {
       :style="{ left: x + 'px', top: y + 'px' }"
       role="toolbar"
       :aria-label="mode === 'highlight' ? 'Highlight actions' : 'Highlight options'"
-      @mousedown="onToolbarPointerDown"
-      @mouseup="onToolbarPointerUp"
+      @mousedown.stop
     >
       <template v-if="mode === 'select'">
         <button
           v-for="c in colors"
           :key="c.id"
+          type="button"
           class="color-btn"
           :class="c.id"
           :aria-label="`Highlight ${c.label}`"
           :title="c.label"
-          @mousedown.prevent
-          @click="highlight(c.id)"
+          @pointerdown.prevent.stop="applyColor(c.id)"
         />
         <span class="divider" />
-        <button class="action-btn" title="Add note" @mousedown.prevent @click="addNoteFromSelection">
+        <button
+          type="button"
+          class="action-btn"
+          title="Add note"
+          @pointerdown.prevent.stop="addNoteFromSelection"
+        >
           Note
         </button>
       </template>
 
       <template v-else>
-        <button class="action-btn" title="Add or edit note" @mousedown.prevent @click="editHighlightNote">
+        <button
+          type="button"
+          class="action-btn"
+          title="Add or edit note"
+          @pointerdown.prevent.stop="editHighlightNote"
+        >
           {{ noteForHighlight(activeHighlightId) ? 'Edit note' : 'Add note' }}
         </button>
         <span class="divider" />
-        <button class="action-btn danger" title="Remove highlight" @mousedown.prevent @click="removeActiveHighlight">
+        <button
+          type="button"
+          class="action-btn danger"
+          title="Remove highlight"
+          @pointerdown.prevent.stop="removeActiveHighlight"
+        >
           Remove
         </button>
       </template>
@@ -366,6 +382,7 @@ watch(() => route.path, () => {
   border-radius: 8px;
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
   z-index: 250;
+  user-select: none;
 }
 
 .color-btn {
