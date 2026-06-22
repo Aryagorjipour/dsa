@@ -8,6 +8,7 @@ import { normalizePagePath } from '../utils/normalizePagePath'
 import { scrollToNote } from '../utils/scrollToNote'
 import { ensureHighlightInDOM } from '../utils/highlightRestorer'
 import { layoutMarginNotes, connectorPath, isMarginNotesMobile } from '../utils/noteLayout'
+import { onAnnotationsRestored } from '../utils/annotationLifecycle'
 import { handbookLink } from '../utils/handbookLink'
 import { showToast } from '../composables/useToast'
 
@@ -30,6 +31,8 @@ const cardRefs = ref({})
 const isMobile = ref(false)
 let resizeObserver = null
 let layoutRaf = 0
+let layoutRetryTimer = 0
+let unbindRestoreListener = null
 
 const marginNotesEnabled = computed(() => showOnPage.value && !isFocusMode.value && !isMobile.value)
 
@@ -113,6 +116,25 @@ function scheduleLayout() {
   })
 }
 
+function scheduleLayoutWithRetry() {
+  scheduleLayout()
+  if (layoutRetryTimer) window.clearTimeout(layoutRetryTimer)
+
+  let attempt = 0
+  const retry = () => {
+    if (!isOpen.value) return
+    attempt++
+    const expected = pageNotes.value.length
+    const placed = placements.value.length
+    if (expected > 0 && placed < expected && attempt < 18) {
+      scheduleLayout()
+      layoutRetryTimer = window.setTimeout(retry, 80 + attempt * 40)
+    }
+  }
+
+  layoutRetryTimer = window.setTimeout(retry, 120)
+}
+
 async function focusNote(note) {
   if (!loaded.value) await loadAnnotations()
   setActiveNoteId(note.id)
@@ -123,10 +145,7 @@ async function focusNote(note) {
 
 function onToggle() {
   togglePageNotesRail()
-  nextTick(() => {
-    scheduleLayout()
-    window.setTimeout(scheduleLayout, 400)
-  })
+  nextTick(() => scheduleLayoutWithRetry())
 }
 
 function setupResizeObserver() {
@@ -140,6 +159,9 @@ function setupResizeObserver() {
 onMounted(async () => {
   await loadAnnotations()
   syncMobile()
+  unbindRestoreListener = onAnnotationsRestored(() => {
+    if (isOpen.value) scheduleLayoutWithRetry()
+  })
   window.addEventListener('scroll', scheduleLayout, { passive: true })
   window.addEventListener('resize', onResize, { passive: true })
 })
@@ -151,6 +173,8 @@ function onResize() {
 
 onUnmounted(() => {
   if (layoutRaf) cancelAnimationFrame(layoutRaf)
+  if (layoutRetryTimer) window.clearTimeout(layoutRetryTimer)
+  unbindRestoreListener?.()
   resizeObserver?.disconnect()
   window.removeEventListener('scroll', scheduleLayout)
   window.removeEventListener('resize', onResize)
@@ -158,10 +182,7 @@ onUnmounted(() => {
 
 watch(isOpen, open => {
   if (open) {
-    nextTick(() => {
-      scheduleLayout()
-      window.setTimeout(scheduleLayout, 400)
-    })
+    nextTick(() => scheduleLayoutWithRetry())
   } else {
     placements.value = []
     activeNoteId.value = null

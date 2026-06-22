@@ -1,6 +1,5 @@
 <script setup>
 import { watch, onMounted, onUnmounted } from 'vue'
-import { useRoute } from 'vitepress'
 import { useAnnotations, loadAnnotations } from '../composables/useAnnotations'
 import {
   bindAnnotationRestore,
@@ -8,7 +7,6 @@ import {
 } from '../utils/annotationLifecycle'
 import { scrollToHash } from '../utils/scrollToNote'
 
-const route = useRoute()
 const { pageHighlights, highlightsVisible } = useAnnotations()
 
 function followNoteHash() {
@@ -31,14 +29,6 @@ onMounted(async () => {
 onUnmounted(() => {
   window.removeEventListener('hashchange', followNoteHash)
 })
-
-watch(() => route.path, () => {
-  scheduleAnnotationRestore(true)
-}, { flush: 'post' })
-
-watch(pageHighlights, () => {
-  scheduleAnnotationRestore(false)
-}, { flush: 'post' })
 
 watch(highlightsVisible, visible => {
   document.documentElement.classList.toggle('highlights-hidden', !visible)

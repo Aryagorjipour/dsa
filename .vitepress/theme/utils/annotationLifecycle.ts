@@ -10,11 +10,15 @@ export interface AnnotationRestoreContext {
   isVisible: () => boolean
 }
 
+type RestoreListener = () => void
+
 let context: AnnotationRestoreContext | null = null
 let restoreToken = 0
 let routerHooked = false
+let debounceTimer = 0
+const restoreListeners = new Set<RestoreListener>()
 
-const MAX_ATTEMPTS = 28
+const MAX_ATTEMPTS = 20
 
 function escapeAttr(value: string): string {
   if (typeof CSS !== 'undefined' && typeof CSS.escape === 'function') {
@@ -68,23 +72,93 @@ function delay(ms: number): Promise<void> {
 }
 
 function attemptDelay(attempt: number): number {
-  return Math.min(40 + attempt * 30, 350)
+  return Math.min(50 + attempt * 35, 300)
+}
+
+function notifyRestored(): void {
+  for (const listener of restoreListeners) {
+    try {
+      listener()
+    } catch {
+      /* ignore listener errors */
+    }
+  }
 }
 
 export function bindAnnotationRestore(ctx: AnnotationRestoreContext): void {
   context = ctx
 }
 
+export function onAnnotationsRestored(listener: RestoreListener): () => void {
+  restoreListeners.add(listener)
+  return () => restoreListeners.delete(listener)
+}
+
 export function setupAnnotationRouter(router: Router): void {
   if (routerHooked) return
   routerHooked = true
 
-  // onAfterPageLoad runs before route.data updates; onAfterRouteChange runs after.
   const previous = router.onAfterRouteChange ?? router.onAfterRouteChanged
   router.onAfterRouteChange = async href => {
     await previous?.(href)
     scheduleAnnotationRestore(true)
   }
+}
+
+async function runRestore(token: number, expectedPath: string, scrollHash: boolean): Promise<void> {
+  let cleared = false
+
+  for (let attempt = 0; attempt < MAX_ATTEMPTS; attempt++) {
+    if (token !== restoreToken) return
+    if (normalizePagePath(window.location.pathname) !== expectedPath) return
+
+    const highlights = context!.getHighlights()
+    const visible = context!.isVisible()
+
+    if (!isDocReady()) {
+      await delay(attemptDelay(attempt))
+      continue
+    }
+
+    if (visible && highlights.length > 0) {
+      if (!cleared) {
+        clearExistingMarks()
+        cleared = true
+        await delay(0)
+        if (token !== restoreToken) return
+      }
+
+      applyHighlights(highlights)
+
+      const applied = countAppliedMarks(highlights)
+      if (applied < highlights.length) {
+        await delay(attemptDelay(attempt))
+        continue
+      }
+    } else if (!cleared) {
+      clearExistingMarks()
+      cleared = true
+    }
+
+    if (scrollHash || window.location.hash) {
+      scrollToNoteHash(highlights)
+    }
+
+    notifyRestored()
+    return
+  }
+
+  if (token !== restoreToken) return
+
+  const highlights = context!.getHighlights()
+  if (context!.isVisible() && highlights.length > 0) {
+    if (!cleared) clearExistingMarks()
+    applyHighlights(highlights)
+  }
+  if (scrollHash || window.location.hash) {
+    scrollToNoteHash(highlights)
+  }
+  notifyRestored()
 }
 
 /**
@@ -94,52 +168,12 @@ export function setupAnnotationRouter(router: Router): void {
 export function scheduleAnnotationRestore(scrollHash = false): void {
   if (!context) return
 
-  const token = ++restoreToken
-  const expectedPath = normalizePagePath(window.location.pathname)
+  if (debounceTimer) window.clearTimeout(debounceTimer)
 
-  void (async () => {
-    await delay(0)
-
-    for (let attempt = 0; attempt < MAX_ATTEMPTS; attempt++) {
-      if (token !== restoreToken) return
-
-      if (normalizePagePath(window.location.pathname) !== expectedPath) return
-
-      const highlights = context!.getHighlights()
-      const visible = context!.isVisible()
-
-      if (!isDocReady()) {
-        await delay(attemptDelay(attempt))
-        continue
-      }
-
-      clearExistingMarks()
-      await delay(0)
-      if (token !== restoreToken) return
-
-      if (visible && highlights.length > 0) {
-        applyHighlights(highlights)
-
-        const applied = countAppliedMarks(highlights)
-        if (applied < highlights.length) {
-          await delay(attemptDelay(attempt))
-          continue
-        }
-      }
-
-      if (scrollHash || window.location.hash) {
-        scrollToNoteHash(highlights)
-      }
-      return
-    }
-
-    if (token !== restoreToken) return
-    const highlights = context!.getHighlights()
-    if (context!.isVisible() && highlights.length > 0) {
-      applyHighlights(highlights)
-    }
-    if (scrollHash || window.location.hash) {
-      scrollToNoteHash(highlights)
-    }
-  })()
+  debounceTimer = window.setTimeout(() => {
+    debounceTimer = 0
+    const token = ++restoreToken
+    const expectedPath = normalizePagePath(window.location.pathname)
+    void runRestore(token, expectedPath, scrollHash)
+  }, 32)
 }

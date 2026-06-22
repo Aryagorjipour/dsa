@@ -51,17 +51,30 @@ function layoutBounds(): LayoutBounds | null {
   const contentRect = contentColumnRect()
   if (!contentRect) return null
 
-  const sidebar = document.querySelector('.VPSidebar')
-  const aside = document.querySelector('.VPDocAside, .aside')
+  const navSidebar = document.querySelector('.VPSidebar')
+  const docAside = document.querySelector('.VPDoc .aside')
 
-  const sidebarRight = sidebar?.getBoundingClientRect().right ?? VIEWPORT_PAD
-  const asideLeft = aside?.getBoundingClientRect().left ?? window.innerWidth
+  const navSidebarRight = navSidebar?.getBoundingClientRect().right ?? VIEWPORT_PAD
+  const asideRect = docAside?.getBoundingClientRect()
+  const asideLeft =
+    asideRect && asideRect.width > 0 ? asideRect.left : window.innerWidth
 
-  const leftX = contentRect.left - CARD_WIDTH - MARGIN_GAP
-  const rightX = contentRect.right + MARGIN_GAP
+  let leftX = contentRect.left - CARD_WIDTH - MARGIN_GAP
+  let rightX = contentRect.right + MARGIN_GAP
 
-  const hasLeft = leftX >= sidebarRight + VIEWPORT_PAD && leftX + CARD_WIDTH <= contentRect.left - 4
-  const hasRight = rightX + CARD_WIDTH <= asideLeft - VIEWPORT_PAD && rightX >= contentRect.right + 4
+  let hasLeft = leftX >= navSidebarRight + VIEWPORT_PAD && leftX + CARD_WIDTH <= contentRect.left - 4
+  let hasRight = rightX + CARD_WIDTH <= asideLeft - VIEWPORT_PAD && rightX >= contentRect.right + 4
+
+  if (!hasLeft && !hasRight) {
+    rightX = window.innerWidth - CARD_WIDTH - VIEWPORT_PAD
+    hasRight = rightX >= contentRect.right - 8
+    if (!hasRight) {
+      rightX = Math.max(VIEWPORT_PAD, contentRect.right - CARD_WIDTH - 8)
+      hasRight = true
+    }
+    hasLeft = false
+    leftX = Math.max(VIEWPORT_PAD, contentRect.left - CARD_WIDTH - MARGIN_GAP)
+  }
 
   return {
     contentRect,
@@ -87,7 +100,6 @@ export function getNoteDocumentY(note: Note, highlights: Highlight[]): number {
 function pickSide(anchorRect: DOMRect, bounds: LayoutBounds): 'left' | 'right' {
   if (bounds.hasLeft && !bounds.hasRight) return 'left'
   if (bounds.hasRight && !bounds.hasLeft) return 'right'
-  if (!bounds.hasLeft && !bounds.hasRight) return 'right'
 
   const anchorCenter = anchorRect.left + anchorRect.width / 2
   const contentCenter = bounds.contentRect.left + bounds.contentRect.width / 2
@@ -104,18 +116,6 @@ function isAnchorInView(rect: DOMRect, topBound: number): boolean {
 
 function isBoxInView(top: number, height: number, topBound: number): boolean {
   return top + height > topBound && top < window.innerHeight - VIEWPORT_PAD
-}
-
-function fitsOnSide(
-  top: number,
-  height: number,
-  side: 'left' | 'right',
-  lastBottom: Record<'left' | 'right', number>,
-  topBound: number,
-): boolean {
-  if (!isBoxInView(top, height, topBound)) return false
-  if (lastBottom[side] > -Infinity && top < lastBottom[side] + CARD_GAP) return false
-  return true
 }
 
 export function sortNotesByPagePosition(notes: Note[], highlights: Highlight[]): Note[] {
@@ -152,29 +152,13 @@ export function layoutMarginNotes(
     let side = pickSide(anchorRect, bounds)
     if (side === 'left' && !bounds.hasLeft) side = 'right'
     if (side === 'right' && !bounds.hasRight) side = 'left'
-    if (!bounds.hasLeft && !bounds.hasRight) continue
 
     let top = idealTop
-    let placed = fitsOnSide(top, height, side, lastBottom, bounds.navBottom)
-
-    if (!placed) {
-      const alt: 'left' | 'right' = side === 'left' ? 'right' : 'left'
-      if ((alt === 'left' && bounds.hasLeft) || (alt === 'right' && bounds.hasRight)) {
-        if (fitsOnSide(idealTop, height, alt, lastBottom, bounds.navBottom)) {
-          side = alt
-          top = idealTop
-          placed = true
-        }
-      }
+    if (lastBottom[side] > -Infinity && top < lastBottom[side] + CARD_GAP) {
+      top = lastBottom[side] + CARD_GAP
     }
 
-    if (!placed) {
-      top = idealTop
-      if (lastBottom[side] > -Infinity && top < lastBottom[side] + CARD_GAP) {
-        top = lastBottom[side] + CARD_GAP
-      }
-      if (!isBoxInView(top, height, bounds.navBottom)) continue
-    }
+    if (!isBoxInView(top, height, bounds.navBottom)) continue
 
     lastBottom[side] = top + height
 
