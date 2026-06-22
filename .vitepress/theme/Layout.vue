@@ -10,6 +10,7 @@ import ReadingProgress from './components/ReadingProgress.vue'
 import Toast from './components/Toast.vue'
 import AnnotationToolbar from './components/AnnotationToolbar.vue'
 import AnnotationRestorer from './components/AnnotationRestorer.vue'
+import NoteDialog from './components/NoteDialog.vue'
 import CodeBlockActions from './components/CodeBlockActions.vue'
 import HeadingNotes from './components/HeadingNotes.vue'
 import SettingsDrawer from './components/SettingsDrawer.vue'
@@ -23,6 +24,7 @@ const { isFocusMode, toggleFocusMode } = useFocusMode()
 </script>
 
 <template>
+  <div class="dsa-theme-root">
   <Layout>
     <template #nav-bar-title-before>
       <DSALogo />
@@ -49,25 +51,37 @@ const { isFocusMode, toggleFocusMode } = useFocusMode()
       <QuizSection />
       <PageTools />
     </template>
-
-    <ReadingProgress />
-    <Toast />
-    <AnnotationToolbar />
-    <AnnotationRestorer />
-    <CodeBlockActions />
-    <HeadingNotes />
-
-    <button
-      v-if="!isFocusMode"
-      class="floating-focus"
-      aria-label="Enter focus mode (Shift+F)"
-      title="Focus Mode — hide sidebars for distraction-free reading (Shift+F)"
-      @click="toggleFocusMode"
-    >
-      <span class="focus-icon" aria-hidden="true">◐</span>
-      Focus
-    </button>
   </Layout>
+
+  <ReadingProgress />
+  <Toast />
+  <AnnotationToolbar />
+  <NoteDialog />
+  <AnnotationRestorer />
+  <CodeBlockActions />
+  <HeadingNotes />
+
+  <button
+    v-if="isFocusMode"
+    class="floating-focus is-exit"
+    aria-label="Exit focus mode (Shift+F or Esc)"
+    title="Exit Focus Mode (Shift+F or Esc)"
+    @click="toggleFocusMode"
+  >
+    <span class="focus-icon" aria-hidden="true">◑</span>
+    Exit Focus
+  </button>
+  <button
+    v-else
+    class="floating-focus"
+    aria-label="Enter focus mode (Shift+F)"
+    title="Focus Mode — fullscreen reading, hides nav and sidebars (Shift+F)"
+    @click="toggleFocusMode"
+  >
+    <span class="focus-icon" aria-hidden="true">◐</span>
+    Focus
+  </button>
+  </div>
 </template>
 
 <style scoped>
@@ -93,6 +107,13 @@ const { isFocusMode, toggleFocusMode } = useFocusMode()
 
 .floating-focus:hover {
   transform: scale(1.04);
+}
+
+.floating-focus.is-exit {
+  background: var(--vp-c-bg-elv);
+  color: var(--vp-c-text-1);
+  border: 1px solid var(--vp-c-divider);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
 }
 
 .focus-icon {

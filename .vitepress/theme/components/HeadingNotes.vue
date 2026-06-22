@@ -2,6 +2,7 @@
 import { onMounted, onUnmounted, watch } from 'vue'
 import { useRoute } from 'vitepress'
 import { useAnnotations } from '../composables/useAnnotations'
+import { openNoteDialog } from '../composables/useNoteDialog'
 import { showToast } from '../composables/useToast'
 
 const route = useRoute()
@@ -26,16 +27,24 @@ function injectHeadingButtons() {
       e.preventDefault()
       e.stopPropagation()
       const title = heading.textContent?.trim() || 'Section note'
-      const body = prompt(`Note for "${title}":`, '')
-      if (body === null || !body.trim()) return
-      await addNote({
-        pagePath: currentPagePath.value,
-        anchorType: 'heading',
-        anchorId: id,
-        title,
-        body: body.trim(),
+      const body = await openNoteDialog({
+        title: `Note for “${title}”`,
+        placeholder: 'Section notes, reminders, questions…',
       })
-      showToast('Section note saved')
+      if (!body) return
+      try {
+        await addNote({
+          pagePath: currentPagePath.value,
+          anchorType: 'heading',
+          anchorId: id,
+          title,
+          body: body.trim(),
+        })
+        showToast('Section note saved')
+      } catch (err) {
+        console.error('[dsa] section note failed', err)
+        showToast('Could not save section note')
+      }
     })
 
     heading.classList.add('dsa-heading-with-note')
@@ -50,15 +59,23 @@ function cleanup() {
   })
 }
 
+function scheduleInject() {
+  requestAnimationFrame(() => {
+    injectHeadingButtons()
+    // Firefox can paint .vp-doc slightly after route change; retry once.
+    setTimeout(injectHeadingButtons, 100)
+  })
+}
+
 onMounted(() => {
-  setTimeout(injectHeadingButtons, 150)
+  scheduleInject()
 })
 
 onUnmounted(() => cleanup())
 
 watch(() => route.path, () => {
   cleanup()
-  setTimeout(injectHeadingButtons, 200)
+  scheduleInject()
 })
 </script>
 

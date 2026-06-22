@@ -37,20 +37,63 @@
   background: var(--vp-c-bg-soft);
 }
 
-/* Focus Mode */
+/* Focus Mode — fullscreen reading; all rules scoped to html.focus-mode for clean exit */
+html.focus-mode {
+  --vp-nav-height: 0px;
+  --vp-layout-top-height: 0px;
+}
+
+html.focus-mode .VPNav,
+html.focus-mode .VPLocalNav,
 html.focus-mode .VPSidebar,
+html.focus-mode .VPBackdrop,
+html.focus-mode .VPFooter,
+html.focus-mode .VPDoc .aside,
+html.focus-mode .VPDocAside,
 html.focus-mode .dsa-explorer,
-html.focus-mode .notes-panel {
+html.focus-mode .notes-panel,
+html.focus-mode .reading-progress,
+html.focus-mode .dsa-breadcrumbs {
   display: none !important;
 }
 
-html.focus-mode .VPDoc {
-  max-width: 48rem;
-  margin: 0 auto;
+html.focus-mode .VPContent,
+html.focus-mode .VPContent.has-sidebar {
+  padding-left: 0 !important;
+  margin-top: 0 !important;
+  width: 100%;
+  max-width: 100%;
 }
 
-html.focus-mode .VPContent {
-  padding-left: 0 !important;
+html.focus-mode .VPDoc {
+  width: 100%;
+  max-width: none;
+  margin: 0;
+  padding: 32px 24px 80px;
+  min-height: 100vh;
+  box-sizing: border-box;
+}
+
+html.focus-mode .VPDoc .container {
+  display: block !important;
+  max-width: none !important;
+  width: 100%;
+}
+
+html.focus-mode .VPDoc .content,
+html.focus-mode .VPDoc.has-aside .content,
+html.focus-mode .VPDoc:not(.has-sidebar) .content {
+  max-width: none;
+  min-width: 0;
+  width: 100%;
+  margin: 0 auto;
+  padding: 0 16px 64px;
+}
+
+html.focus-mode .VPDoc .content-container,
+html.focus-mode .VPDoc.has-aside .content-container {
+  max-width: 42rem;
+  margin: 0 auto;
 }
 
 html.focus-mode::before {
@@ -70,27 +113,50 @@ html.focus-mode::before {
   pointer-events: none;
 }
 
+/* Note jump flash */
+.dsa-note-flash {
+  outline: 2px solid var(--vp-c-brand-1) !important;
+  outline-offset: 3px;
+  border-radius: 3px;
+  animation: dsa-note-flash-pulse 1.6s ease-out;
+}
+
+@keyframes dsa-note-flash-pulse {
+  0%, 100% { outline-color: var(--vp-c-brand-1); }
+  50% { outline-color: transparent; }
+}
+
 /* Text highlights */
 mark.dsa-hl {
   border-radius: 2px;
   padding: 0 1px;
   cursor: pointer;
+  color: inherit;
+  -webkit-text-fill-color: currentColor;
 }
 
-mark.dsa-hl-yellow { background: rgba(254, 240, 138, 0.6); }
-mark.dsa-hl-green { background: rgba(187, 247, 208, 0.6); }
-mark.dsa-hl-blue { background: rgba(191, 219, 254, 0.6); }
-mark.dsa-hl-pink { background: rgba(251, 207, 232, 0.6); }
+mark.dsa-hl-yellow { background: rgba(254, 240, 138, 0.65); }
+mark.dsa-hl-green { background: rgba(187, 247, 208, 0.65); }
+mark.dsa-hl-blue { background: rgba(191, 219, 254, 0.65); }
+mark.dsa-hl-pink { background: rgba(251, 207, 232, 0.65); }
 
 html.highlights-hidden mark.dsa-hl {
   background: transparent !important;
   color: inherit;
 }
 
-html.dark mark.dsa-hl-yellow { background: rgba(161, 98, 7, 0.35); }
-html.dark mark.dsa-hl-green { background: rgba(21, 128, 61, 0.35); }
-html.dark mark.dsa-hl-blue { background: rgba(29, 78, 216, 0.35); }
-html.dark mark.dsa-hl-pink { background: rgba(157, 23, 77, 0.35); }
+html.dark mark.dsa-hl {
+  color: var(--vp-c-text-1);
+}
+
+html.dark mark.dsa-hl-yellow { background: rgba(250, 204, 21, 0.28); }
+html.dark mark.dsa-hl-green { background: rgba(74, 222, 128, 0.22); }
+html.dark mark.dsa-hl-blue { background: rgba(96, 165, 250, 0.25); }
+html.dark mark.dsa-hl-pink { background: rgba(244, 114, 182, 0.25); }
+
+html.dark mark.dsa-hl:hover {
+  filter: brightness(1.08);
+}
 
 /* Playground full-page layout */
 .VPPage .playground-page {
@@ -149,7 +215,7 @@ html.dark mark.dsa-hl-pink { background: rgba(157, 23, 77, 0.35); }
   font-size: 14px;
   line-height: 1;
   cursor: pointer;
-  opacity: 0;
+  opacity: 0.45;
   transition: opacity 0.15s;
 }
 

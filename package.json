@@ -22,6 +22,7 @@
   "license": "ISC",
   "type": "commonjs",
   "devDependencies": {
+    "@iconify-json/simple-icons": "^1.2.86",
     "vitepress": "^1.6.4"
   },
   "dependencies": {

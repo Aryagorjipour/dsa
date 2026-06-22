@@ -5,9 +5,12 @@ import { showToast } from '../composables/useToast'
 import { buildPlaygroundUrl } from '../utils/playgroundUrl'
 import { handbookLink } from '../utils/handbookLink'
 import { normalizePagePath } from '../utils/normalizePagePath'
+import { useAnnotations } from '../composables/useAnnotations'
+import { openNoteDialog } from '../composables/useNoteDialog'
 
 const { page } = useData()
 const route = useRoute()
+const { addNote, currentPagePath } = useAnnotations()
 
 const title = computed(() => page.value.title || 'DSA Topic')
 const isProjectPage = computed(() => normalizePagePath(route.path).includes('/projects/tier-'))
@@ -19,6 +22,26 @@ function playgroundUrl() {
 function sharePage() {
   navigator.clipboard.writeText(window.location.href)
   showToast('Link copied to clipboard')
+}
+
+async function addPageNote() {
+  const body = await openNoteDialog({
+    title: `Note for “${title.value}”`,
+    placeholder: 'Page-level notes, takeaways, questions…',
+  })
+  if (!body) return
+  try {
+    await addNote({
+      pagePath: currentPagePath.value,
+      anchorType: 'free',
+      title: title.value,
+      body: body.trim(),
+    })
+    showToast('Page note saved — see sidebar or My Notes')
+  } catch (err) {
+    console.error('[dsa] page note failed', err)
+    showToast('Could not save page note')
+  }
 }
 
 function giveToAI() {
@@ -60,12 +83,13 @@ Start your explanation now.`
 </script>
 
 <template>
-  <div class="page-tools">
+  <div id="dsa-page-tools" class="page-tools">
     <p class="annotation-hint">
-      Select text to highlight or add a note. Hover a section heading and click
-      <strong>+</strong> for a section note. Your notes appear in the sidebar.
+      Select text to highlight or add a note. Click a highlight to edit or remove it.
+      Hover a section heading and click <strong>+</strong> for a section note.
     </p>
     <div class="actions">
+      <button class="btn" @click="addPageNote">Add page note</button>
       <button class="btn" @click="sharePage">Share</button>
       <button class="btn" @click="giveToAI">{{ isProjectPage ? 'Mentor Mode' : 'Give to AI' }}</button>
       <a v-if="isProjectPage" :href="handbookLink('/projects/README')" class="btn">Project Lab</a>

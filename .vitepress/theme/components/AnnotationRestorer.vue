@@ -1,15 +1,25 @@
 <script setup>
-import { watch, onMounted } from 'vue'
+import { watch, onMounted, onUnmounted, nextTick } from 'vue'
 import { useRoute } from 'vitepress'
 import { useAnnotations, loadAnnotations } from '../composables/useAnnotations'
 import { assignBlockIds } from '../utils/assignBlockIds'
 import { applyHighlightToDOM } from '../utils/highlightRestorer'
+import { scrollToHash } from '../utils/scrollToNote'
 
 const route = useRoute()
 const { pageHighlights, highlightsVisible, loaded } = useAnnotations()
 
+function followNoteHash() {
+  const hash = window.location.hash
+  if (!hash) return
+  scrollToHash(hash)
+}
+
 function restoreHighlights() {
-  if (!highlightsVisible.value) return
+  if (!highlightsVisible.value) {
+    followNoteHash()
+    return
+  }
   assignBlockIds()
   document.querySelectorAll('mark.dsa-hl').forEach(el => {
     const parent = el.parentNode
@@ -23,16 +33,28 @@ function restoreHighlights() {
     for (const hl of pageHighlights.value) {
       applyHighlightToDOM(hl)
     }
+    followNoteHash()
   })
 }
 
 onMounted(async () => {
+  window.addEventListener('hashchange', followNoteHash)
   await loadAnnotations()
-  setTimeout(restoreHighlights, 200)
+  nextTick(() => {
+    assignBlockIds()
+    setTimeout(restoreHighlights, 200)
+  })
 })
 
 watch(() => route.path, () => {
-  setTimeout(restoreHighlights, 300)
+  nextTick(() => {
+    assignBlockIds()
+    setTimeout(restoreHighlights, 300)
+  })
+})
+
+onUnmounted(() => {
+  window.removeEventListener('hashchange', followNoteHash)
 })
 
 watch(pageHighlights, restoreHighlights)

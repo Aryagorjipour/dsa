@@ -1,35 +1,48 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import { useAnnotations, loadAnnotations } from '../composables/useAnnotations'
-import { handbookLink } from '../utils/handbookLink'
+import { normalizePagePath } from '../utils/normalizePagePath'
+import { notePageLink } from '../utils/scrollToNote'
 
-const { notes, removeNote } = useAnnotations()
+const { notes, removeNote, loaded } = useAnnotations()
 const search = ref('')
 
 onMounted(() => loadAnnotations())
 
+const ANCHOR_LABELS = {
+  free: 'Page note',
+  heading: 'Section note',
+  highlight: 'Highlight note',
+}
+
 const filtered = computed(() => {
   const q = search.value.toLowerCase().trim()
-  if (!q) return notes.value
-  return notes.value.filter(n =>
+  const sorted = [...notes.value].sort((a, b) => b.updatedAt - a.updatedAt)
+  if (!q) return sorted
+  return sorted.filter(n =>
     n.title.toLowerCase().includes(q) ||
     n.body.toLowerCase().includes(q) ||
-    n.pagePath.toLowerCase().includes(q)
+    normalizePagePath(n.pagePath).toLowerCase().includes(q)
   )
 })
 
 const grouped = computed(() => {
   const groups = {}
   for (const note of filtered.value) {
-    const section = note.pagePath.split('/')[1] || 'other'
+    const path = normalizePagePath(note.pagePath)
+    const section = path.split('/').filter(Boolean)[0] || 'other'
     if (!groups[section]) groups[section] = []
-    groups[section].push(note)
+    groups[section].push({ ...note, pagePath: path })
   }
   return groups
 })
 
 function formatDate(ts) {
   return new Date(ts).toLocaleDateString()
+}
+
+function anchorLabel(note) {
+  return ANCHOR_LABELS[note.anchorType] ?? 'Note'
 }
 </script>
 
@@ -43,16 +56,26 @@ function formatDate(ts) {
       aria-label="Search notes"
     />
 
-    <p v-if="!notes.length" class="empty">
-      No notes yet. Highlight text on any handbook page and add a note.
+    <p v-if="!loaded" class="status">Loading your notes…</p>
+
+    <p v-else-if="!notes.length" class="empty">
+      No notes yet. On any handbook page you can:
+      <strong>Add page note</strong> at the bottom,
+      <strong>+</strong> on a section heading,
+      or select text and click <strong>Note</strong>.
     </p>
+
+    <p v-else-if="!filtered.length" class="empty">No notes match your search.</p>
 
     <div v-for="(items, section) in grouped" :key="section" class="section-group">
       <h3>{{ section }}</h3>
       <ul>
         <li v-for="note in items" :key="note.id">
-          <a :href="handbookLink(note.pagePath)" class="note-link">
-            <span class="note-title">{{ note.title || 'Untitled' }}</span>
+          <a :href="notePageLink(note)" class="note-link">
+            <span class="note-head">
+              <span class="note-title">{{ note.title || 'Untitled' }}</span>
+              <span class="note-type">{{ anchorLabel(note) }}</span>
+            </span>
             <span class="note-body">{{ note.body }}</span>
             <span class="note-meta">{{ formatDate(note.updatedAt) }} · {{ note.pagePath }}</span>
           </a>
@@ -79,9 +102,11 @@ function formatDate(ts) {
   margin-bottom: 24px;
 }
 
+.status,
 .empty {
   color: var(--vp-c-text-3);
   font-size: 14px;
+  line-height: 1.6;
 }
 
 .section-group {
@@ -122,11 +147,25 @@ function formatDate(ts) {
   border-color: var(--vp-c-brand-1);
 }
 
+.note-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 4px;
+}
+
 .note-title {
-  display: block;
   font-weight: 600;
   color: var(--vp-c-text-1);
-  margin-bottom: 4px;
+}
+
+.note-type {
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--vp-c-text-3);
+  white-space: nowrap;
 }
 
 .note-body {

@@ -1,5 +1,11 @@
+import { toRaw } from 'vue'
 import { get, set, del, keys } from 'idb-keyval'
 import type { QuizProgressStore } from '../../../quizzes/types'
+
+/** IndexedDB uses structuredClone — Vue reactive proxies cannot be persisted. */
+export function cloneForStorage<T>(value: T): T {
+  return JSON.parse(JSON.stringify(toRaw(value)))
+}
 
 export const STORAGE_VERSION = 'dsa-annotations-v2'
 
@@ -53,7 +59,7 @@ export async function getHighlights(): Promise<Highlight[]> {
 }
 
 export async function setHighlights(highlights: Highlight[]) {
-  await set(`${PREFIX}highlights`, highlights)
+  await set(`${PREFIX}highlights`, cloneForStorage(highlights))
 }
 
 export async function getNotes(): Promise<Note[]> {
@@ -61,7 +67,7 @@ export async function getNotes(): Promise<Note[]> {
 }
 
 export async function setNotes(notes: Note[]) {
-  await set(`${PREFIX}notes`, notes)
+  await set(`${PREFIX}notes`, cloneForStorage(notes))
 }
 
 export async function getSnippets(): Promise<PlaygroundSnippet[]> {
@@ -69,7 +75,7 @@ export async function getSnippets(): Promise<PlaygroundSnippet[]> {
 }
 
 export async function setSnippets(snippets: PlaygroundSnippet[]) {
-  await set(`${PREFIX}snippets`, snippets.slice(0, 50))
+  await set(`${PREFIX}snippets`, cloneForStorage(snippets.slice(0, 50)))
 }
 
 export async function getPlaygroundState(): Promise<{ go: string; csharp: string }> {
@@ -77,7 +83,7 @@ export async function getPlaygroundState(): Promise<{ go: string; csharp: string
 }
 
 export async function setPlaygroundState(state: { go: string; csharp: string }) {
-  await set(`${PREFIX}playground`, state)
+  await set(`${PREFIX}playground`, cloneForStorage(state))
 }
 
 export async function getHighlightsVisible(): Promise<boolean> {
@@ -99,7 +105,7 @@ export async function getQuizProgress(): Promise<QuizProgressStore> {
 }
 
 export async function setQuizProgress(progress: QuizProgressStore) {
-  await set(`${PREFIX}quiz-progress`, progress)
+  await set(`${PREFIX}quiz-progress`, cloneForStorage(progress))
 }
 
 export async function updateQuizStreak(store: QuizProgressStore): Promise<QuizProgressStore> {

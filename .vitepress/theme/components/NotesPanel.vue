@@ -1,10 +1,10 @@
 <script setup>
 import { ref, onMounted } from 'vue'
-import { useRoute } from 'vitepress'
 import { useAnnotations, loadAnnotations } from '../composables/useAnnotations'
 import { handbookLink } from '../utils/handbookLink'
+import { scrollToNote } from '../utils/scrollToNote'
+import { showToast } from '../composables/useToast'
 
-const route = useRoute()
 const { pageNotes, pageHighlights, toggleHighlightsVisible, highlightsVisible, removeNote } = useAnnotations()
 const collapsed = ref(false)
 
@@ -12,18 +12,9 @@ onMounted(() => {
   loadAnnotations()
 })
 
-function scrollToHighlight(note) {
-  if (note.anchorType === 'highlight' && note.anchorId) {
-    const mark = document.querySelector(`mark[data-highlight-id="${note.anchorId}"]`)
-    if (mark) {
-      mark.scrollIntoView({ behavior: 'smooth', block: 'center' })
-      return
-    }
-  }
-  if (note.anchorType === 'heading' && note.anchorId) {
-    const heading = document.getElementById(note.anchorId)
-    heading?.scrollIntoView({ behavior: 'smooth', block: 'start' })
-  }
+async function goToNote(note) {
+  const ok = await scrollToNote(note)
+  if (!ok) showToast('Could not find this note on the page')
 }
 </script>
 
@@ -54,7 +45,7 @@ function scrollToHighlight(note) {
       </p>
       <ul v-else>
         <li v-for="note in pageNotes" :key="note.id">
-          <button class="note-item" @click="scrollToHighlight(note)">
+          <button class="note-item" @click="goToNote(note)">
             <span class="note-title">{{ note.title || 'Note' }}</span>
             <span class="note-preview">{{ note.body.slice(0, 80) }}</span>
           </button>

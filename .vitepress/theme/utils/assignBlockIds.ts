@@ -1,13 +1,66 @@
-const BLOCK_SELECTOR = '.vp-doc p, .vp-doc li, .vp-doc td, .vp-doc th, .vp-doc blockquote, .vp-doc h1, .vp-doc h2, .vp-doc h3, .vp-doc h4, .vp-doc h5, .vp-doc h6'
+const BLOCK_SELECTOR =
+  '.vp-doc p, .vp-doc li, .vp-doc td, .vp-doc th, .vp-doc blockquote, .vp-doc h1, .vp-doc h2, .vp-doc h3, .vp-doc h4, .vp-doc h5, .vp-doc h6, .vp-doc .custom-block'
+
+export const CONTENT_BLOCK_TAGS = new Set([
+  'P',
+  'LI',
+  'TD',
+  'TH',
+  'BLOCKQUOTE',
+  'H1',
+  'H2',
+  'H3',
+  'H4',
+  'H5',
+  'H6',
+])
+
+function nextBlockCounter(doc: Element): number {
+  const current = parseInt(doc.getAttribute('data-dsa-block-next') || '0', 10)
+  doc.setAttribute('data-dsa-block-next', String(current + 1))
+  return current
+}
+
+/** Assign a stable id to a content block element. */
+export function ensureBlockId(el: Element): string {
+  const existing = el.getAttribute('data-dsa-block')
+  if (existing) return existing
+
+  const doc = el.closest('.vp-doc')
+  if (!doc) {
+    el.setAttribute('data-dsa-block', '0')
+    return '0'
+  }
+
+  const id = String(nextBlockCounter(doc))
+  el.setAttribute('data-dsa-block', id)
+  return id
+}
+
+/** Find the nearest highlightable content block from any selection node. */
+export function findContentBlock(node: Node | null): Element | null {
+  let current: Node | null = node
+  while (current) {
+    if (current instanceof Element) {
+      if (current.classList.contains('vp-doc')) return null
+      if (current.closest('pre, code, .vp-code-group, .language-')) return null
+      if (CONTENT_BLOCK_TAGS.has(current.tagName)) return current
+    }
+    current = current.parentNode
+  }
+  return null
+}
 
 export function assignBlockIds(): void {
   const doc = document.querySelector('.vp-doc')
   if (!doc) return
 
-  let counter = 0
   doc.querySelectorAll(BLOCK_SELECTOR).forEach(el => {
+    if (!(el instanceof Element)) return
     if (el.closest('pre, code, .vp-code-group, .language-')) return
     if (el.hasAttribute('data-dsa-block')) return
-    el.setAttribute('data-dsa-block', String(counter++))
+    const childBlock = el.querySelector('[data-dsa-block]')
+    if (childBlock && el !== childBlock) return
+    ensureBlockId(el)
   })
 }
