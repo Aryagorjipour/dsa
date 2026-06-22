@@ -30,13 +30,18 @@ async function addPageNote() {
     placeholder: 'Page-level notes, takeaways, questions…',
   })
   if (!body) return
-  await addNote({
-    pagePath: currentPagePath.value,
-    anchorType: 'free',
-    title: title.value,
-    body: body.trim(),
-  })
-  showToast('Page note saved — see sidebar')
+  try {
+    await addNote({
+      pagePath: currentPagePath.value,
+      anchorType: 'free',
+      title: title.value,
+      body: body.trim(),
+    })
+    showToast('Page note saved — see sidebar or My Notes')
+  } catch (err) {
+    console.error('[dsa] page note failed', err)
+    showToast('Could not save page note')
+  }
 }
 
 function giveToAI() {

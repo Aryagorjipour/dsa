@@ -1,6 +1,7 @@
 import { ref, computed } from 'vue'
 import { useRoute } from 'vitepress'
 import { pagePathKey, pathsMatch } from '../utils/pagePathKey'
+import { normalizePagePath } from '../utils/normalizePagePath'
 import { removeHighlightFromDOM } from '../utils/highlightRestorer'
 import {
   type Highlight,
@@ -25,8 +26,14 @@ export async function loadAnnotations() {
     getNotes(),
     getHighlightsVisible(),
   ])
-  highlights.value = h
-  notes.value = n
+  highlights.value = h.map(item => ({
+    ...item,
+    pagePath: normalizePagePath(item.pagePath),
+  }))
+  notes.value = n.map(item => ({
+    ...item,
+    pagePath: normalizePagePath(item.pagePath),
+  }))
   highlightsVisible.value = vis
   loaded.value = true
 }
@@ -47,6 +54,7 @@ export function useAnnotations() {
   async function addHighlight(data: Omit<Highlight, 'id' | 'createdAt'>) {
     const highlight: Highlight = {
       ...data,
+      pagePath: normalizePagePath(data.pagePath),
       id: generateId(),
       createdAt: Date.now(),
     }
@@ -66,6 +74,7 @@ export function useAnnotations() {
     const now = Date.now()
     const note: Note = {
       ...data,
+      pagePath: normalizePagePath(data.pagePath),
       id: generateId(),
       createdAt: now,
       updatedAt: now,

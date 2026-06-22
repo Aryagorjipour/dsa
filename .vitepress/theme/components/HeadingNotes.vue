@@ -32,14 +32,19 @@ function injectHeadingButtons() {
         placeholder: 'Section notes, reminders, questions…',
       })
       if (!body) return
-      await addNote({
-        pagePath: currentPagePath.value,
-        anchorType: 'heading',
-        anchorId: id,
-        title,
-        body: body.trim(),
-      })
-      showToast('Section note saved')
+      try {
+        await addNote({
+          pagePath: currentPagePath.value,
+          anchorType: 'heading',
+          anchorId: id,
+          title,
+          body: body.trim(),
+        })
+        showToast('Section note saved')
+      } catch (err) {
+        console.error('[dsa] section note failed', err)
+        showToast('Could not save section note')
+      }
     })
 
     heading.classList.add('dsa-heading-with-note')
