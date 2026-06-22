@@ -70,15 +70,13 @@ const isHomePage = computed(() => page.value.frontmatter.layout === 'home')
 .dsa-explorer {
   font-size: 13px;
   line-height: 1.45;
-  margin-top: 16px;
-  padding-top: 12px;
-  border-top: 1px solid var(--vp-c-divider);
+  margin-top: 0;
+  padding-top: 0;
 }
 
 .dsa-explorer.is-home {
   margin-top: 0;
   padding-top: 0;
-  border-top: none;
 }
 
 .explorer-header {
