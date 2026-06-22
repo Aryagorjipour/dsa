@@ -83,7 +83,7 @@ Start your explanation now.`
 </script>
 
 <template>
-  <div class="page-tools">
+  <div id="dsa-page-tools" class="page-tools">
     <p class="annotation-hint">
       Select text to highlight or add a note. Click a highlight to edit or remove it.
       Hover a section heading and click <strong>+</strong> for a section note.

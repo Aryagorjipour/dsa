@@ -1,8 +1,8 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import { useAnnotations, loadAnnotations } from '../composables/useAnnotations'
-import { handbookLink } from '../utils/handbookLink'
 import { normalizePagePath } from '../utils/normalizePagePath'
+import { notePageLink } from '../utils/scrollToNote'
 
 const { notes, removeNote, loaded } = useAnnotations()
 const search = ref('')
@@ -71,7 +71,7 @@ function anchorLabel(note) {
       <h3>{{ section }}</h3>
       <ul>
         <li v-for="note in items" :key="note.id">
-          <a :href="handbookLink(note.pagePath)" class="note-link">
+          <a :href="notePageLink(note)" class="note-link">
             <span class="note-head">
               <span class="note-title">{{ note.title || 'Untitled' }}</span>
               <span class="note-type">{{ anchorLabel(note) }}</span>

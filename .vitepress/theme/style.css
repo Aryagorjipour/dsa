@@ -113,6 +113,19 @@ html.focus-mode::before {
   pointer-events: none;
 }
 
+/* Note jump flash */
+.dsa-note-flash {
+  outline: 2px solid var(--vp-c-brand-1) !important;
+  outline-offset: 3px;
+  border-radius: 3px;
+  animation: dsa-note-flash-pulse 1.6s ease-out;
+}
+
+@keyframes dsa-note-flash-pulse {
+  0%, 100% { outline-color: var(--vp-c-brand-1); }
+  50% { outline-color: transparent; }
+}
+
 /* Text highlights */
 mark.dsa-hl {
   border-radius: 2px;
