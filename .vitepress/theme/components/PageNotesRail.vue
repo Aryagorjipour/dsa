@@ -5,7 +5,8 @@ import { useAnnotations, loadAnnotations } from '../composables/useAnnotations'
 import { usePageNotesRail } from '../composables/usePageNotesRail'
 import { useFocusMode } from '../composables/useFocusMode'
 import { normalizePagePath } from '../utils/normalizePagePath'
-import { getNoteAnchorElement, scrollToNote } from '../utils/scrollToNote'
+import { scrollToNote, flashTarget } from '../utils/scrollToNote'
+import { layoutMarginNotes, connectorPath } from '../utils/noteLayout'
 import { handbookLink } from '../utils/handbookLink'
 import { showToast } from '../composables/useToast'
 
@@ -15,18 +16,18 @@ const { isFocusMode } = useFocusMode()
 const {
   isOpen,
   activeNoteId,
-  side,
   togglePageNotesRail,
   closePageNotesRail,
   setActiveNoteId,
-  computeRailSide,
 } = usePageNotesRail()
 
 const { pageNotes, highlights, loaded, removeNote } = useAnnotations()
 
+const placements = ref([])
+const cardHeights = ref({})
 const cardRefs = ref({})
-const connectors = ref([])
-const railRef = ref(null)
+let resizeObserver = null
+let layoutRaf = 0
 
 const TYPE_LABELS = {
   highlight: 'Highlight',
@@ -43,8 +44,12 @@ const showOnPage = computed(() => {
   return true
 })
 
-const sortedNotes = computed(() =>
-  [...pageNotes.value].sort((a, b) => b.updatedAt - a.updatedAt)
+const connectors = computed(() =>
+  placements.value.map(p => ({
+    id: p.note.id,
+    path: connectorPath(p),
+    active: activeNoteId.value === p.note.id,
+  }))
 )
 
 function setCardRef(id, el) {
@@ -52,107 +57,98 @@ function setCardRef(id, el) {
   else delete cardRefs.value[id]
 }
 
-function anchorPoint(el, railSide) {
-  const rect = el.getBoundingClientRect()
-  const x = railSide === 'left' ? rect.right : rect.left
-  return { x, y: rect.top + rect.height / 2 }
+function measureCards() {
+  const heights = { ...cardHeights.value }
+  let changed = false
+  for (const [id, el] of Object.entries(cardRefs.value)) {
+    if (!(el instanceof HTMLElement)) continue
+    const h = Math.ceil(el.getBoundingClientRect().height)
+    if (h > 0 && heights[id] !== h) {
+      heights[id] = h
+      changed = true
+    }
+  }
+  if (changed) cardHeights.value = heights
+  return changed
 }
 
-function cardPoint(cardEl, railSide) {
-  const rect = cardEl.getBoundingClientRect()
-  const x = railSide === 'left' ? rect.right - 4 : rect.left + 4
-  return { x, y: rect.top + rect.height / 2 }
-}
-
-function curvePath(x1, y1, x2, y2, railSide) {
-  const dx = x2 - x1
-  const ctrlX = x1 + dx * 0.45
-  const bend = railSide === 'left' ? -30 : 30
-  const ctrlY = (y1 + y2) / 2 + bend
-  return `M ${x1} ${y1} Q ${ctrlX} ${ctrlY} ${x2} ${y2}`
-}
-
-function updateConnectors() {
+function updateLayout() {
   if (!isOpen.value) {
-    connectors.value = []
+    placements.value = []
     return
   }
-
-  const railSide = side.value
-  const lines = []
-
-  for (const note of sortedNotes.value) {
-    const cardEl = cardRefs.value[note.id]
-    const anchorEl = getNoteAnchorElement(note, highlights.value)
-    if (!cardEl || !anchorEl) continue
-
-    const from = cardPoint(cardEl, railSide)
-    const to = anchorPoint(anchorEl, railSide)
-
-    lines.push({
-      id: note.id,
-      path: curvePath(from.x, from.y, to.x, to.y, railSide),
-      active: activeNoteId.value === note.id,
-    })
-  }
-
-  connectors.value = lines
+  measureCards()
+  placements.value = layoutMarginNotes(pageNotes.value, highlights.value, cardHeights.value)
 }
 
-async function goToNote(note) {
+function scheduleLayout() {
+  if (!isOpen.value) return
+  if (layoutRaf) cancelAnimationFrame(layoutRaf)
+  layoutRaf = requestAnimationFrame(() => {
+    layoutRaf = 0
+    updateLayout()
+    if (measureCards()) updateLayout()
+  })
+}
+
+async function focusNote(note) {
   if (!loaded.value) await loadAnnotations()
   setActiveNoteId(note.id)
   const ok = await scrollToNote(note, { highlights: highlights.value })
   if (!ok) showToast('Could not find this note on the page')
-  await nextTick()
-  updateConnectors()
+  scheduleLayout()
 }
 
 function onToggle() {
-  computeRailSide()
   togglePageNotesRail()
-  nextTick(updateConnectors)
+  nextTick(() => {
+    scheduleLayout()
+    window.setTimeout(scheduleLayout, 400)
+  })
 }
 
-let scrollRaf = 0
-function onScrollOrResize() {
-  if (!isOpen.value) return
-  if (scrollRaf) cancelAnimationFrame(scrollRaf)
-  scrollRaf = requestAnimationFrame(() => {
-    scrollRaf = 0
-    updateConnectors()
-  })
+function setupResizeObserver() {
+  resizeObserver?.disconnect()
+  resizeObserver = new ResizeObserver(() => scheduleLayout())
+  for (const el of Object.values(cardRefs.value)) {
+    if (el instanceof HTMLElement) resizeObserver.observe(el)
+  }
 }
 
 onMounted(async () => {
   await loadAnnotations()
-  window.addEventListener('scroll', onScrollOrResize, { passive: true })
-  window.addEventListener('resize', onScrollOrResize, { passive: true })
+  window.addEventListener('scroll', scheduleLayout, { passive: true })
+  window.addEventListener('resize', scheduleLayout, { passive: true })
 })
 
 onUnmounted(() => {
-  if (scrollRaf) cancelAnimationFrame(scrollRaf)
-  window.removeEventListener('scroll', onScrollOrResize)
-  window.removeEventListener('resize', onScrollOrResize)
+  if (layoutRaf) cancelAnimationFrame(layoutRaf)
+  resizeObserver?.disconnect()
+  window.removeEventListener('scroll', scheduleLayout)
+  window.removeEventListener('resize', scheduleLayout)
 })
 
 watch(isOpen, open => {
   if (open) {
     nextTick(() => {
-      updateConnectors()
-      window.setTimeout(updateConnectors, 350)
+      scheduleLayout()
+      window.setTimeout(scheduleLayout, 400)
     })
   } else {
-    connectors.value = []
+    placements.value = []
+    activeNoteId.value = null
   }
 })
 
 watch(() => route.path, () => {
   closePageNotesRail()
   cardRefs.value = {}
+  cardHeights.value = {}
 })
 
-watch([sortedNotes, activeNoteId, side], () => nextTick(updateConnectors))
+watch(pageNotes, () => nextTick(scheduleLayout))
+
+watch(placements, () => nextTick(setupResizeObserver))
 </script>
 
 <template>
@@ -163,8 +159,8 @@ watch([sortedNotes, activeNoteId, side], () => nextTick(updateConnectors))
         class="page-notes-toggle"
         :class="{ open: isOpen }"
         :aria-expanded="isOpen"
-        aria-label="Toggle page notes panel"
-        title="Page notes (Shift+N)"
+        aria-label="Toggle page notes on this page"
+        title="Show notes beside their passages (Shift+N)"
         @click="onToggle"
       >
         <span class="toggle-icon" aria-hidden="true">📝</span>
@@ -175,62 +171,33 @@ watch([sortedNotes, activeNoteId, side], () => nextTick(updateConnectors))
         <kbd class="toggle-kbd">⇧N</kbd>
       </button>
 
-      <Transition name="rail-slide">
-        <aside
-          v-if="isOpen"
-          ref="railRef"
-          class="page-notes-rail"
-          :class="side"
-          aria-label="Notes on this page"
-        >
-          <header class="rail-header">
-            <div>
-              <h2 class="rail-title">Notes on this page</h2>
-              <p class="rail-sub">{{ pageNotes.length }} saved · lines point to sources</p>
-            </div>
-            <button type="button" class="rail-close" aria-label="Close" @click="closePageNotesRail">✕</button>
-          </header>
+      <p v-if="isOpen" class="page-notes-hint" aria-live="polite">
+        Notes follow page order · <kbd>Esc</kbd> to close
+        <a :href="handbookLink('/my-notes')" class="hint-link">All notes</a>
+      </p>
 
-          <p v-if="!pageNotes.length" class="rail-empty">
-            No notes on this page yet. Highlight text or use <strong>Add page note</strong> at the bottom.
-          </p>
-
-          <ul v-else class="rail-list">
-            <li
-              v-for="note in sortedNotes"
-              :key="note.id"
-              :ref="el => setCardRef(note.id, el)"
-              class="rail-card"
-              :class="{ active: activeNoteId === note.id }"
-            >
-              <button type="button" class="rail-card-btn" @click="goToNote(note)">
-                <span class="rail-card-head">
-                  <span class="rail-type">{{ TYPE_LABELS[note.anchorType] || 'Note' }}</span>
-                  <span class="rail-arrow" aria-hidden="true">{{ side === 'left' ? '→' : '←' }}</span>
-                </span>
-                <span class="rail-card-title">{{ note.title || 'Untitled' }}</span>
-                <span class="rail-card-body">{{ note.body }}</span>
-              </button>
-              <button
-                type="button"
-                class="rail-delete"
-                aria-label="Delete note"
-                @click.stop="removeNote(note.id)"
-              >✕</button>
-            </li>
-          </ul>
-
-          <footer class="rail-footer">
-            <a :href="handbookLink('/my-notes')" class="rail-all-link">All notes across handbook →</a>
-          </footer>
-        </aside>
-      </Transition>
-
-      <svg
-        v-if="isOpen && connectors.length"
-        class="note-connectors"
-        aria-hidden="true"
+      <article
+        v-for="p in placements"
+        :key="p.note.id"
+        :ref="el => setCardRef(p.note.id, el)"
+        class="margin-note-card"
+        :class="{ active: activeNoteId === p.note.id, [p.side]: true }"
+        :style="{ top: p.top + 'px', left: p.left + 'px', width: p.width + 'px' }"
       >
+        <button type="button" class="margin-note-main" @click="focusNote(p.note)">
+          <span class="margin-note-type">{{ TYPE_LABELS[p.note.anchorType] || 'Note' }}</span>
+          <span v-if="p.note.title" class="margin-note-title">{{ p.note.title }}</span>
+          <p class="margin-note-body">{{ p.note.body }}</p>
+        </button>
+        <button
+          type="button"
+          class="margin-note-delete"
+          aria-label="Delete note"
+          @click.stop="removeNote(p.note.id)"
+        >✕</button>
+      </article>
+
+      <svg v-if="isOpen && connectors.length" class="note-connectors" aria-hidden="true">
         <path
           v-for="line in connectors"
           :key="line.id"
@@ -301,184 +268,122 @@ watch([sortedNotes, activeNoteId, side], () => nextTick(updateConnectors))
   line-height: 1.3;
 }
 
-.page-notes-rail {
+.page-notes-hint {
   position: fixed;
-  top: calc(var(--vp-nav-height, 64px) + 12px);
   bottom: 72px;
-  width: min(300px, calc(100vw - 24px));
-  z-index: 108;
-  display: flex;
-  flex-direction: column;
-  border-radius: 14px;
-  border: 1px solid var(--vp-c-divider);
-  background: color-mix(in srgb, var(--vp-c-bg-elv) 92%, transparent);
-  backdrop-filter: blur(12px);
-  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.22);
-  overflow: hidden;
-}
-
-.page-notes-rail.left {
-  left: 12px;
-}
-
-.page-notes-rail.right {
-  right: 12px;
-}
-
-.rail-header {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 8px;
-  padding: 14px 14px 10px;
-  border-bottom: 1px solid var(--vp-c-divider);
-}
-
-.rail-title {
+  left: 24px;
+  z-index: 109;
   margin: 0;
-  font-size: 14px;
-  font-weight: 700;
-  color: var(--vp-c-text-1);
-}
-
-.rail-sub {
-  margin: 2px 0 0;
+  padding: 6px 10px;
+  border-radius: 8px;
   font-size: 11px;
-  color: var(--vp-c-text-3);
-}
-
-.rail-close {
-  background: none;
-  border: none;
-  color: var(--vp-c-text-3);
-  cursor: pointer;
-  padding: 4px;
-  font-size: 14px;
-  line-height: 1;
-}
-
-.rail-empty {
-  margin: 0;
-  padding: 16px 14px;
-  font-size: 13px;
-  line-height: 1.5;
   color: var(--vp-c-text-2);
-}
-
-.rail-list {
-  list-style: none;
-  margin: 0;
-  padding: 10px;
-  overflow-y: auto;
-  flex: 1;
-}
-
-.rail-card {
-  display: flex;
-  gap: 4px;
-  margin-bottom: 8px;
-}
-
-.rail-card.active .rail-card-btn {
-  border-color: var(--vp-c-brand-1);
-  box-shadow: 0 0 0 1px color-mix(in srgb, var(--vp-c-brand-1) 35%, transparent);
-}
-
-.rail-card-btn {
-  flex: 1;
-  text-align: left;
-  padding: 10px 12px;
-  border-radius: 10px;
+  background: color-mix(in srgb, var(--vp-c-bg-elv) 90%, transparent);
   border: 1px solid var(--vp-c-divider);
-  background: var(--vp-c-bg-soft);
-  cursor: pointer;
-  transition: border-color 0.15s, box-shadow 0.15s;
+  backdrop-filter: blur(8px);
 }
 
-.rail-card-btn:hover {
-  border-color: var(--vp-c-brand-1);
-}
-
-.rail-card-head {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 4px;
-}
-
-.rail-type {
+.page-notes-hint kbd {
   font-size: 10px;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  color: var(--vp-c-brand-1);
-  font-weight: 700;
+  padding: 1px 4px;
+  border-radius: 3px;
+  border: 1px solid var(--vp-c-divider);
+  font-family: inherit;
 }
 
-.rail-arrow {
-  font-size: 12px;
-  color: var(--vp-c-text-3);
-}
-
-.rail-card-title {
-  display: block;
-  font-size: 12px;
-  font-weight: 600;
-  color: var(--vp-c-text-1);
-  margin-bottom: 4px;
-}
-
-.rail-card-body {
-  display: block;
-  font-size: 12px;
-  line-height: 1.45;
-  color: var(--vp-c-text-2);
-  display: -webkit-box;
-  -webkit-line-clamp: 3;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-}
-
-.rail-delete {
-  background: none;
-  border: none;
-  color: var(--vp-c-text-3);
-  cursor: pointer;
-  padding: 8px 4px;
-  font-size: 11px;
-}
-
-.rail-footer {
-  padding: 10px 14px 12px;
-  border-top: 1px solid var(--vp-c-divider);
-}
-
-.rail-all-link {
-  font-size: 12px;
+.hint-link {
+  margin-left: 6px;
   color: var(--vp-c-brand-1);
   text-decoration: none;
 }
 
-.rail-all-link:hover {
+.hint-link:hover {
   text-decoration: underline;
 }
 
-.rail-slide-enter-active,
-.rail-slide-leave-active {
-  transition: opacity 0.2s ease, transform 0.22s ease;
+.margin-note-card {
+  position: fixed;
+  z-index: 108;
+  display: flex;
+  gap: 2px;
+  border-radius: 10px;
+  border: 1px solid var(--vp-c-divider);
+  background: color-mix(in srgb, var(--vp-c-bg-elv) 94%, transparent);
+  backdrop-filter: blur(10px);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.14);
+  transition: border-color 0.15s, box-shadow 0.15s;
+  pointer-events: auto;
 }
 
-.rail-slide-enter-from,
-.rail-slide-leave-to {
-  opacity: 0;
-  transform: translateX(var(--rail-offset, 12px));
+.margin-note-card.active {
+  border-color: var(--vp-c-brand-1);
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--vp-c-brand-1) 40%, transparent),
+    0 8px 24px rgba(99, 102, 241, 0.18);
 }
 
-.page-notes-rail.left {
-  --rail-offset: -16px;
+.margin-note-main {
+  flex: 1;
+  text-align: left;
+  padding: 8px 10px;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  min-width: 0;
 }
 
-.page-notes-rail.right {
-  --rail-offset: 16px;
+.margin-note-type {
+  display: block;
+  font-size: 9px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  font-weight: 700;
+  color: var(--vp-c-brand-1);
+  margin-bottom: 3px;
+}
+
+.margin-note-title {
+  display: block;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--vp-c-text-1);
+  margin-bottom: 3px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.margin-note-body {
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.4;
+  color: var(--vp-c-text-2);
+  display: -webkit-box;
+  -webkit-line-clamp: 4;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.margin-note-delete {
+  background: none;
+  border: none;
+  color: var(--vp-c-text-3);
+  cursor: pointer;
+  padding: 6px 6px 0 0;
+  font-size: 11px;
+  line-height: 1;
+}
+
+@media (max-width: 1100px) {
+  .margin-note-card {
+    width: min(220px, calc(100vw - 24px)) !important;
+    max-width: calc(100vw - 24px);
+  }
+
+  .margin-note-card.left,
+  .margin-note-card.right {
+    left: auto !important;
+    right: 12px !important;
+  }
 }
 
 @media (max-width: 640px) {
@@ -489,14 +394,9 @@ watch([sortedNotes, activeNoteId, side], () => nextTick(updateConnectors))
     font-size: 12px;
   }
 
-  .toggle-kbd {
+  .toggle-kbd,
+  .page-notes-hint {
     display: none;
-  }
-
-  .page-notes-rail {
-    width: calc(100vw - 20px);
-    left: 10px !important;
-    right: 10px !important;
   }
 }
 </style>
@@ -513,15 +413,13 @@ watch([sortedNotes, activeNoteId, side], () => nextTick(updateConnectors))
 
 .connector-line {
   fill: none;
-  stroke: color-mix(in srgb, var(--vp-c-brand-1) 35%, transparent);
+  stroke: color-mix(in srgb, var(--vp-c-brand-1) 40%, transparent);
   stroke-width: 1.5;
-  stroke-dasharray: 5 4;
   transition: stroke 0.2s, stroke-width 0.2s;
 }
 
 .connector-line.active {
   stroke: var(--vp-c-brand-1);
   stroke-width: 2.5;
-  stroke-dasharray: none;
 }
 </style>

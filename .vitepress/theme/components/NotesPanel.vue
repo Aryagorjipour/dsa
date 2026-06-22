@@ -1,11 +1,13 @@
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useAnnotations, loadAnnotations } from '../composables/useAnnotations'
 import { handbookLink } from '../utils/handbookLink'
 import { scrollToNote } from '../utils/scrollToNote'
+import { sortNotesByPagePosition } from '../utils/noteLayout'
 import { showToast } from '../composables/useToast'
 
 const { pageNotes, pageHighlights, highlights, loaded, toggleHighlightsVisible, highlightsVisible, removeNote } = useAnnotations()
+const orderedPageNotes = computed(() => sortNotesByPagePosition(pageNotes.value, highlights.value))
 const collapsed = ref(false)
 
 onMounted(async () => {
@@ -46,7 +48,7 @@ async function goToNote(note) {
         Select text to highlight or add notes.
       </p>
       <ul v-else>
-        <li v-for="note in pageNotes" :key="note.id">
+        <li v-for="note in orderedPageNotes" :key="note.id">
           <button class="note-item" @click="goToNote(note)">
             <span class="note-title">{{ note.title || 'Note' }}</span>
             <span class="note-preview">{{ note.body.slice(0, 80) }}</span>

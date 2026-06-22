@@ -44,7 +44,7 @@ A no-hand-waving, deeply practical handbook written for developers who want to t
 - [x] Page notes, section notes (heading **+**), and highlight-linked notes
 - [x] **My Notes** hub — search and browse every note across the handbook
 - [x] Jump to the exact passage — notes scroll to their source on the page
-- [x] **Page notes panel** (`Shift+N`) — margin rail with arrows pointing to each note
+- [x] **Page notes overlay** (`Shift+N`) — margin cards beside each passage, in page order
 - [x] Click a highlight to preview your note, then edit or remove
 - [x] Focus mode (`Shift+F`) — fullscreen reading, hides nav and sidebars
 - [x] Reading progress bar on handbook pages

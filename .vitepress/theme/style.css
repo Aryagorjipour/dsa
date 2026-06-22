@@ -55,7 +55,8 @@ html.focus-mode .notes-panel,
 html.focus-mode .reading-progress,
 html.focus-mode .dsa-breadcrumbs,
 html.focus-mode .page-notes-toggle,
-html.focus-mode .page-notes-rail,
+html.focus-mode .page-notes-hint,
+html.focus-mode .margin-note-card,
 html.focus-mode .note-connectors {
   display: none !important;
 }

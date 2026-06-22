@@ -312,7 +312,7 @@ function onDocumentMouseDown(e) {
   if (!(e.target instanceof Element)) return
   if (e.target.closest('.annotation-toolbar')) return
   if (e.target.closest('.note-dialog, .note-dialog-backdrop')) return
-  if (e.target.closest('.page-notes-rail, .page-notes-toggle')) return
+  if (e.target.closest('.margin-note-card, .page-notes-toggle, .page-notes-hint')) return
   if (e.target.closest('mark.dsa-hl')) return
   if (toolbarPressing.value) return
 
