@@ -75,22 +75,32 @@ mark.dsa-hl {
   border-radius: 2px;
   padding: 0 1px;
   cursor: pointer;
+  color: inherit;
+  -webkit-text-fill-color: currentColor;
 }
 
-mark.dsa-hl-yellow { background: rgba(254, 240, 138, 0.6); }
-mark.dsa-hl-green { background: rgba(187, 247, 208, 0.6); }
-mark.dsa-hl-blue { background: rgba(191, 219, 254, 0.6); }
-mark.dsa-hl-pink { background: rgba(251, 207, 232, 0.6); }
+mark.dsa-hl-yellow { background: rgba(254, 240, 138, 0.65); }
+mark.dsa-hl-green { background: rgba(187, 247, 208, 0.65); }
+mark.dsa-hl-blue { background: rgba(191, 219, 254, 0.65); }
+mark.dsa-hl-pink { background: rgba(251, 207, 232, 0.65); }
 
 html.highlights-hidden mark.dsa-hl {
   background: transparent !important;
   color: inherit;
 }
 
-html.dark mark.dsa-hl-yellow { background: rgba(161, 98, 7, 0.35); }
-html.dark mark.dsa-hl-green { background: rgba(21, 128, 61, 0.35); }
-html.dark mark.dsa-hl-blue { background: rgba(29, 78, 216, 0.35); }
-html.dark mark.dsa-hl-pink { background: rgba(157, 23, 77, 0.35); }
+html.dark mark.dsa-hl {
+  color: var(--vp-c-text-1);
+}
+
+html.dark mark.dsa-hl-yellow { background: rgba(250, 204, 21, 0.28); }
+html.dark mark.dsa-hl-green { background: rgba(74, 222, 128, 0.22); }
+html.dark mark.dsa-hl-blue { background: rgba(96, 165, 250, 0.25); }
+html.dark mark.dsa-hl-pink { background: rgba(244, 114, 182, 0.25); }
+
+html.dark mark.dsa-hl:hover {
+  filter: brightness(1.08);
+}
 
 /* Playground full-page layout */
 .VPPage .playground-page {

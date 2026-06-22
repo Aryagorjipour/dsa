@@ -10,6 +10,7 @@ import ReadingProgress from './components/ReadingProgress.vue'
 import Toast from './components/Toast.vue'
 import AnnotationToolbar from './components/AnnotationToolbar.vue'
 import AnnotationRestorer from './components/AnnotationRestorer.vue'
+import NoteDialog from './components/NoteDialog.vue'
 import CodeBlockActions from './components/CodeBlockActions.vue'
 import HeadingNotes from './components/HeadingNotes.vue'
 import SettingsDrawer from './components/SettingsDrawer.vue'
@@ -55,6 +56,7 @@ const { isFocusMode, toggleFocusMode } = useFocusMode()
   <ReadingProgress />
   <Toast />
   <AnnotationToolbar />
+  <NoteDialog />
   <AnnotationRestorer />
   <CodeBlockActions />
   <HeadingNotes />

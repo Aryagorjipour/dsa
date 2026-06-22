@@ -6,6 +6,7 @@ import { buildPlaygroundUrl } from '../utils/playgroundUrl'
 import { handbookLink } from '../utils/handbookLink'
 import { normalizePagePath } from '../utils/normalizePagePath'
 import { useAnnotations } from '../composables/useAnnotations'
+import { openNoteDialog } from '../composables/useNoteDialog'
 
 const { page } = useData()
 const route = useRoute()
@@ -24,8 +25,11 @@ function sharePage() {
 }
 
 async function addPageNote() {
-  const body = prompt('Add a note for this page:', '')
-  if (body === null || !body.trim()) return
+  const body = await openNoteDialog({
+    title: `Note for “${title.value}”`,
+    placeholder: 'Page-level notes, takeaways, questions…',
+  })
+  if (!body) return
   await addNote({
     pagePath: currentPagePath.value,
     anchorType: 'free',
@@ -76,8 +80,8 @@ Start your explanation now.`
 <template>
   <div class="page-tools">
     <p class="annotation-hint">
-      Select text to highlight or add a note. Hover a section heading and click
-      <strong>+</strong> for a section note. Your notes appear in the sidebar.
+      Select text to highlight or add a note. Click a highlight to edit or remove it.
+      Hover a section heading and click <strong>+</strong> for a section note.
     </p>
     <div class="actions">
       <button class="btn" @click="addPageNote">Add page note</button>

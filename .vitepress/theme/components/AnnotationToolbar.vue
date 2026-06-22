@@ -2,16 +2,28 @@
 import { ref, onMounted, onUnmounted, watch, nextTick } from 'vue'
 import { useRoute } from 'vitepress'
 import { useAnnotations } from '../composables/useAnnotations'
+import { openNoteDialog } from '../composables/useNoteDialog'
+import { showToast } from '../composables/useToast'
 import { assignBlockIds } from '../utils/assignBlockIds'
-import { getSelectionAnchor } from '../utils/highlightRestorer'
-import { applyHighlightToDOM } from '../utils/highlightRestorer'
+import { getSelectionAnchor, applyHighlightToDOM, removeHighlightFromDOM } from '../utils/highlightRestorer'
 
 const route = useRoute()
-const { addHighlight, addNote, highlightsVisible, currentPagePath } = useAnnotations()
+const {
+  addHighlight,
+  addNote,
+  updateNote,
+  removeNote,
+  removeHighlight,
+  highlightsVisible,
+  currentPagePath,
+  pageNotes,
+} = useAnnotations()
 
 const visible = ref(false)
+const mode = ref('select')
 const x = ref(0)
 const y = ref(0)
+const activeHighlightId = ref(null)
 const toolbarInteracting = ref(false)
 
 const colors = [
@@ -23,20 +35,39 @@ const colors = [
 
 function hide() {
   visible.value = false
+  mode.value = 'select'
+  activeHighlightId.value = null
 }
 
 function isIgnoredTarget(target) {
   if (!(target instanceof Element)) return false
   return !!target.closest(
-    'input, textarea, select, [contenteditable="true"], .annotation-toolbar, pre, code, .vp-code-group, .language-'
+    'input, textarea, select, [contenteditable="true"], .annotation-toolbar, .note-dialog, .note-dialog-backdrop, pre, code, .vp-code-group, .language-'
   )
 }
 
+function selectionInsideHighlight() {
+  const sel = window.getSelection()
+  if (!sel || sel.isCollapsed || sel.rangeCount === 0) return false
+  try {
+    const node = sel.getRangeAt(0).commonAncestorContainer
+    const el = node instanceof Element ? node : node.parentElement
+    return !!el?.closest('mark.dsa-hl')
+  } catch {
+    return false
+  }
+}
+
 function updateToolbar() {
-  if (toolbarInteracting.value) return
+  if (toolbarInteracting.value || mode.value === 'highlight') return
 
   const sel = window.getSelection()
   if (!sel || sel.isCollapsed || sel.rangeCount === 0) {
+    hide()
+    return
+  }
+
+  if (selectionInsideHighlight()) {
     hide()
     return
   }
@@ -59,6 +90,7 @@ function updateToolbar() {
   const rect = range.getBoundingClientRect()
   x.value = rect.left + rect.width / 2
   y.value = Math.max(8, rect.top - 8)
+  mode.value = 'select'
   visible.value = true
 }
 
@@ -70,6 +102,20 @@ function scheduleUpdate() {
     debounceTimer = null
     updateToolbar()
   }, 30)
+}
+
+function showHighlightMenu(mark) {
+  const id = mark.dataset.highlightId
+  if (!id) return
+
+  const rect = mark.getBoundingClientRect()
+  activeHighlightId.value = id
+  mode.value = 'highlight'
+  x.value = rect.left + rect.width / 2
+  y.value = Math.max(8, rect.top - 8)
+  visible.value = true
+  toolbarInteracting.value = true
+  window.getSelection()?.removeAllRanges()
 }
 
 async function highlight(color) {
@@ -92,6 +138,13 @@ async function highlight(color) {
 
   window.getSelection()?.removeAllRanges()
   hide()
+  showToast('Highlight saved')
+}
+
+function noteForHighlight(highlightId) {
+  return pageNotes.value.find(
+    n => n.anchorType === 'highlight' && n.anchorId === highlightId
+  )
 }
 
 async function addNoteFromSelection() {
@@ -112,19 +165,75 @@ async function addNoteFromSelection() {
     applyHighlightToDOM(hl)
   }
 
-  const body = prompt('Add a note for this highlight:', '')
-  if (body !== null && body.trim()) {
+  window.getSelection()?.removeAllRanges()
+  hide()
+
+  const body = await openNoteDialog({
+    title: 'Add a note',
+    placeholder: 'What do you want to remember about this passage?',
+    initial: '',
+  })
+
+  if (body) {
     await addNote({
       pagePath: currentPagePath.value,
       anchorType: 'highlight',
       anchorId: hl.id,
       title: anchor.textSnapshot.slice(0, 60),
-      body: body.trim(),
+      body,
     })
+    showToast('Note saved')
+  }
+}
+
+async function editHighlightNote() {
+  const highlightId = activeHighlightId.value
+  if (!highlightId) return
+
+  const existing = noteForHighlight(highlightId)
+  const body = await openNoteDialog({
+    title: existing ? 'Edit note' : 'Add a note',
+    placeholder: 'What do you want to remember about this highlight?',
+    initial: existing?.body ?? '',
+  })
+
+  hide()
+
+  if (body === null) return
+
+  if (existing) {
+    if (!body.trim()) {
+      await removeNote(existing.id)
+      showToast('Note removed')
+      return
+    }
+    await updateNote(existing.id, body)
+    showToast('Note updated')
+    return
   }
 
-  window.getSelection()?.removeAllRanges()
+  if (!body.trim()) return
+
+  const mark = document.querySelector(`mark[data-highlight-id="${highlightId}"]`)
+  const title = mark?.textContent?.trim().slice(0, 60) || 'Highlight note'
+  await addNote({
+    pagePath: currentPagePath.value,
+    anchorType: 'highlight',
+    anchorId: highlightId,
+    title,
+    body,
+  })
+  showToast('Note saved')
+}
+
+async function removeActiveHighlight() {
+  const highlightId = activeHighlightId.value
+  if (!highlightId) return
+
+  removeHighlightFromDOM(highlightId)
+  await removeHighlight(highlightId)
   hide()
+  showToast('Highlight removed')
 }
 
 function onSelectionChange() {
@@ -134,6 +243,28 @@ function onSelectionChange() {
 function onMouseUp(e) {
   if (isIgnoredTarget(e.target)) return
   scheduleUpdate()
+}
+
+function onClick(e) {
+  const mark = e.target instanceof Element ? e.target.closest('mark.dsa-hl') : null
+  if (!mark) return
+  if (e.target instanceof Element && e.target.closest('.annotation-toolbar')) return
+
+  e.preventDefault()
+  e.stopPropagation()
+  showHighlightMenu(mark)
+}
+
+function onDocumentMouseDown(e) {
+  if (!(e.target instanceof Element)) return
+  if (e.target.closest('.annotation-toolbar')) return
+  if (e.target.closest('.note-dialog, .note-dialog-backdrop')) return
+  if (e.target.closest('mark.dsa-hl')) return
+
+  if (visible.value) {
+    hide()
+    toolbarInteracting.value = false
+  }
 }
 
 function onKeyDown(e) {
@@ -160,6 +291,8 @@ onMounted(() => {
   preparePage()
   document.addEventListener('selectionchange', onSelectionChange)
   document.addEventListener('mouseup', onMouseUp)
+  document.addEventListener('click', onClick, true)
+  document.addEventListener('mousedown', onDocumentMouseDown)
   document.addEventListener('keydown', onKeyDown)
 })
 
@@ -167,6 +300,8 @@ onUnmounted(() => {
   if (debounceTimer) clearTimeout(debounceTimer)
   document.removeEventListener('selectionchange', onSelectionChange)
   document.removeEventListener('mouseup', onMouseUp)
+  document.removeEventListener('click', onClick, true)
+  document.removeEventListener('mousedown', onDocumentMouseDown)
   document.removeEventListener('keydown', onKeyDown)
 })
 
@@ -181,26 +316,39 @@ watch(() => route.path, () => {
     <div
       v-if="visible"
       class="annotation-toolbar"
+      :class="mode"
       :style="{ left: x + 'px', top: y + 'px' }"
       role="toolbar"
-      aria-label="Highlight options"
+      :aria-label="mode === 'highlight' ? 'Highlight actions' : 'Highlight options'"
       @mousedown="onToolbarPointerDown"
       @mouseup="onToolbarPointerUp"
     >
-      <button
-        v-for="c in colors"
-        :key="c.id"
-        class="color-btn"
-        :class="c.id"
-        :aria-label="`Highlight ${c.label}`"
-        :title="c.label"
-        @mousedown.prevent
-        @click="highlight(c.id)"
-      />
-      <span class="divider" />
-      <button class="action-btn" title="Add note" @mousedown.prevent @click="addNoteFromSelection">
-        Note
-      </button>
+      <template v-if="mode === 'select'">
+        <button
+          v-for="c in colors"
+          :key="c.id"
+          class="color-btn"
+          :class="c.id"
+          :aria-label="`Highlight ${c.label}`"
+          :title="c.label"
+          @mousedown.prevent
+          @click="highlight(c.id)"
+        />
+        <span class="divider" />
+        <button class="action-btn" title="Add note" @mousedown.prevent @click="addNoteFromSelection">
+          Note
+        </button>
+      </template>
+
+      <template v-else>
+        <button class="action-btn" title="Add or edit note" @mousedown.prevent @click="editHighlightNote">
+          {{ noteForHighlight(activeHighlightId) ? 'Edit note' : 'Add note' }}
+        </button>
+        <span class="divider" />
+        <button class="action-btn danger" title="Remove highlight" @mousedown.prevent @click="removeActiveHighlight">
+          Remove
+        </button>
+      </template>
     </div>
   </Teleport>
 </template>
@@ -253,10 +401,15 @@ watch(() => route.path, () => {
   color: var(--vp-c-text-2);
   cursor: pointer;
   border-radius: 4px;
+  white-space: nowrap;
 }
 
 .action-btn:hover {
   background: var(--vp-c-bg-soft);
   color: var(--vp-c-text-1);
+}
+
+.action-btn.danger:hover {
+  color: #ef4444;
 }
 </style>

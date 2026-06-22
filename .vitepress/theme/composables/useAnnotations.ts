@@ -1,6 +1,7 @@
 import { ref, computed } from 'vue'
 import { useRoute } from 'vitepress'
 import { pagePathKey, pathsMatch } from '../utils/pagePathKey'
+import { removeHighlightFromDOM } from '../utils/highlightRestorer'
 import {
   type Highlight,
   type Note,
@@ -55,6 +56,7 @@ export function useAnnotations() {
   }
 
   async function removeHighlight(id: string) {
+    removeHighlightFromDOM(id)
     highlights.value = highlights.value.filter(h => h.id !== id)
     notes.value = notes.value.filter(n => n.anchorId !== id)
     await Promise.all([setHighlights(highlights.value), setNotes(notes.value)])
