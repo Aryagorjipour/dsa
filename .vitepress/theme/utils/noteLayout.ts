@@ -14,11 +14,14 @@ export interface NotePlacement {
   cardAnchorY: number
 }
 
+export const MARGIN_NOTES_MOBILE_MAX = 960
+
 const CARD_WIDTH = 220
 const CARD_GAP = 8
 const CARD_EST_HEIGHT = 88
 const VIEWPORT_PAD = 8
 const MARGIN_GAP = 10
+const MAX_NUDGE = 40
 
 function contentColumnRect(): DOMRect | null {
   const el =
@@ -26,6 +29,11 @@ function contentColumnRect(): DOMRect | null {
     document.querySelector('.vp-doc .content') ||
     document.querySelector('.vp-doc')
   return el?.getBoundingClientRect() ?? null
+}
+
+export function isMarginNotesMobile(): boolean {
+  if (typeof window === 'undefined') return false
+  return window.innerWidth <= MARGIN_NOTES_MOBILE_MAX
 }
 
 export function getNoteDocumentY(note: Note, highlights: Highlight[]): number {
@@ -63,6 +71,14 @@ function pickSide(anchorRect: DOMRect, contentRect: DOMRect): 'left' | 'right' {
   return anchorCenter < contentCenter ? 'left' : 'right'
 }
 
+function isAnchorInView(rect: DOMRect): boolean {
+  return rect.bottom > VIEWPORT_PAD && rect.top < window.innerHeight - VIEWPORT_PAD
+}
+
+function isBoxInView(top: number, height: number): boolean {
+  return top + height > VIEWPORT_PAD && top < window.innerHeight - VIEWPORT_PAD
+}
+
 export function sortNotesByPagePosition(notes: Note[], highlights: Highlight[]): Note[] {
   return [...notes].sort((a, b) => getNoteDocumentY(a, highlights) - getNoteDocumentY(b, highlights))
 }
@@ -72,13 +88,10 @@ export function layoutMarginNotes(
   highlights: Highlight[],
   heights: Record<string, number> = {},
 ): NotePlacement[] {
+  if (isMarginNotesMobile()) return []
+
   const contentRect = contentColumnRect()
   if (!contentRect) return []
-
-  const navBottom = parseInt(
-    getComputedStyle(document.documentElement).getPropertyValue('--vp-nav-height') || '64',
-    10,
-  ) + VIEWPORT_PAD
 
   const items = sortNotesByPagePosition(notes, highlights)
     .map(note => ({
@@ -88,19 +101,23 @@ export function layoutMarginNotes(
     .filter((item): item is typeof item & { anchorEl: Element } => !!item.anchorEl)
 
   const placements: NotePlacement[] = []
-  const lastBottom: Record<'left' | 'right', number> = { left: navBottom, right: navBottom }
+  const lastBottom: Record<'left' | 'right', number> = { left: -Infinity, right: -Infinity }
 
   for (const { note, anchorEl } of items) {
     const anchorRect = anchorEl.getBoundingClientRect()
+    if (!isAnchorInView(anchorRect)) continue
+
     const height = heights[note.id] || CARD_EST_HEIGHT
     const side = pickSide(anchorRect, contentRect)
+    const idealTop = anchorRect.top + anchorRect.height / 2 - height / 2
 
-    let top = anchorRect.top + anchorRect.height / 2 - height / 2
-    top = Math.max(navBottom, top)
-    if (top < lastBottom[side] + CARD_GAP) top = lastBottom[side] + CARD_GAP
+    let top = idealTop
+    if (lastBottom[side] > -Infinity && top < lastBottom[side] + CARD_GAP) {
+      top = Math.min(lastBottom[side] + CARD_GAP, idealTop + MAX_NUDGE)
+      if (top < lastBottom[side] + CARD_GAP) continue
+    }
 
-    const maxTop = window.innerHeight - height - VIEWPORT_PAD
-    top = Math.min(top, maxTop)
+    if (!isBoxInView(top, height)) continue
 
     lastBottom[side] = top + height
 

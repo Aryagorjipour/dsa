@@ -87,7 +87,8 @@ Start your explanation now.`
     <p class="annotation-hint">
       Select text to highlight or add a note. Click a highlight to view, edit, or remove it.
       Hover a section heading and click <strong>+</strong> for a section note.
-      Press <kbd>Shift+N</kbd> to open all notes on this page.
+      <span class="desktop-notes-hint">Press <kbd>Shift+N</kbd> to open all notes on this page.</span>
+      <span class="mobile-notes-hint">Use the <strong>My Notes</strong> panel in the sidebar for this page.</span>
     </p>
     <div class="actions">
       <button class="btn" @click="addPageNote">Add page note</button>
@@ -131,6 +132,20 @@ Start your explanation now.`
   border: 1px solid var(--vp-c-divider);
   background: var(--vp-c-bg-soft);
   font-family: inherit;
+}
+
+.mobile-notes-hint {
+  display: none;
+}
+
+@media (max-width: 960px) {
+  .desktop-notes-hint {
+    display: none;
+  }
+
+  .mobile-notes-hint {
+    display: inline;
+  }
 }
 
 .actions {

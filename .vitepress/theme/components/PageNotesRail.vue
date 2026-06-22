@@ -5,8 +5,8 @@ import { useAnnotations, loadAnnotations } from '../composables/useAnnotations'
 import { usePageNotesRail } from '../composables/usePageNotesRail'
 import { useFocusMode } from '../composables/useFocusMode'
 import { normalizePagePath } from '../utils/normalizePagePath'
-import { scrollToNote, flashTarget } from '../utils/scrollToNote'
-import { layoutMarginNotes, connectorPath } from '../utils/noteLayout'
+import { scrollToNote } from '../utils/scrollToNote'
+import { layoutMarginNotes, connectorPath, isMarginNotesMobile } from '../utils/noteLayout'
 import { handbookLink } from '../utils/handbookLink'
 import { showToast } from '../composables/useToast'
 
@@ -26,8 +26,11 @@ const { pageNotes, highlights, loaded, removeNote } = useAnnotations()
 const placements = ref([])
 const cardHeights = ref({})
 const cardRefs = ref({})
+const isMobile = ref(false)
 let resizeObserver = null
 let layoutRaf = 0
+
+const marginNotesEnabled = computed(() => showOnPage.value && !isFocusMode.value && !isMobile.value)
 
 const TYPE_LABELS = {
   highlight: 'Highlight',
@@ -72,8 +75,14 @@ function measureCards() {
   return changed
 }
 
+function syncMobile() {
+  const mobile = isMarginNotesMobile()
+  if (mobile && isOpen.value) closePageNotesRail()
+  isMobile.value = mobile
+}
+
 function updateLayout() {
-  if (!isOpen.value) {
+  if (!isOpen.value || isMobile.value) {
     placements.value = []
     return
   }
@@ -117,15 +126,21 @@ function setupResizeObserver() {
 
 onMounted(async () => {
   await loadAnnotations()
+  syncMobile()
   window.addEventListener('scroll', scheduleLayout, { passive: true })
-  window.addEventListener('resize', scheduleLayout, { passive: true })
+  window.addEventListener('resize', onResize, { passive: true })
 })
+
+function onResize() {
+  syncMobile()
+  scheduleLayout()
+}
 
 onUnmounted(() => {
   if (layoutRaf) cancelAnimationFrame(layoutRaf)
   resizeObserver?.disconnect()
   window.removeEventListener('scroll', scheduleLayout)
-  window.removeEventListener('resize', scheduleLayout)
+  window.removeEventListener('resize', onResize)
 })
 
 watch(isOpen, open => {
@@ -153,7 +168,7 @@ watch(placements, () => nextTick(setupResizeObserver))
 
 <template>
   <Teleport to="body">
-    <template v-if="showOnPage && !isFocusMode">
+    <template v-if="marginNotesEnabled">
       <button
         type="button"
         class="page-notes-toggle"
@@ -313,6 +328,7 @@ watch(placements, () => nextTick(setupResizeObserver))
   box-shadow: 0 6px 20px rgba(0, 0, 0, 0.14);
   transition: border-color 0.15s, box-shadow 0.15s;
   pointer-events: auto;
+  will-change: top, left;
 }
 
 .margin-note-card.active {
@@ -373,32 +389,7 @@ watch(placements, () => nextTick(setupResizeObserver))
   line-height: 1;
 }
 
-@media (max-width: 1100px) {
-  .margin-note-card {
-    width: min(220px, calc(100vw - 24px)) !important;
-    max-width: calc(100vw - 24px);
-  }
 
-  .margin-note-card.left,
-  .margin-note-card.right {
-    left: auto !important;
-    right: 12px !important;
-  }
-}
-
-@media (max-width: 640px) {
-  .page-notes-toggle {
-    bottom: 16px;
-    left: 16px;
-    padding: 7px 12px;
-    font-size: 12px;
-  }
-
-  .toggle-kbd,
-  .page-notes-hint {
-    display: none;
-  }
-}
 </style>
 
 <style>

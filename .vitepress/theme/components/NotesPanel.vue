@@ -8,7 +8,7 @@ import { showToast } from '../composables/useToast'
 
 const { pageNotes, pageHighlights, highlights, loaded, toggleHighlightsVisible, highlightsVisible, removeNote } = useAnnotations()
 const orderedPageNotes = computed(() => sortNotesByPagePosition(pageNotes.value, highlights.value))
-const collapsed = ref(false)
+const collapsed = ref(true)
 
 onMounted(async () => {
   await loadAnnotations()

@@ -1,4 +1,5 @@
 import { ref, onMounted, onUnmounted } from 'vue'
+import { isMarginNotesMobile } from '../utils/noteLayout'
 
 const isOpen = ref(false)
 const activeNoteId = ref<string | null>(null)
@@ -23,6 +24,7 @@ function applySide() {
 }
 
 export function openPageNotesRail(noteId?: string) {
+  if (isMarginNotesMobile()) return
   applySide()
   isOpen.value = true
   if (noteId) activeNoteId.value = noteId
@@ -50,6 +52,7 @@ function handleKey(e: KeyboardEvent) {
   if (target?.matches('input, textarea, select, [contenteditable="true"]')) return
 
   if (e.key === 'N' && e.shiftKey && !e.ctrlKey && !e.metaKey && !e.altKey) {
+    if (isMarginNotesMobile()) return
     e.preventDefault()
     togglePageNotesRail()
   }
