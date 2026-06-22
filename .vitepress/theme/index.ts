@@ -9,11 +9,13 @@ const MyNotesView = defineAsyncComponent(() => import('./components/MyNotesView.
 const QuizDashboard = defineAsyncComponent(() => import('./components/QuizDashboard.vue'))
 import Layout from './Layout.vue'
 import { blockIdPlugin } from './plugins/block-id'
+import { setupAnnotationRouter } from './utils/annotationLifecycle'
 
 export default {
   extends: DefaultTheme,
   Layout,
-  enhanceApp({ app }) {
+  enhanceApp({ app, router }) {
+    setupAnnotationRouter(router)
     app.component('DSALogo', DSALogo)
     app.component('DSAExplorer', DSAExplorer)
     app.component('PlaygroundPage', PlaygroundPage)

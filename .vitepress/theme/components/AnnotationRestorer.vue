@@ -1,13 +1,15 @@
 <script setup>
-import { watch, onMounted, onUnmounted, nextTick } from 'vue'
+import { watch, onMounted, onUnmounted } from 'vue'
 import { useRoute } from 'vitepress'
 import { useAnnotations, loadAnnotations } from '../composables/useAnnotations'
-import { assignBlockIds } from '../utils/assignBlockIds'
-import { ensureHighlightInDOM } from '../utils/highlightRestorer'
+import {
+  bindAnnotationRestore,
+  scheduleAnnotationRestore,
+} from '../utils/annotationLifecycle'
 import { scrollToHash } from '../utils/scrollToNote'
 
 const route = useRoute()
-const { pageHighlights, highlightsVisible, loaded } = useAnnotations()
+const { pageHighlights, highlightsVisible } = useAnnotations()
 
 function followNoteHash() {
   const hash = window.location.hash
@@ -15,52 +17,32 @@ function followNoteHash() {
   scrollToHash(hash, pageHighlights.value)
 }
 
-function restoreHighlights() {
-  if (!highlightsVisible.value) {
-    followNoteHash()
-    return
-  }
-  assignBlockIds()
-  document.querySelectorAll('mark.dsa-hl').forEach(el => {
-    const parent = el.parentNode
-    if (!parent) return
-    while (el.firstChild) parent.insertBefore(el.firstChild, el)
-    parent.removeChild(el)
-    parent.normalize()
-  })
-
-  requestAnimationFrame(() => {
-    for (const hl of pageHighlights.value) {
-      ensureHighlightInDOM(hl)
-    }
-    followNoteHash()
-  })
-}
-
 onMounted(async () => {
+  bindAnnotationRestore({
+    getHighlights: () => pageHighlights.value,
+    isVisible: () => highlightsVisible.value,
+  })
+
   window.addEventListener('hashchange', followNoteHash)
   await loadAnnotations()
-  nextTick(() => {
-    assignBlockIds()
-    setTimeout(restoreHighlights, 200)
-  })
-})
-
-watch(() => route.path, () => {
-  nextTick(() => {
-    assignBlockIds()
-    setTimeout(restoreHighlights, 300)
-  })
+  scheduleAnnotationRestore(true)
 })
 
 onUnmounted(() => {
   window.removeEventListener('hashchange', followNoteHash)
 })
 
-watch(pageHighlights, restoreHighlights)
+watch(() => route.path, () => {
+  scheduleAnnotationRestore(true)
+}, { flush: 'post' })
+
+watch(pageHighlights, () => {
+  scheduleAnnotationRestore(false)
+}, { flush: 'post' })
+
 watch(highlightsVisible, visible => {
   document.documentElement.classList.toggle('highlights-hidden', !visible)
-  if (visible) restoreHighlights()
+  scheduleAnnotationRestore(false)
 })
 </script>
 
