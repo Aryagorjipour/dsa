@@ -34,7 +34,8 @@ let layoutRaf = 0
 let layoutRetryTimer = 0
 let unbindRestoreListener = null
 
-const marginNotesEnabled = computed(() => showOnPage.value && !isFocusMode.value && !isMobile.value)
+const showDock = computed(() => showOnPage.value && !isMobile.value)
+const marginNotesEnabled = computed(() => showDock.value && !isFocusMode.value)
 
 const TYPE_LABELS = {
   highlight: 'Highlight',
@@ -202,13 +203,25 @@ watch(placements, () => nextTick(setupResizeObserver))
 
 <template>
   <Teleport to="body">
-    <template v-if="marginNotesEnabled">
-      <div class="page-bottom-dock-wrap">
-        <p v-if="isOpen" class="page-notes-hint" aria-live="polite">
-          Notes follow page order · <kbd>Esc</kbd> to close
-          <a :href="handbookLink('/my-notes')" class="hint-link">All notes</a>
-        </p>
-        <div class="page-bottom-dock">
+    <div v-if="showDock" class="page-bottom-dock-wrap">
+      <p v-if="marginNotesEnabled && isOpen" class="page-notes-hint" aria-live="polite">
+        Notes follow page order · <kbd>Esc</kbd> to close
+        <a :href="handbookLink('/my-notes')" class="hint-link">All notes</a>
+      </p>
+      <div class="page-bottom-dock">
+        <template v-if="isFocusMode">
+          <button
+            type="button"
+            class="dock-focus-btn is-exit"
+            aria-label="Exit focus mode (Shift+F or Esc)"
+            title="Exit Focus Mode (Shift+F or Esc)"
+            @click="toggleFocusMode"
+          >
+            <span class="focus-icon" aria-hidden="true">◑</span>
+            Exit Focus
+          </button>
+        </template>
+        <template v-else>
           <button
             type="button"
             class="page-notes-toggle"
@@ -235,9 +248,11 @@ watch(placements, () => nextTick(setupResizeObserver))
             <span class="focus-icon" aria-hidden="true">◐</span>
             Focus
           </button>
-        </div>
+        </template>
       </div>
+    </div>
 
+    <template v-if="marginNotesEnabled">
       <article
         v-for="p in placements"
         :key="p.note.id"
@@ -366,6 +381,13 @@ watch(placements, () => nextTick(setupResizeObserver))
 
 .dock-focus-btn:hover {
   transform: scale(1.04);
+}
+
+.dock-focus-btn.is-exit {
+  background: var(--vp-c-bg-elv);
+  color: var(--vp-c-text-1);
+  border: 1px solid var(--vp-c-divider);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
 }
 
 .dock-focus-btn .focus-icon {

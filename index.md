@@ -72,11 +72,7 @@ We especially welcome:
 - Additional C# / Go implementations
 - Diagrams and visuals
 
----
-
-**Made with care by [Aryagorjipour](https://github.com/Aryagorjipour)**
-
----
+<p class="home-footer-credit">Made with care by <a href="https://github.com/Aryagorjipour">Aryagorjipour</a></p>
 
 ## Related Projects
 

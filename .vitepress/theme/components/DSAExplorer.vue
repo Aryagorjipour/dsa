@@ -1,16 +1,20 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue'
+import { useData } from 'vitepress'
 import { useFocusMode } from '../composables/useFocusMode'
+import { openShortcuts } from '../composables/useKeyboardShortcuts'
 import { getExplorerTree } from '../../sidebar'
 import { handbookLink } from '../utils/handbookLink'
 
 const collapsed = ref(true)
+const { page } = useData()
 const { isFocusMode, toggleFocusMode } = useFocusMode()
 const tree = computed(() => getExplorerTree())
+const isHomePage = computed(() => page.value.frontmatter.layout === 'home')
 </script>
 
 <template>
-  <div class="dsa-explorer" :class="{ collapsed }">
+  <div class="dsa-explorer" :class="{ collapsed, 'is-home': isHomePage }">
     <div class="explorer-header">
       <button
         class="explorer-toggle"
@@ -38,6 +42,19 @@ const tree = computed(() => getExplorerTree())
 
     <div class="explorer-footer">
       <button
+        v-if="isHomePage"
+        type="button"
+        class="shortcuts-btn"
+        title="Keyboard shortcuts (Shift+?)"
+        @click="openShortcuts"
+      >
+        <span class="shortcuts-glyph" aria-hidden="true">?</span>
+        Shortcuts
+        <kbd>⇧?</kbd>
+      </button>
+      <button
+        v-else
+        type="button"
         class="focus-btn"
         :aria-pressed="isFocusMode"
         :title="isFocusMode ? 'Exit Focus (Esc)' : 'Focus Mode (Shift+F)'"
@@ -56,6 +73,12 @@ const tree = computed(() => getExplorerTree())
   margin-top: 16px;
   padding-top: 12px;
   border-top: 1px solid var(--vp-c-divider);
+}
+
+.dsa-explorer.is-home {
+  margin-top: 0;
+  padding-top: 0;
+  border-top: none;
 }
 
 .explorer-header {
@@ -131,5 +154,46 @@ const tree = computed(() => getExplorerTree())
 
 .focus-btn:hover {
   background: var(--vp-c-bg-alt);
+}
+
+.shortcuts-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  padding: 4px 10px;
+  border: 1px solid var(--vp-c-divider);
+  background: transparent;
+  color: var(--vp-c-text-2);
+  border-radius: 9999px;
+  cursor: pointer;
+}
+
+.shortcuts-btn:hover {
+  border-color: var(--vp-c-brand-1);
+  color: var(--vp-c-brand-1);
+}
+
+.shortcuts-glyph {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: var(--vp-c-brand-1);
+  color: #fff;
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.shortcuts-btn kbd {
+  font-size: 9px;
+  padding: 1px 4px;
+  border-radius: 3px;
+  border: 1px solid var(--vp-c-divider);
+  font-family: inherit;
+  color: var(--vp-c-text-3);
 }
 </style>

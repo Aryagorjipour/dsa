@@ -28,6 +28,41 @@
   border-top: 1px solid var(--vp-c-divider);
 }
 
+/* Home page — avoid stacked dividers on every section */
+.VPHome .vp-doc h2 {
+  border-top: none;
+  padding-top: 0;
+  margin-top: 2rem;
+}
+
+.VPHome .vp-doc h2:not(:first-of-type) {
+  margin-top: 2.5rem;
+}
+
+.VPHome .vp-doc hr {
+  display: none;
+}
+
+.VPHome .home-footer-credit {
+  margin: 2rem 0 0;
+  font-size: 14px;
+  color: var(--vp-c-text-2);
+  text-align: center;
+}
+
+.VPHome .home-footer-credit a {
+  color: var(--vp-c-brand-1);
+  text-decoration: none;
+}
+
+.VPHome .home-footer-credit a:hover {
+  text-decoration: underline;
+}
+
+.VPHome .vp-doc > :last-child {
+  margin-bottom: 0;
+}
+
 .vp-doc table {
   width: 100%;
   font-size: 14px;

@@ -1,3 +1,4 @@
+import { nextTick } from 'vue'
 import type { Router } from 'vitepress'
 import type { Highlight } from '../composables/useStorage'
 import { assignBlockIds } from './assignBlockIds'
@@ -31,6 +32,21 @@ function isDocReady(): boolean {
   const doc = document.querySelector('.vp-doc')
   if (!doc) return false
   return !!doc.querySelector('p, h1, h2, h3, h4, li, td, th, blockquote, .custom-block')
+}
+
+function pageContentReady(highlights: Highlight[]): boolean {
+  if (!isDocReady()) return false
+  if (!highlights.length) return true
+
+  let matched = 0
+  const threshold = Math.min(2, highlights.length)
+  for (const hl of highlights) {
+    if (document.querySelector(`[data-dsa-block="${escapeAttr(hl.blockId)}"]`)) {
+      matched++
+      if (matched >= threshold) return true
+    }
+  }
+  return false
 }
 
 function countAppliedMarks(highlights: Highlight[]): number {
@@ -94,13 +110,41 @@ export function onAnnotationsRestored(listener: RestoreListener): () => void {
   return () => restoreListeners.delete(listener)
 }
 
+export function cancelAnnotationRestore(): void {
+  restoreToken++
+  if (debounceTimer) {
+    window.clearTimeout(debounceTimer)
+    debounceTimer = 0
+  }
+}
+
 export function setupAnnotationRouter(router: Router): void {
   if (routerHooked) return
   routerHooked = true
 
-  const previous = router.onAfterRouteChange ?? router.onAfterRouteChanged
+  const previousBefore = router.onBeforeRouteChange
+  router.onBeforeRouteChange = async href => {
+    if ((await previousBefore?.(href)) === false) return false
+    if (typeof document === 'undefined') return
+    cancelAnnotationRestore()
+    clearExistingMarks()
+  }
+
+  const previousAfter = router.onAfterRouteChange ?? router.onAfterRouteChanged
+  const previousAfterPage = router.onAfterPageLoad
+
+  router.onAfterPageLoad = async href => {
+    await previousAfterPage?.(href)
+    if (typeof document === 'undefined') return
+    await nextTick()
+    scheduleAnnotationRestore(true)
+  }
+
   router.onAfterRouteChange = async href => {
-    await previous?.(href)
+    await previousAfter?.(href)
+    if (typeof document === 'undefined') return
+    await nextTick()
+    await new Promise<void>(resolve => requestAnimationFrame(() => resolve()))
     scheduleAnnotationRestore(true)
   }
 }
@@ -115,7 +159,7 @@ async function runRestore(token: number, expectedPath: string, scrollHash: boole
     const highlights = context!.getHighlights()
     const visible = context!.isVisible()
 
-    if (!isDocReady()) {
+    if (!pageContentReady(highlights)) {
       await delay(attemptDelay(attempt))
       continue
     }
