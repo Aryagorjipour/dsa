@@ -14,6 +14,8 @@ const {
   updateNote,
   removeNote,
   removeHighlight,
+  updateHighlightColor,
+  highlights,
   highlightsVisible,
   currentPagePath,
   pageNotes,
@@ -25,6 +27,7 @@ const x = ref(0)
 const y = ref(0)
 const activeHighlightId = ref(null)
 const activeHighlightQuote = ref('')
+const activeHighlightColor = ref('yellow')
 /** Saved when toolbar opens — selection is gone by the time buttons are clicked. */
 const pendingAnchor = ref(null)
 /** True while the pointer is down on the toolbar — blocks outside-click hide. */
@@ -121,6 +124,10 @@ function scheduleUpdate() {
 function showHighlightMenu(mark) {
   const id = mark.dataset.highlightId
   if (!id) return
+
+  const stored = highlights.value.find(h => h.id === id)
+  const fromClass = [...mark.classList].find(c => c.startsWith('dsa-hl-'))?.slice(7)
+  activeHighlightColor.value = stored?.color || fromClass || 'yellow'
 
   const rect = mark.getBoundingClientRect()
   pendingAnchor.value = null
@@ -258,6 +265,20 @@ async function editHighlightNote() {
     body,
   })
   showToast('Note saved')
+}
+
+async function changeHighlightColor(color) {
+  const highlightId = activeHighlightId.value
+  if (!highlightId || color === activeHighlightColor.value) return
+
+  try {
+    await updateHighlightColor(highlightId, color)
+    activeHighlightColor.value = color
+    showToast('Highlight color updated')
+  } catch (err) {
+    console.error('[dsa] highlight color failed', err)
+    showToast('Could not update highlight color')
+  }
 }
 
 async function removeActiveHighlight() {
@@ -403,6 +424,22 @@ watch(() => route.path, () => {
           </div>
           <p v-else class="toolbar-no-note">No note yet — add one below.</p>
         </div>
+        <div class="toolbar-colors">
+          <span class="toolbar-colors-label">Color</span>
+          <div class="toolbar-color-row">
+            <button
+              v-for="c in colors"
+              :key="c.id"
+              type="button"
+              class="color-btn"
+              :class="[c.id, { active: activeHighlightColor === c.id }]"
+              :aria-label="`Change to ${c.label}`"
+              :title="c.label"
+              :aria-pressed="activeHighlightColor === c.id"
+              @click.stop="changeHighlightColor(c.id)"
+            />
+          </div>
+        </div>
         <footer class="toolbar-footer">
           <button
             type="button"
@@ -490,6 +527,29 @@ watch(() => route.path, () => {
   color: var(--vp-c-text-3);
 }
 
+.toolbar-colors {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 8px 12px;
+  border-top: 1px solid var(--vp-c-divider);
+}
+
+.toolbar-colors-label {
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  font-weight: 700;
+  color: var(--vp-c-text-3);
+}
+
+.toolbar-color-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
 .toolbar-footer {
   display: flex;
   align-items: center;
@@ -511,6 +571,11 @@ watch(() => route.path, () => {
 
 .color-btn:hover {
   border-color: var(--vp-c-text-2);
+}
+
+.color-btn.active {
+  border-color: var(--vp-c-brand-1);
+  box-shadow: 0 0 0 1px var(--vp-c-brand-1);
 }
 
 .color-btn.yellow { background: #fef08a; }

@@ -2,7 +2,7 @@ import { ref, computed } from 'vue'
 import { useRoute } from 'vitepress'
 import { pagePathKey, pathsMatch } from '../utils/pagePathKey'
 import { normalizePagePath } from '../utils/normalizePagePath'
-import { removeHighlightFromDOM } from '../utils/highlightRestorer'
+import { removeHighlightFromDOM, updateHighlightColorInDOM } from '../utils/highlightRestorer'
 import {
   type Highlight,
   type Note,
@@ -70,6 +70,18 @@ export function useAnnotations() {
     await Promise.all([setHighlights(highlights.value), setNotes(notes.value)])
   }
 
+  async function updateHighlightColor(id: string, color: Highlight['color']) {
+    const existing = highlights.value.find(h => h.id === id)
+    if (!existing || existing.color === color) return existing
+
+    highlights.value = highlights.value.map(h =>
+      h.id === id ? { ...h, color } : h
+    )
+    await setHighlights(highlights.value)
+    updateHighlightColorInDOM(id, color)
+    return highlights.value.find(h => h.id === id)
+  }
+
   async function addNote(data: Omit<Note, 'id' | 'createdAt' | 'updatedAt'>) {
     const now = Date.now()
     const note: Note = {
@@ -117,6 +129,7 @@ export function useAnnotations() {
     pageNotes,
     addHighlight,
     removeHighlight,
+    updateHighlightColor,
     addNote,
     updateNote,
     removeNote,

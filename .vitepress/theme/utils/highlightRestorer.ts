@@ -136,6 +136,15 @@ export function applyHighlightToDOM(highlight: Highlight): boolean {
   }
 }
 
+const HIGHLIGHT_COLOR_CLASSES = ['dsa-hl-yellow', 'dsa-hl-green', 'dsa-hl-blue', 'dsa-hl-pink'] as const
+
+export function updateHighlightColorInDOM(id: string, color: Highlight['color']): void {
+  const mark = findHighlightMark(id)
+  if (!mark) return
+  mark.classList.remove(...HIGHLIGHT_COLOR_CLASSES)
+  mark.classList.add(`dsa-hl-${color}`)
+}
+
 export function removeHighlightFromDOM(id: string) {
   const mark = findHighlightMark(id)
   if (!mark?.parentNode) return
