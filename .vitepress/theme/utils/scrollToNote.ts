@@ -1,6 +1,6 @@
 import type { Highlight, Note } from '../composables/useStorage'
 import { assignBlockIds } from './assignBlockIds'
-import { ensureHighlightInDOM } from './highlightRestorer'
+import { buildHighlightRange, ensureHighlightInDOM } from './highlightRestorer'
 import { normalizePagePath } from './normalizePagePath'
 import { handbookLink } from './handbookLink'
 
@@ -11,6 +11,11 @@ export interface ScrollToNoteOptions {
   highlights?: Highlight[]
   behavior?: ScrollBehavior
   block?: ScrollLogicalPosition
+}
+
+export interface NoteAnchor {
+  rect: DOMRect
+  element: Element
 }
 
 function escapeAttr(value: string): string {
@@ -45,64 +50,141 @@ function findHighlightById(id: string, highlights: Highlight[]): Highlight | und
   return highlights.find(h => h.id === id)
 }
 
-function findTextInDoc(snapshot: string): Element | null {
+function mergeRangeRects(range: Range): DOMRect | null {
+  const rects = [...range.getClientRects()]
+  if (!rects.length) {
+    const box = range.getBoundingClientRect()
+    return box.width > 0 || box.height > 0 ? box : null
+  }
+
+  let top = Infinity
+  let left = Infinity
+  let bottom = -Infinity
+  let right = -Infinity
+  for (const r of rects) {
+    if (r.width === 0 && r.height === 0) continue
+    top = Math.min(top, r.top)
+    left = Math.min(left, r.left)
+    bottom = Math.max(bottom, r.bottom)
+    right = Math.max(right, r.right)
+  }
+
+  if (!Number.isFinite(top)) return null
+  return new DOMRect(left, top, right - left, bottom - top)
+}
+
+function findTextRangeInDoc(
+  snapshot: string,
+  options: { blockId?: string } = {},
+): Range | null {
   const needle = snapshot?.trim()
   if (!needle) return null
 
   const doc = document.querySelector('.vp-doc')
   if (!doc) return null
 
-  const walker = document.createTreeWalker(doc, NodeFilter.SHOW_TEXT)
-  let node: Node | null
-  while ((node = walker.nextNode())) {
-    const text = node.textContent || ''
-    const idx = text.indexOf(needle)
-    if (idx < 0) continue
+  const blocks: Element[] = options.blockId
+    ? [...doc.querySelectorAll(`[data-dsa-block="${escapeAttr(options.blockId)}"]`)]
+    : [...doc.querySelectorAll('[data-dsa-block]')]
 
-    const range = document.createRange()
-    range.setStart(node, idx)
-    range.setEnd(node, Math.min(idx + needle.length, text.length))
-    const rect = range.getBoundingClientRect()
-    if (rect.width === 0 && rect.height === 0) continue
+  if (!blocks.length && !options.blockId) blocks.push(doc)
 
-    return node.parentElement ?? doc
+  for (const block of blocks) {
+    const walker = document.createTreeWalker(block, NodeFilter.SHOW_TEXT)
+    let node: Node | null
+    while ((node = walker.nextNode())) {
+      const text = node.textContent || ''
+      const idx = text.indexOf(needle)
+      if (idx < 0) continue
+
+      const range = document.createRange()
+      range.setStart(node, idx)
+      range.setEnd(node, Math.min(idx + needle.length, text.length))
+      if (mergeRangeRects(range)) return range
+    }
   }
 
   return null
 }
 
-function prepareHighlightTarget(
+function anchorFromRange(range: Range, fallback: Element): NoteAnchor | null {
+  const rect = mergeRangeRects(range)
+  if (!rect) return null
+  return { rect, element: fallback }
+}
+
+function prepareHighlightAnchor(
   highlightId: string,
   highlights: Highlight[],
-): Element | null {
+): NoteAnchor | null {
   assignBlockIds()
 
   let mark = findHighlightMark(highlightId)
-  if (mark) return mark
+  if (mark) {
+    const rect = mergeRangeRects(rangeFromElement(mark)) ?? mark.getBoundingClientRect()
+    return { rect, element: mark }
+  }
 
   const highlight = findHighlightById(highlightId, highlights)
   if (!highlight) return null
 
   ensureHighlightInDOM(highlight)
   mark = findHighlightMark(highlightId)
-  if (mark) return mark
+  if (mark) {
+    const rect = mergeRangeRects(rangeFromElement(mark)) ?? mark.getBoundingClientRect()
+    return { rect, element: mark }
+  }
 
-  return findTextInDoc(highlight.textSnapshot) ?? findTextInDoc(highlight.textSnapshot.slice(0, 80))
+  const range = buildHighlightRange(highlight)
+  if (range) {
+    const anchor = anchorFromRange(range, document.body)
+    if (anchor) return anchor
+  }
+
+  const textRange = findTextRangeInDoc(highlight.textSnapshot, { blockId: highlight.blockId })
+  if (textRange) {
+    return anchorFromRange(textRange, document.body)
+  }
+
+  return null
 }
 
-function findNoteTarget(note: Note, highlights: Highlight[]): Element | null {
+function rangeFromElement(el: Element): Range | null {
+  const range = document.createRange()
+  try {
+    range.selectNodeContents(el)
+    return range
+  } catch {
+    return null
+  }
+}
+
+function findNoteAnchor(note: Note, highlights: Highlight[]): NoteAnchor | null {
   if (note.anchorType === 'highlight' && note.anchorId) {
-    const target = prepareHighlightTarget(note.anchorId, highlights)
-    if (target) return target
-    return findTextInDoc(note.title)
+    const anchor = prepareHighlightAnchor(note.anchorId, highlights)
+    if (anchor) return anchor
+
+    const highlight = findHighlightById(note.anchorId, highlights)
+    if (highlight) {
+      const range = findTextRangeInDoc(highlight.textSnapshot, { blockId: highlight.blockId })
+      if (range) return anchorFromRange(range, document.body)
+    }
+
+    const fallback = findTextRangeInDoc(note.title)
+    if (fallback) return anchorFromRange(fallback, document.body)
+    return null
   }
 
   if (note.anchorType === 'heading' && note.anchorId) {
-    return document.getElementById(note.anchorId)
+    const el = document.getElementById(note.anchorId)
+    if (!el) return null
+    return { rect: el.getBoundingClientRect(), element: el }
   }
 
   if (note.anchorType === 'free') {
-    return document.getElementById('dsa-page-tools')
+    const el = document.getElementById('dsa-page-tools')
+    if (!el) return null
+    return { rect: el.getBoundingClientRect(), element: el }
   }
 
   return null
@@ -113,7 +195,7 @@ function findHashTarget(hash: string, highlights: Highlight[]): Element | null {
 
   if (hash.startsWith(HIGHLIGHT_HASH_PREFIX)) {
     const id = hash.slice(HIGHLIGHT_HASH_PREFIX.length)
-    return prepareHighlightTarget(id, highlights)
+    return prepareHighlightAnchor(id, highlights)?.element ?? null
   }
 
   if (hash === PAGE_NOTE_HASH) {
@@ -133,6 +215,34 @@ export function flashTarget(el: Element) {
 function scrollAndFlash(el: Element, opts: ScrollIntoViewOptions): void {
   el.scrollIntoView(opts)
   flashTarget(el)
+}
+
+function scrollToAnchor(anchor: NoteAnchor, opts: ScrollIntoViewOptions): void {
+  const el = anchor.element
+  if (el instanceof HTMLElement && el.isConnected && el !== document.body) {
+    scrollAndFlash(el, opts)
+    return
+  }
+
+  const targetTop =
+    anchor.rect.top + window.scrollY - window.innerHeight / 2 + anchor.rect.height / 2
+  window.scrollTo({ top: Math.max(0, targetTop), behavior: opts.behavior ?? 'smooth' })
+}
+
+async function scrollToAnchorWithRetry(
+  find: () => NoteAnchor | null,
+  opts: ScrollIntoViewOptions,
+  maxAttempts = 20,
+): Promise<boolean> {
+  for (let i = 0; i < maxAttempts; i++) {
+    const anchor = find()
+    if (anchor) {
+      scrollToAnchor(anchor, opts)
+      return true
+    }
+    await new Promise(resolve => window.setTimeout(resolve, 60 + i * 35))
+  }
+  return false
 }
 
 async function scrollToElement(
@@ -161,14 +271,22 @@ export function scrollToNote(
     block: options.block ?? 'center',
   }
 
-  return scrollToElement(() => findNoteTarget(note, highlights), scrollOpts)
+  return scrollToAnchorWithRetry(() => findNoteAnchor(note, highlights), scrollOpts)
 }
 
+export function getNoteAnchor(
+  note: Note,
+  highlights: Highlight[] = [],
+): NoteAnchor | null {
+  return findNoteAnchor(note, highlights)
+}
+
+/** @deprecated Use getNoteAnchor — returns the scroll target element. */
 export function getNoteAnchorElement(
   note: Note,
   highlights: Highlight[] = [],
 ): Element | null {
-  return findNoteTarget(note, highlights)
+  return getNoteAnchor(note, highlights)?.element ?? null
 }
 
 export function scrollToHash(

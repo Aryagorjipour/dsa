@@ -72,6 +72,41 @@ function fuzzyFindSnapshot(block: Element, snapshot: string): { start: number; e
   return null
 }
 
+function resolveHighlightOffsets(
+  highlight: Highlight,
+  block: Element,
+): { start: number; end: number; pos: NonNullable<ReturnType<typeof findOffsetPosition>> } | null {
+  let start = highlight.startOffset
+  let end = highlight.endOffset
+
+  let pos = findOffsetPosition(block, start, end)
+  if (!pos) {
+    const fuzzy = fuzzyFindSnapshot(block, highlight.textSnapshot)
+    if (!fuzzy) return null
+    start = fuzzy.start
+    end = fuzzy.end
+    pos = findOffsetPosition(block, start, end)
+    if (!pos) return null
+  }
+
+  return { start, end, pos }
+}
+
+/** Build a DOM Range for a stored highlight without mutating the document. */
+export function buildHighlightRange(highlight: Highlight): Range | null {
+  assignBlockIds()
+  const block = resolveBlock(highlight)
+  if (!block) return null
+
+  const resolved = resolveHighlightOffsets(highlight, block)
+  if (!resolved) return null
+
+  const range = document.createRange()
+  range.setStart(resolved.pos.startNode, resolved.pos.startOff)
+  range.setEnd(resolved.pos.endNode, resolved.pos.endOff)
+  return range
+}
+
 export function ensureHighlightInDOM(highlight: Highlight): boolean {
   assignBlockIds()
   if (findHighlightMark(highlight.id)) return true
@@ -79,25 +114,8 @@ export function ensureHighlightInDOM(highlight: Highlight): boolean {
 }
 
 export function applyHighlightToDOM(highlight: Highlight): boolean {
-  const block = resolveBlock(highlight)
-  if (!block) return false
-
-  let start = highlight.startOffset
-  let end = highlight.endOffset
-
-  let pos = findOffsetPosition(block, start, end)
-  if (!pos) {
-    const fuzzy = fuzzyFindSnapshot(block, highlight.textSnapshot)
-    if (!fuzzy) return false
-    start = fuzzy.start
-    end = fuzzy.end
-    pos = findOffsetPosition(block, start, end)
-    if (!pos) return false
-  }
-
-  const range = document.createRange()
-  range.setStart(pos.startNode, pos.startOff)
-  range.setEnd(pos.endNode, pos.endOff)
+  const range = buildHighlightRange(highlight)
+  if (!range) return false
 
   const mark = document.createElement('mark')
   mark.className = `dsa-hl dsa-hl-${highlight.color}`

@@ -6,6 +6,7 @@ import { usePageNotesRail } from '../composables/usePageNotesRail'
 import { useFocusMode } from '../composables/useFocusMode'
 import { normalizePagePath } from '../utils/normalizePagePath'
 import { scrollToNote } from '../utils/scrollToNote'
+import { ensureHighlightInDOM } from '../utils/highlightRestorer'
 import { layoutMarginNotes, connectorPath, isMarginNotesMobile } from '../utils/noteLayout'
 import { handbookLink } from '../utils/handbookLink'
 import { showToast } from '../composables/useToast'
@@ -21,7 +22,7 @@ const {
   setActiveNoteId,
 } = usePageNotesRail()
 
-const { pageNotes, highlights, loaded, removeNote } = useAnnotations()
+const { pageNotes, pageHighlights, highlights, loaded, removeNote } = useAnnotations()
 
 const placements = ref([])
 const cardHeights = ref({})
@@ -81,11 +82,23 @@ function syncMobile() {
   isMobile.value = mobile
 }
 
+function ensureNoteAnchors() {
+  const linked = new Set(
+    pageNotes.value
+      .filter(n => n.anchorType === 'highlight' && n.anchorId)
+      .map(n => n.anchorId),
+  )
+  for (const hl of pageHighlights.value) {
+    if (linked.has(hl.id)) ensureHighlightInDOM(hl)
+  }
+}
+
 function updateLayout() {
   if (!isOpen.value || isMobile.value) {
     placements.value = []
     return
   }
+  ensureNoteAnchors()
   measureCards()
   placements.value = layoutMarginNotes(pageNotes.value, highlights.value, cardHeights.value)
 }
