@@ -67,6 +67,7 @@ async function handleClear() {
       <button class="panel-btn" @click="handleImportClick">Import JSON</button>
       <button class="panel-btn danger" @click="handleClear">Clear all data</button>
       <input ref="fileInput" type="file" accept=".json" hidden @change="handleImport" />
+      <p class="shortcut-hint">Press <kbd>Shift+?</kbd> for keyboard shortcuts</p>
     </div>
   </div>
 </template>
@@ -136,5 +137,22 @@ async function handleClear() {
 .panel-btn.danger {
   color: #ef4444;
   border-color: #fca5a5;
+}
+
+.shortcut-hint {
+  margin: 10px 0 0;
+  padding-top: 8px;
+  border-top: 1px solid var(--vp-c-divider);
+  font-size: 11px;
+  color: var(--vp-c-text-3);
+  text-align: center;
+}
+
+.shortcut-hint kbd {
+  font-size: 10px;
+  padding: 1px 4px;
+  border-radius: 3px;
+  border: 1px solid var(--vp-c-divider);
+  font-family: inherit;
 }
 </style>

@@ -15,13 +15,16 @@ import CodeBlockActions from './components/CodeBlockActions.vue'
 import HeadingNotes from './components/HeadingNotes.vue'
 import PageNotesRail from './components/PageNotesRail.vue'
 import SettingsDrawer from './components/SettingsDrawer.vue'
+import KeyboardShortcutsSheet from './components/KeyboardShortcutsSheet.vue'
 import { useFocusMode } from './composables/useFocusMode'
+import { useKeyboardShortcuts } from './composables/useKeyboardShortcuts'
 import DSALogo from './components/DSALogo.vue'
 
 const QuizSection = defineAsyncComponent(() => import('./components/QuizSection.vue'))
 
 const { Layout } = DefaultTheme
 const { isFocusMode, toggleFocusMode } = useFocusMode()
+useKeyboardShortcuts()
 </script>
 
 <template>
@@ -62,6 +65,7 @@ const { isFocusMode, toggleFocusMode } = useFocusMode()
   <CodeBlockActions />
   <HeadingNotes />
   <PageNotesRail />
+  <KeyboardShortcutsSheet />
 
   <button
     v-if="isFocusMode"

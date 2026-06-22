@@ -50,6 +50,7 @@ A no-hand-waving, deeply practical handbook written for developers who want to t
 - [x] Reading progress bar on handbook pages
 - [x] Export / import notes, highlights, and quiz progress (Settings drawer)
 - [x] Chapter navigation, breadcrumbs, and quick-jump explorer
+- [x] **Keyboard shortcuts** — `Shift+?` cheat sheet; `Shift+H/P/M/Q/L` jump to main sections; `Shift+T` toggles theme
 
 ### Up next
 
@@ -58,7 +59,6 @@ A no-hand-waving, deeply practical handbook written for developers who want to t
 - [ ] Spaced-repetition mode — turn notes into review cards
 - [ ] Printable / PDF export of a chapter with your annotations
 - [ ] PWA offline support for reading on the go
-- [ ] Keyboard shortcuts cheat sheet (`?` overlay)
 - [ ] More language ports in the Playground (Python, Rust, …)
 - [ ] Community-contributed diagrams and walkthrough videos
 
