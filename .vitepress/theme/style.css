@@ -37,20 +37,63 @@
   background: var(--vp-c-bg-soft);
 }
 
-/* Focus Mode */
+/* Focus Mode — fullscreen reading; all rules scoped to html.focus-mode for clean exit */
+html.focus-mode {
+  --vp-nav-height: 0px;
+  --vp-layout-top-height: 0px;
+}
+
+html.focus-mode .VPNav,
+html.focus-mode .VPLocalNav,
 html.focus-mode .VPSidebar,
+html.focus-mode .VPBackdrop,
+html.focus-mode .VPFooter,
+html.focus-mode .VPDoc .aside,
+html.focus-mode .VPDocAside,
 html.focus-mode .dsa-explorer,
-html.focus-mode .notes-panel {
+html.focus-mode .notes-panel,
+html.focus-mode .reading-progress,
+html.focus-mode .dsa-breadcrumbs {
   display: none !important;
 }
 
-html.focus-mode .VPDoc {
-  max-width: 48rem;
-  margin: 0 auto;
+html.focus-mode .VPContent,
+html.focus-mode .VPContent.has-sidebar {
+  padding-left: 0 !important;
+  margin-top: 0 !important;
+  width: 100%;
+  max-width: 100%;
 }
 
-html.focus-mode .VPContent {
-  padding-left: 0 !important;
+html.focus-mode .VPDoc {
+  width: 100%;
+  max-width: none;
+  margin: 0;
+  padding: 32px 24px 80px;
+  min-height: 100vh;
+  box-sizing: border-box;
+}
+
+html.focus-mode .VPDoc .container {
+  display: block !important;
+  max-width: none !important;
+  width: 100%;
+}
+
+html.focus-mode .VPDoc .content,
+html.focus-mode .VPDoc.has-aside .content,
+html.focus-mode .VPDoc:not(.has-sidebar) .content {
+  max-width: none;
+  min-width: 0;
+  width: 100%;
+  margin: 0 auto;
+  padding: 0 16px 64px;
+}
+
+html.focus-mode .VPDoc .content-container,
+html.focus-mode .VPDoc.has-aside .content-container {
+  max-width: 42rem;
+  margin: 0 auto;
 }
 
 html.focus-mode::before {
