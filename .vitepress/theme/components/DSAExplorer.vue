@@ -5,10 +5,12 @@ import { useFocusMode } from '../composables/useFocusMode'
 import { openShortcuts } from '../composables/useKeyboardShortcuts'
 import { getExplorerTree } from '../../sidebar'
 import { handbookLink } from '../utils/handbookLink'
+import { usePageActions } from '../composables/usePageActions'
 
 const collapsed = ref(true)
 const { page } = useData()
 const { isFocusMode, toggleFocusMode } = useFocusMode()
+const { pageNote, editPageNote } = usePageActions()
 const tree = computed(() => getExplorerTree())
 const isHomePage = computed(() => page.value.frontmatter.layout === 'home')
 </script>
@@ -52,16 +54,25 @@ const isHomePage = computed(() => page.value.frontmatter.layout === 'home')
         Shortcuts
         <kbd>⇧?</kbd>
       </button>
-      <button
-        v-else
-        type="button"
-        class="focus-btn"
-        :aria-pressed="isFocusMode"
-        :title="isFocusMode ? 'Exit Focus (Esc)' : 'Focus Mode (Shift+F)'"
-        @click="toggleFocusMode"
-      >
-        {{ isFocusMode ? 'Exit Focus' : 'Focus' }}
-      </button>
+      <div v-else class="footer-actions">
+        <button
+          type="button"
+          class="footer-btn"
+          :class="{ 'has-note': pageNote }"
+          @click="editPageNote"
+        >
+          {{ pageNote ? 'Edit note' : 'Add page note' }}
+        </button>
+        <button
+          type="button"
+          class="footer-btn"
+          :aria-pressed="isFocusMode"
+          :title="isFocusMode ? 'Exit Focus (Esc)' : 'Focus Mode (Shift+F)'"
+          @click="toggleFocusMode"
+        >
+          {{ isFocusMode ? 'Exit Focus' : 'Focus' }}
+        </button>
+      </div>
     </div>
   </div>
 </template>
@@ -140,18 +151,35 @@ const isHomePage = computed(() => page.value.frontmatter.layout === 'home')
   margin-top: 8px;
 }
 
-.focus-btn {
-  font-size: 11px;
-  padding: 2px 8px;
-  border: 1px solid var(--vp-c-divider);
-  background: transparent;
-  color: var(--vp-c-text-2);
-  border-radius: 4px;
-  cursor: pointer;
+.footer-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px;
 }
 
-.focus-btn:hover {
-  background: var(--vp-c-bg-alt);
+.footer-btn {
+  width: 100%;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 7px 8px;
+  border: 1px solid var(--vp-c-divider);
+  background: var(--vp-c-bg);
+  color: var(--vp-c-text-1);
+  border-radius: 6px;
+  cursor: pointer;
+  text-align: center;
+  white-space: nowrap;
+  transition: border-color 0.15s, color 0.15s;
+}
+
+.footer-btn:hover {
+  border-color: var(--vp-c-brand-1);
+  color: var(--vp-c-brand-1);
+}
+
+.footer-btn.has-note {
+  border-color: var(--vp-c-brand-1);
+  color: var(--vp-c-brand-1);
 }
 
 .shortcuts-btn {
