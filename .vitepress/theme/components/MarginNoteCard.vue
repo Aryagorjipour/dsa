@@ -273,7 +273,7 @@ function onColorPointerDown(e) {
 <style scoped>
 .margin-note-card {
   position: fixed;
-  z-index: 108;
+  z-index: 25;
   display: flex;
   gap: 0;
   border-radius: 10px;
@@ -289,7 +289,7 @@ function onColorPointerDown(e) {
 .margin-note-card.dragging {
   transition: none;
   opacity: 0.92;
-  z-index: 110;
+  z-index: 28;
 }
 
 .margin-note-card.active {

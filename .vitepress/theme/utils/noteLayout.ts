@@ -43,7 +43,14 @@ function navBottom(): number {
     getComputedStyle(document.documentElement).getPropertyValue('--vp-nav-height') || '64',
     10,
   )
-  return navH + VIEWPORT_PAD
+  const layoutTop = parseInt(
+    getComputedStyle(document.documentElement).getPropertyValue('--vp-layout-top-height') || '0',
+    10,
+  )
+  const offlineBanner = document.querySelector('.offline-banner')
+  const bannerH =
+    offlineBanner instanceof HTMLElement ? offlineBanner.getBoundingClientRect().height : 0
+  return navH + layoutTop + bannerH + VIEWPORT_PAD
 }
 
 function contentColumnRect(): DOMRect | null {
@@ -125,6 +132,23 @@ export function clampHorizontalLeft(
   return Math.max(VIEWPORT_PAD, Math.min(rawLeft, viewportWidth - width - VIEWPORT_PAD))
 }
 
+/**
+ * Keep cards below the navbar without sticking when scrolled off-screen.
+ * Returns null when the card would sit entirely above the nav band.
+ */
+export function clampNoteTopBelowNav(
+  rawTop: number,
+  height: number,
+  bounds: LayoutBounds,
+  viewportHeight: number,
+): number | null {
+  const maxTop = viewportHeight - height - VIEWPORT_PAD
+  if (rawTop + height <= bounds.navBottom) return null
+  const top = Math.min(Math.max(rawTop, bounds.navBottom), maxTop)
+  if (!isBoxInView(top, height, bounds.navBottom)) return null
+  return top
+}
+
 /** Page notes stick under the navbar; only horizontal position is user-controlled. */
 export function applyPageNoteStickyLayout(
   note: Note,
@@ -164,8 +188,9 @@ export function applyManualLayout(
   const rawTop = docToViewportTop(note.marginLayout.docTop, scrollY)
   const rawLeft = note.marginLayout.docLeft - scrollX
 
-  // Non-page notes follow their dragged position and scroll away — only page notes stick under the navbar.
-  const top = Math.min(rawTop, viewportHeight - height - VIEWPORT_PAD)
+  const top = clampNoteTopBelowNav(rawTop, height, bounds, viewportHeight)
+  if (top === null) return null
+
   const left = clampHorizontalLeft(rawLeft, CARD_WIDTH, viewportWidth)
 
   const contentCenter = bounds.contentRect.left + bounds.contentRect.width / 2
@@ -370,7 +395,6 @@ export function layoutMarginNotes(
       window.innerWidth,
     )
     if (!manual) continue
-    if (!isBoxInView(manual.top, height, bounds.navBottom)) continue
 
     placements.push(
       buildPlacement(note, anchor, manual.top, manual.left, height, manual.side, true, {
@@ -401,7 +425,9 @@ export function layoutMarginNotes(
       top = lastBottom[side] + CARD_GAP
     }
 
-    if (!isBoxInView(top, height, bounds.navBottom)) continue
+    const clampedTop = clampNoteTopBelowNav(top, height, bounds, window.innerHeight)
+    if (clampedTop === null) continue
+    top = clampedTop
 
     lastBottom[side] = top + height
 

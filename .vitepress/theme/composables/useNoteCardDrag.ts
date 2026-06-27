@@ -1,6 +1,6 @@
 import { ref } from 'vue'
 import type { Note } from './useStorage'
-import { viewportToDocTop } from '../utils/noteLayout'
+import { layoutBounds, viewportToDocTop } from '../utils/noteLayout'
 
 const DRAG_THRESHOLD_PX = 4
 
@@ -54,7 +54,12 @@ export function useNoteCardDrag() {
       state.dragging = true
     }
 
-    state.currentTop = horizontalOnly ? state.originTop : state.originTop + dy
+    let nextTop = horizontalOnly ? state.originTop : state.originTop + dy
+    const bounds = layoutBounds()
+    if (bounds) {
+      nextTop = Math.max(nextTop, bounds.navBottom)
+    }
+    state.currentTop = nextTop
     state.currentLeft = state.originLeft + dx
   }
 

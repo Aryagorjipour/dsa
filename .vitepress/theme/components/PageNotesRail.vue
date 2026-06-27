@@ -561,7 +561,7 @@ watch(placements, () => nextTick(setupResizeObserver))
   width: 100%;
   height: 100%;
   pointer-events: none;
-  z-index: 107;
+  z-index: 24;
 }
 
 .connector-line {
