@@ -26,15 +26,21 @@ export function useConnectivity() {
       isOnline.value = navigator.onLine
 
       if ('serviceWorker' in navigator) {
-        navigator.serviceWorker.addEventListener('controllerchange', () => {
+        const recoverFromStaleOfflinePage = () => {
           if (document.body?.dataset.dsaOfflineRecovering === '1') return
-          const isBareOffline = document.body?.childElementCount === 1
-            && document.body?.textContent?.trim() === 'Offline'
+          const text = document.body?.textContent?.trim() ?? ''
+          const isBareOffline =
+            text === 'Offline' ||
+            (text.length < 32 && /^offline$/i.test(text))
           if (isBareOffline) {
             document.body.dataset.dsaOfflineRecovering = '1'
+            void navigator.serviceWorker.getRegistration().then(reg => reg?.update())
             window.location.reload()
           }
-        })
+        }
+
+        recoverFromStaleOfflinePage()
+        navigator.serviceWorker.addEventListener('controllerchange', recoverFromStaleOfflinePage)
       }
     }
   })

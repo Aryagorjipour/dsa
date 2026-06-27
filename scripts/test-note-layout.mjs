@@ -48,8 +48,9 @@ function applyManualLayout(note, bounds, height, scrollY, scrollX, viewportHeigh
     bounds.navBottom,
     Math.min(rawTop, viewportHeight - height - VIEWPORT_PAD),
   )
+  const minLeft = bounds.minLeft ?? VIEWPORT_PAD
   const left = Math.max(
-    VIEWPORT_PAD,
+    minLeft,
     Math.min(rawLeft, viewportWidth - CARD_WIDTH - VIEWPORT_PAD),
   )
 
@@ -103,6 +104,7 @@ assert(
 const bounds = {
   contentRect: { left: 300, width: 700 },
   navBottom: 72,
+  minLeft: 280,
   leftX: 60,
   rightX: 1020,
   hasLeft: true,
@@ -128,6 +130,13 @@ const clamped = applyManualLayout(
   1400,
 )
 assert(clamped.top === bounds.navBottom, 'clamps top to nav bottom')
+assert(clamped.left === bounds.minLeft, 'clamps left past sidebar to minLeft')
+
+// clampHorizontalLeft respects sidebar edge
+assert(
+  clampHorizontalLeft(5, 220, 1400, bounds.minLeft) === bounds.minLeft,
+  'clampHorizontalLeft keeps notes out from under sidebar',
+)
 
 // blockMatchesHighlight logic — same-page block IDs must match text snapshot
 function blockMatchesHighlight(hl, blocks) {
@@ -251,9 +260,9 @@ function layoutPinnedFreeTop(navBottom, side, lastBottom, height) {
 assert(layoutPinnedFreeTop(72, 'right', -Infinity, 88) === 72, 'pinned page note starts at nav bottom')
 assert(layoutPinnedFreeTop(72, 'right', 160, 88) === 168, 'multiple pinned notes stack with gap')
 
-function clampHorizontalLeft(rawLeft, width, viewportWidth) {
+function clampHorizontalLeft(rawLeft, width, viewportWidth, minLeft = 8) {
   const VIEWPORT_PAD = 8
-  return Math.max(VIEWPORT_PAD, Math.min(rawLeft, viewportWidth - width - VIEWPORT_PAD))
+  return Math.max(minLeft, Math.min(rawLeft, viewportWidth - width - VIEWPORT_PAD))
 }
 
 function applyPageNoteStickyLayout(note, bounds, height, scrollX, viewportWidth, stackedTop) {
@@ -264,7 +273,12 @@ function applyPageNoteStickyLayout(note, bounds, height, scrollX, viewportWidth,
 
   let left = side === 'left' ? bounds.leftX : bounds.rightX
   if (note.marginLayout) {
-    left = clampHorizontalLeft(note.marginLayout.docLeft - scrollX, CARD_WIDTH, viewportWidth)
+    left = clampHorizontalLeft(
+      note.marginLayout.docLeft - scrollX,
+      CARD_WIDTH,
+      viewportWidth,
+      bounds.minLeft ?? 8,
+    )
     const contentCenter = bounds.contentRect.left + bounds.contentRect.width / 2
     side = left + CARD_WIDTH / 2 < contentCenter ? 'left' : 'right'
   }
@@ -276,6 +290,7 @@ function applyPageNoteStickyLayout(note, bounds, height, scrollX, viewportWidth,
 const stickyBounds = {
   contentRect: { left: 300, width: 700 },
   navBottom: 72,
+  minLeft: 280,
   leftX: 40,
   rightX: 1020,
   hasLeft: true,

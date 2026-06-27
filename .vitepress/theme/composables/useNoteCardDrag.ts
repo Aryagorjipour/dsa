@@ -55,12 +55,18 @@ export function useNoteCardDrag() {
     }
 
     let nextTop = horizontalOnly ? state.originTop : state.originTop + dy
+    let nextLeft = state.originLeft + dx
     const bounds = layoutBounds()
     if (bounds) {
       nextTop = Math.max(nextTop, bounds.navBottom)
+      const cardWidth = 220
+      nextLeft = Math.max(
+        bounds.minLeft,
+        Math.min(nextLeft, window.innerWidth - cardWidth - 8),
+      )
     }
     state.currentTop = nextTop
-    state.currentLeft = state.originLeft + dx
+    state.currentLeft = nextLeft
   }
 
   async function onDragPointerUp(
@@ -77,7 +83,11 @@ export function useNoteCardDrag() {
 
     if (state.dragging) {
       const docTop = options.horizontalOnly ? 0 : viewportToDocTop(state.currentTop, window.scrollY)
-      const docLeft = state.currentLeft + window.scrollX
+      let docLeft = state.currentLeft + window.scrollX
+      const bounds = layoutBounds()
+      if (bounds) {
+        docLeft = Math.max(bounds.minLeft + window.scrollX, docLeft)
+      }
       await onPersist(state.noteId, docTop, docLeft)
       justDragged.value = true
       window.setTimeout(() => {

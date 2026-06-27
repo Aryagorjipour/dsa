@@ -43,6 +43,8 @@ const swText = fs.readFileSync(swPath, 'utf8')
 assert(!swText.includes("new Response('Offline'"), 'sw-clean-urls does not return bare Offline text')
 assert(swText.includes('offline-shell.html'), 'sw-clean-urls references offline-shell.html')
 assert(swText.includes('findInAnyCache'), 'sw-clean-urls searches all caches')
+assert(!swText.includes('{ capture: true }'), 'sw-clean-urls does not block workbox with capture handler')
+assert(swText.includes('toAbsoluteUrl'), 'sw-clean-urls resolves absolute precache URLs')
 
 const shellPath = path.resolve('public/offline-shell.html')
 assert(fs.existsSync(shellPath), 'offline-shell.html exists in public')

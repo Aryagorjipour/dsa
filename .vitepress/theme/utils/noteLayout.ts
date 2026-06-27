@@ -32,6 +32,8 @@ const SECTION_GAP = 10
 export interface LayoutBounds {
   contentRect: DOMRect
   navBottom: number
+  /** Minimum viewport left for note cards — right edge of nav sidebar + padding */
+  minLeft: number
   leftX: number
   rightX: number
   hasLeft: boolean
@@ -69,6 +71,7 @@ export function layoutBounds(): LayoutBounds | null {
   const docAside = document.querySelector('.VPDoc .aside')
 
   const navSidebarRight = navSidebar?.getBoundingClientRect().right ?? VIEWPORT_PAD
+  const minLeft = Math.max(VIEWPORT_PAD, Math.ceil(navSidebarRight) + VIEWPORT_PAD)
   const asideRect = docAside?.getBoundingClientRect()
   const asideLeft =
     asideRect && asideRect.width > 0 ? asideRect.left : window.innerWidth
@@ -93,6 +96,7 @@ export function layoutBounds(): LayoutBounds | null {
   return {
     contentRect,
     navBottom: navBottom(),
+    minLeft,
     leftX,
     rightX,
     hasLeft,
@@ -128,8 +132,10 @@ export function clampHorizontalLeft(
   rawLeft: number,
   width: number,
   viewportWidth: number,
+  minLeft = VIEWPORT_PAD,
 ): number {
-  return Math.max(VIEWPORT_PAD, Math.min(rawLeft, viewportWidth - width - VIEWPORT_PAD))
+  const maxLeft = viewportWidth - width - VIEWPORT_PAD
+  return Math.max(minLeft, Math.min(rawLeft, maxLeft))
 }
 
 /**
@@ -164,7 +170,12 @@ export function applyPageNoteStickyLayout(
 
   let left = sideX(side, bounds)
   if (note.marginLayout) {
-    left = clampHorizontalLeft(note.marginLayout.docLeft - scrollX, CARD_WIDTH, viewportWidth)
+    left = clampHorizontalLeft(
+      note.marginLayout.docLeft - scrollX,
+      CARD_WIDTH,
+      viewportWidth,
+      bounds.minLeft,
+    )
     const contentCenter = bounds.contentRect.left + bounds.contentRect.width / 2
     side = left + CARD_WIDTH / 2 < contentCenter ? 'left' : 'right'
   }
@@ -191,7 +202,7 @@ export function applyManualLayout(
   const top = clampNoteTopBelowNav(rawTop, height, bounds, viewportHeight)
   if (top === null) return null
 
-  const left = clampHorizontalLeft(rawLeft, CARD_WIDTH, viewportWidth)
+  const left = clampHorizontalLeft(rawLeft, CARD_WIDTH, viewportWidth, bounds.minLeft)
 
   const contentCenter = bounds.contentRect.left + bounds.contentRect.width / 2
   const side: 'left' | 'right' = left + CARD_WIDTH / 2 < contentCenter ? 'left' : 'right'
