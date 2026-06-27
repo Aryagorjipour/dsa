@@ -32,7 +32,7 @@ const previewNotes = computed(() => orderedPageNotes.value.slice(0, PREVIEW_LIMI
 
 const marginNotesAvailable = computed(() => !isMarginNotesMobile())
 
-const { pageNote, isProjectPage, editPageNote, giveToAI } = usePageActions()
+const { pageNote, isProjectPage, sharePage, editPageNote, giveToAI } = usePageActions()
 
 onMounted(async () => {
   await loadAnnotations()
@@ -76,6 +76,15 @@ function openOnPage() {
         @click="editPageNote"
       >
         {{ pageNote ? 'Edit page note' : 'Add page note' }}
+      </button>
+      <button
+        type="button"
+        class="page-action-btn share-icon-btn"
+        aria-label="Share this page"
+        title="Copy link to share"
+        @click="sharePage"
+      >
+        <span class="share-icon" aria-hidden="true">⎘</span>
       </button>
       <button type="button" class="page-action-btn" @click="giveToAI">
         {{ isProjectPage ? 'Mentor' : 'Give to AI' }}
@@ -210,9 +219,10 @@ function openOnPage() {
 
 .page-actions-quick {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: 1fr auto 1fr;
   gap: 6px;
   margin-top: 8px;
+  align-items: stretch;
 }
 
 .page-action-btn {
@@ -225,7 +235,29 @@ function openOnPage() {
   color: var(--vp-c-text-1);
   cursor: pointer;
   text-align: center;
-  transition: border-color 0.15s;
+  transition: border-color 0.15s, color 0.15s;
+}
+
+.page-action-btn.share-icon-btn {
+  width: 36px;
+  min-width: 36px;
+  padding: 6px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--vp-c-brand-1);
+  border-color: color-mix(in srgb, var(--vp-c-brand-1) 35%, var(--vp-c-divider));
+  background: color-mix(in srgb, var(--vp-c-brand-1) 8%, var(--vp-c-bg));
+}
+
+.page-action-btn.share-icon-btn:hover {
+  border-color: var(--vp-c-brand-1);
+  background: color-mix(in srgb, var(--vp-c-brand-1) 16%, var(--vp-c-bg));
+}
+
+.share-icon {
+  font-size: 15px;
+  line-height: 1;
 }
 
 .page-action-btn:hover {
