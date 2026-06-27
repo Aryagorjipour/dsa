@@ -72,11 +72,19 @@ async function handleClear() {
   <div class="settings-drawer">
     <button
       class="settings-btn"
+      :aria-expanded="open"
       aria-label="Personal data settings"
       title="Export / import notes & highlights"
       @click="open = !open"
     >
-      ⚙
+      <svg class="settings-icon" viewBox="0 0 24 24" aria-hidden="true" fill="none">
+        <path d="M4 7h10" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" />
+        <circle cx="17" cy="7" r="2" stroke="currentColor" stroke-width="1.75" />
+        <path d="M4 12h14" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" />
+        <circle cx="20" cy="12" r="2" stroke="currentColor" stroke-width="1.75" />
+        <path d="M4 17h7" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" />
+        <circle cx="13" cy="17" r="2" stroke="currentColor" stroke-width="1.75" />
+      </svg>
     </button>
 
     <div v-if="open" class="settings-panel" role="dialog" aria-label="Data settings">
@@ -101,20 +109,30 @@ async function handleClear() {
 .settings-drawer {
   position: relative;
   display: inline-flex;
+  max-width: 100%;
 }
 
 .settings-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   background: none;
   border: none;
-  font-size: 18px;
   cursor: pointer;
   color: var(--vp-c-text-2);
   padding: 4px 8px;
   line-height: 1;
+  flex-shrink: 0;
 }
 
 .settings-btn:hover {
-  color: var(--vp-c-text-1);
+  color: var(--vp-c-brand-1);
+}
+
+.settings-icon {
+  width: 20px;
+  height: 20px;
+  display: block;
 }
 
 .settings-panel {
@@ -122,8 +140,10 @@ async function handleClear() {
   top: 100%;
   right: 0;
   margin-top: 8px;
-  width: 240px;
+  width: min(280px, calc(100vw - 24px));
+  max-width: min(280px, calc(100vw - 24px));
   max-height: calc(100vh - 80px);
+  overflow-x: hidden;
   overflow-y: auto;
   padding: 12px;
   background: var(--vp-c-bg-elv);
@@ -131,6 +151,7 @@ async function handleClear() {
   border-radius: 8px;
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
   z-index: 200;
+  box-sizing: border-box;
 }
 
 .settings-panel h4 {
@@ -142,6 +163,8 @@ async function handleClear() {
   font-size: 11px;
   color: var(--vp-c-text-3);
   margin: 0 0 10px;
+  overflow-wrap: break-word;
+  word-break: break-word;
 }
 
 .section-title {
@@ -158,6 +181,7 @@ async function handleClear() {
 .panel-btn {
   display: block;
   width: 100%;
+  max-width: 100%;
   padding: 6px 10px;
   margin-bottom: 4px;
   border: 1px solid var(--vp-c-divider);
@@ -166,6 +190,8 @@ async function handleClear() {
   font-size: 12px;
   cursor: pointer;
   text-align: left;
+  box-sizing: border-box;
+  white-space: normal;
 }
 
 .panel-btn:hover {
@@ -192,5 +218,17 @@ async function handleClear() {
   border-radius: 3px;
   border: 1px solid var(--vp-c-divider);
   font-family: inherit;
+}
+
+@media (max-width: 640px) {
+  .settings-panel {
+    position: fixed;
+    top: calc(var(--vp-nav-height, 64px) + 8px);
+    right: 12px;
+    left: 12px;
+    width: auto;
+    max-width: none;
+    margin-top: 0;
+  }
 }
 </style>

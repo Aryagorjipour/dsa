@@ -42,6 +42,10 @@ async function handleInstall() {
 <style scoped>
 .install-prompt {
   margin-top: 4px;
+  min-width: 0;
+  max-width: 100%;
+  overflow-wrap: break-word;
+  word-break: break-word;
 }
 
 .install-status {
@@ -57,6 +61,7 @@ async function handleInstall() {
 .install-btn {
   display: block;
   width: 100%;
+  max-width: 100%;
   padding: 6px 10px;
   margin-bottom: 4px;
   border: 1px solid var(--vp-c-brand-1);
@@ -67,6 +72,8 @@ async function handleInstall() {
   cursor: pointer;
   text-align: left;
   min-height: 36px;
+  box-sizing: border-box;
+  white-space: normal;
 }
 
 .install-btn.subtle {

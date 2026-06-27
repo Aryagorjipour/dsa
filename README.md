@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="https://raw.githubusercontent.com/Aryagorjipour/dsa/main/public/logo.png" alt="DSA Handbook logo" width="160" height="160" />
+</p>
+
 # DSA Handbook: From Zero to "I Actually Get It and Use It Daily"
 
 > A complete, no-hand-waving, no-placeholders, real-world-first guide to **Data Structures** and **Algorithms**.  
