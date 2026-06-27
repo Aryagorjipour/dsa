@@ -1,5 +1,10 @@
+import path from 'node:path'
+import { generateSW } from 'workbox-build'
 import { defineConfig } from 'vitepress'
+import { VitePWA } from 'vite-plugin-pwa'
 import { sidebar } from './sidebar'
+
+const DIST = path.resolve('.vitepress/dist')
 
 export default defineConfig({
   title: 'DSA Handbook',
@@ -14,15 +19,48 @@ export default defineConfig({
 
   head: [
     ['link', { rel: 'icon', href: '/favicon.svg', type: 'image/svg+xml' }],
-    ['link', { rel: 'apple-touch-icon', href: '/favicon.svg', sizes: '180x180' }],
+    ['link', { rel: 'apple-touch-icon', href: '/icons/icon-192.png', sizes: '192x192' }],
     ['link', { rel: 'mask-icon', href: '/favicon.svg', color: '#6366f1' }],
-    ['link', { rel: 'preconnect', href: 'https://fonts.googleapis.com' }],
-    ['link', { rel: 'preconnect', href: 'https://fonts.gstatic.com', crossorigin: '' }],
-    ['link', { rel: 'stylesheet', href: 'https://fonts.googleapis.com/css2?family=Syne:wght@800&display=swap' }]
+    ['meta', { name: 'theme-color', content: '#6366f1' }],
+    ['meta', { name: 'mobile-web-app-capable', content: 'yes' }],
+    ['meta', { name: 'apple-mobile-web-app-capable', content: 'yes' }],
+    ['meta', { name: 'apple-mobile-web-app-status-bar-style', content: 'black-translucent' }],
+    ['meta', { name: 'viewport', content: 'width=device-width, initial-scale=1, viewport-fit=cover' }],
+    ['link', { rel: 'manifest', href: '/dsa/manifest.webmanifest' }],
   ],
 
   vite: {
     publicDir: 'public',
+    plugins: [
+      VitePWA({
+        registerType: 'prompt',
+        injectRegister: false,
+        includeAssets: ['favicon.svg', 'icons/**/*', 'images/**/*', 'examples-manifest.json'],
+        manifest: {
+          name: 'DSA Handbook',
+          short_name: 'DSA',
+          description: 'Data Structures & Algorithms — read offline',
+          theme_color: '#6366f1',
+          background_color: '#1b1b1f',
+          display: 'standalone',
+          scope: '/dsa/',
+          start_url: '/dsa/',
+          id: '/dsa/',
+          icons: [
+            { src: '/dsa/icons/icon-192.png', sizes: '192x192', type: 'image/png' },
+            { src: '/dsa/icons/icon-512.png', sizes: '512x512', type: 'image/png' },
+            { src: '/dsa/icons/icon-512.png', sizes: '512x512', type: 'image/png', purpose: 'maskable' },
+          ],
+        },
+        workbox: {
+          globPatterns: ['**/*.{js,css,ico,png,svg,json,woff2,webp}'],
+          globIgnores: ['**/hashmap.json'],
+          cleanupOutdatedCaches: true,
+          maximumFileSizeToCacheInBytes: 5 * 1024 * 1024,
+          importScripts: ['sw-clean-urls.js'],
+        },
+      }),
+    ],
     build: {
       chunkSizeWarningLimit: 600,
       rollupOptions: {
@@ -77,5 +115,22 @@ export default defineConfig({
       message: 'Made with ❤️ for learners everywhere.',
       copyright: 'Copyright © Aryagorjipour'
     }
-  }
+  },
+
+  async buildEnd() {
+    await generateSW({
+      swDest: path.join(DIST, 'sw.js'),
+      globDirectory: DIST,
+      globPatterns: ['**/*.{js,css,html,ico,png,svg,json,woff2,webp}'],
+      globIgnores: ['**/hashmap.json', 'sw.js', 'workbox-*.js'],
+      importScripts: ['sw-clean-urls.js'],
+      cleanupOutdatedCaches: true,
+      maximumFileSizeToCacheInBytes: 5 * 1024 * 1024,
+      modifyURLPrefix: {
+        '': '/dsa/',
+      },
+      skipWaiting: false,
+      clientsClaim: true,
+    })
+  },
 })

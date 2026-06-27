@@ -1,5 +1,6 @@
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
 import { getPlaygroundState, setPlaygroundState } from './useStorage'
+import { assertOnline } from '../utils/networkFeatures'
 
 export type PlaygroundLang = 'go' | 'csharp'
 
@@ -27,6 +28,14 @@ export function usePlayground() {
   const running = ref(false)
   const compilerName = ref('')
   const permalink = ref('')
+  const isOnline = ref(typeof navigator !== 'undefined' ? navigator.onLine : true)
+
+  if (typeof window !== 'undefined') {
+    window.addEventListener('online', () => { isOnline.value = true })
+    window.addEventListener('offline', () => { isOnline.value = false })
+  }
+
+  const canRunOnline = computed(() => isOnline.value)
 
   async function loadPersisted() {
     const state = await getPlaygroundState()
@@ -58,6 +67,12 @@ export function usePlayground() {
   }
 
   async function runWandbox() {
+    const check = assertOnline('wandbox', navigator.onLine)
+    if (!check.ok) {
+      output.value = `${check.title}\n\n${check.message}`
+      return
+    }
+
     running.value = true
     output.value = 'Fetching compilers and compiling on Wandbox...'
     permalink.value = ''
@@ -127,7 +142,10 @@ export function usePlayground() {
       }
     } catch (e: unknown) {
       const msg = e instanceof Error ? e.message : String(e)
-      output.value = `Error calling Wandbox API: ${msg}\n\nYour code is saved locally. Try "Open in Wandbox" when online.`
+      const offlineHint = navigator.onLine
+        ? '\n\nYour code is saved locally. Try "Open in Wandbox" to debug on the official site.'
+        : '\n\nYou appear to be offline. Your code is saved locally — try again when connected.'
+      output.value = `Error calling Wandbox API: ${msg}${offlineHint}`
     }
 
     running.value = false
@@ -153,6 +171,7 @@ export function usePlayground() {
     running,
     compilerName,
     permalink,
+    canRunOnline,
     loadPersisted,
     persist,
     setLang,

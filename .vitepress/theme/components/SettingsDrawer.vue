@@ -4,8 +4,11 @@ import { exportUserData, importUserData, clearAllUserData } from '../composables
 import { showToast } from '../composables/useToast'
 import { loadAnnotations } from '../composables/useAnnotations'
 import { scheduleAnnotationRestore } from '../utils/annotationLifecycle'
+import InstallAppPrompt from './InstallAppPrompt.vue'
+import { useServiceWorker } from '../composables/useServiceWorker'
 
 const open = ref(false)
+const { offlineReady } = useServiceWorker()
 const fileInput = ref(null)
 
 async function handleExport() {
@@ -42,6 +45,20 @@ async function handleImport(e) {
   open.value = false
 }
 
+async function checkForUpdates() {
+  if (!('serviceWorker' in navigator)) {
+    showToast('Service workers not supported in this browser')
+    return
+  }
+  const reg = await navigator.serviceWorker.getRegistration()
+  if (!reg) {
+    showToast('No service worker registered yet — visit again after the page loads')
+    return
+  }
+  await reg.update()
+  showToast('Checking for updates…')
+}
+
 async function handleClear() {
   if (!confirm('Delete all notes, highlights, quiz progress, and playground data? This cannot be undone.')) return
   await clearAllUserData()
@@ -69,6 +86,12 @@ async function handleClear() {
       <button class="panel-btn" @click="handleImportClick">Import JSON</button>
       <button class="panel-btn danger" @click="handleClear">Clear all data</button>
       <input ref="fileInput" type="file" accept=".json" hidden @change="handleImport" />
+
+      <h4 class="section-title">Offline &amp; App</h4>
+      <p v-if="offlineReady" class="hint cache-status">Handbook content cached for offline reading.</p>
+      <InstallAppPrompt />
+      <button class="panel-btn" @click="checkForUpdates">Check for updates</button>
+
       <p class="shortcut-hint">Press <kbd>Shift+?</kbd> for keyboard shortcuts</p>
     </div>
   </div>
@@ -99,7 +122,9 @@ async function handleClear() {
   top: 100%;
   right: 0;
   margin-top: 8px;
-  width: 220px;
+  width: 240px;
+  max-height: calc(100vh - 80px);
+  overflow-y: auto;
   padding: 12px;
   background: var(--vp-c-bg-elv);
   border: 1px solid var(--vp-c-divider);
@@ -117,6 +142,17 @@ async function handleClear() {
   font-size: 11px;
   color: var(--vp-c-text-3);
   margin: 0 0 10px;
+}
+
+.section-title {
+  margin: 12px 0 4px;
+  padding-top: 10px;
+  border-top: 1px solid var(--vp-c-divider);
+  font-size: 13px;
+}
+
+.cache-status {
+  color: #22c55e;
 }
 
 .panel-btn {

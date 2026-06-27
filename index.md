@@ -51,6 +51,8 @@ A no-hand-waving, deeply practical handbook written for developers who want to t
 - [x] Export / import notes, highlights, and quiz progress (Settings drawer)
 - [x] Chapter navigation, breadcrumbs, and quick-jump explorer
 - [x] **Keyboard shortcuts** — `Shift+?` cheat sheet; `Shift+H/P/M/Q/L` jump to main sections; `Shift+T` toggles theme
+- [x] **PWA offline support** — install the handbook, read anywhere without internet
+- [x] Offline-aware Playground — edit code locally; Wandbox compile when online
 
 ### Up next
 
@@ -58,7 +60,6 @@ A no-hand-waving, deeply practical handbook written for developers who want to t
 - [ ] Full-text search across all your notes
 - [ ] Spaced-repetition mode — turn notes into review cards
 - [ ] Printable / PDF export of a chapter with your annotations
-- [ ] PWA offline support for reading on the go
 - [ ] More language ports in the Playground (Python, Rust, …)
 - [ ] Community-contributed diagrams and walkthrough videos
 

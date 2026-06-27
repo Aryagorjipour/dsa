@@ -8,6 +8,7 @@ import { normalizePagePath } from '../utils/normalizePagePath'
 import { useAnnotations, loadAnnotations } from '../composables/useAnnotations'
 import { openNoteDialog } from '../composables/useNoteDialog'
 import { findPageNote } from '../utils/findNoteForAnchor'
+import { assertOnline } from '../utils/networkFeatures'
 
 const { page } = useData()
 const route = useRoute()
@@ -90,6 +91,11 @@ Page: ${window.location.href}
 Start your explanation now.`
 
   navigator.clipboard.writeText(prompt)
+  const chatCheck = assertOnline('chatgpt', navigator.onLine)
+  if (!chatCheck.ok) {
+    showToast('Prompt copied — connect to the internet to open ChatGPT', undefined, 5000)
+    return
+  }
   showToast('Prompt copied', {
     label: 'Open ChatGPT',
     onClick: () => {

@@ -1,4 +1,5 @@
 import DefaultTheme from 'vitepress/theme'
+import '@fontsource/syne/800.css'
 import './style.css'
 import DSALogo from './components/DSALogo.vue'
 import DSAExplorer from './components/DSAExplorer.vue'

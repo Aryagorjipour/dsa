@@ -18,7 +18,11 @@ import HeadingNotes from './components/HeadingNotes.vue'
 import PageNotesRail from './components/PageNotesRail.vue'
 import SettingsDrawer from './components/SettingsDrawer.vue'
 import KeyboardShortcutsSheet from './components/KeyboardShortcutsSheet.vue'
+import OfflineBanner from './components/OfflineBanner.vue'
+import PwaUpdatePrompt from './components/PwaUpdatePrompt.vue'
+import OfflineUncachedNotice from './components/OfflineUncachedNotice.vue'
 import { useFocusMode } from './composables/useFocusMode'
+
 import { openShortcuts, useKeyboardShortcuts } from './composables/useKeyboardShortcuts'
 import { normalizePagePath } from './utils/normalizePagePath'
 import { isMarginNotesMobile } from './utils/noteLayout'
@@ -50,6 +54,8 @@ const showFallbackFocus = computed(() => {
 
 <template>
   <div class="dsa-theme-root">
+  <OfflineBanner />
+  <PwaUpdatePrompt />
   <Layout>
     <template #nav-bar-title-before>
       <DSALogo />
@@ -60,6 +66,7 @@ const showFallbackFocus = computed(() => {
     </template>
 
     <template #doc-before>
+      <OfflineUncachedNotice />
       <Breadcrumbs />
     </template>
 
@@ -126,7 +133,7 @@ const showFallbackFocus = computed(() => {
 <style scoped>
 .floating-focus {
   position: fixed;
-  bottom: 24px;
+  bottom: calc(24px + var(--dsa-safe-bottom, 0px));
   left: 24px;
   background: var(--vp-c-brand-1);
   color: white;
@@ -161,7 +168,7 @@ const showFallbackFocus = computed(() => {
 
 .floating-shortcuts {
   position: fixed;
-  bottom: 24px;
+  bottom: calc(24px + var(--dsa-safe-bottom, 0px));
   left: 24px;
   display: flex;
   align-items: center;
@@ -211,7 +218,7 @@ const showFallbackFocus = computed(() => {
 @media (max-width: 640px) {
   .floating-focus,
   .floating-shortcuts {
-    bottom: 16px;
+    bottom: calc(16px + var(--dsa-safe-bottom, 0px));
     left: 16px;
     padding: 6px 12px;
     font-size: 12px;

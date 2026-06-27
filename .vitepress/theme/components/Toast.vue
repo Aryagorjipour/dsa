@@ -34,13 +34,20 @@ const { toasts } = useToast()
 <style scoped>
 .dsa-toast-container {
   position: fixed;
-  bottom: 80px;
+  bottom: calc(80px + var(--dsa-safe-bottom, 0px));
   right: 24px;
   z-index: 300;
   display: flex;
   flex-direction: column;
   gap: 8px;
   max-width: 360px;
+}
+
+@media (max-width: 640px) {
+  .dsa-toast-container {
+    right: 16px;
+    max-width: calc(100vw - 32px);
+  }
 }
 
 .dsa-toast {

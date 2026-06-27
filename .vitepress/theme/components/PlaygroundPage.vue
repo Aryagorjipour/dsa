@@ -12,16 +12,21 @@ import { defaultKeymap } from '@codemirror/commands'
 import { usePlayground } from '../composables/usePlayground'
 import { getSnippets, setSnippets, generateId, getPlaygroundState } from '../composables/useStorage'
 import { showToast } from '../composables/useToast'
+import { useConnectivity } from '../composables/useConnectivity'
+import { openExternal } from '../utils/openExternal'
+import OfflineFeatureCallout from './OfflineFeatureCallout.vue'
 
 const editorEl = ref(null)
 let editorView = null
 let themeObserver = null
 
 const {
-  lang, code, stdin, output, running, compilerName, permalink,
+  lang, code, stdin, output, running, compilerName, permalink, canRunOnline,
   loadPersisted, setLang, setCode, runWandbox, openWandbox, reset,
   persist, DEFAULT_GO, DEFAULT_CSHARP,
 } = usePlayground()
+
+const { isOnline } = useConnectivity()
 
 const route = useRoute()
 const snippets = ref([])
@@ -140,7 +145,11 @@ async function loadFromPage() {
           return
         }
       }
-    } catch { /* fall through */ }
+    } catch {
+      if (!navigator.onLine) {
+        showToast('Example code unavailable offline — your saved code is still here', undefined, 5000)
+      }
+    }
   }
 
   await loadPersisted()
@@ -179,6 +188,18 @@ function copyCode() {
 function handleReset() {
   reset()
   createEditor()
+}
+
+function handleOpenWandbox() {
+  if (!navigator.onLine) {
+    showToast('Opening wandbox.org requires an internet connection', undefined, 5000)
+    return
+  }
+  openWandbox()
+}
+
+function openPermalink(url) {
+  openExternal(url, 'wandbox')
 }
 
 onMounted(async () => {
@@ -222,6 +243,8 @@ onUnmounted(() => {
       </div>
     </div>
 
+    <OfflineFeatureCallout v-if="!isOnline" feature="wandbox" />
+
     <div class="playground-body">
       <div class="editor-pane">
         <div ref="editorEl" class="editor-container" />
@@ -230,17 +253,22 @@ onUnmounted(() => {
         <div class="output-header">Output</div>
         <pre v-if="output" class="output-content">{{ output }}</pre>
         <p v-else class="output-empty">Run your code to see output here.</p>
-        <a v-if="permalink" :href="permalink" target="_blank" rel="noopener" class="permalink">
+        <button v-if="permalink" type="button" class="permalink" @click="openPermalink(permalink)">
           Open Wandbox permalink →
-        </a>
+        </button>
       </div>
     </div>
 
     <div class="playground-controls">
-      <button class="btn primary" :disabled="running" @click="runWandbox">
+      <button
+        class="btn primary run-btn"
+        :disabled="!canRunOnline || running"
+        :title="canRunOnline ? 'Compile and run via Wandbox' : 'Requires internet — Wandbox compiles code in the cloud'"
+        @click="runWandbox"
+      >
         {{ running ? 'Running...' : '▶ Run with Wandbox' }}
       </button>
-      <button class="btn" @click="openWandbox">Open Wandbox</button>
+      <button class="btn" @click="handleOpenWandbox">Open Wandbox</button>
       <button class="btn" @click="copyCode">Copy</button>
       <button class="btn" @click="saveSnippet">Save Snippet</button>
       <button class="btn" @click="handleReset">Reset</button>
@@ -307,6 +335,7 @@ onUnmounted(() => {
   color: var(--vp-c-text-2);
   cursor: pointer;
   font-size: 13px;
+  min-height: 44px;
 }
 
 .lang-tabs button.active {
@@ -366,9 +395,14 @@ onUnmounted(() => {
 
 .permalink {
   display: block;
+  width: 100%;
+  text-align: left;
   padding: 8px 12px;
   font-size: 12px;
   color: var(--vp-c-brand-1);
+  background: none;
+  border: none;
+  cursor: pointer;
 }
 
 .playground-controls {
@@ -386,6 +420,7 @@ onUnmounted(() => {
   border-radius: 6px;
   font-size: 13px;
   cursor: pointer;
+  min-height: 44px;
 }
 
 .btn.primary {
@@ -458,5 +493,11 @@ onUnmounted(() => {
   font-size: 12px;
   color: var(--vp-c-text-3);
   margin-top: 12px;
+}
+
+@media (max-width: 640px) {
+  .playground-controls .run-btn {
+    width: 100%;
+  }
 }
 </style>
