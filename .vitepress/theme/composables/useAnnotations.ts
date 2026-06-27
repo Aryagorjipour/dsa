@@ -2,7 +2,10 @@ import { ref, computed } from 'vue'
 import { useRoute } from 'vitepress'
 import { pagePathKey, pathsMatch } from '../utils/pagePathKey'
 import { normalizePagePath } from '../utils/normalizePagePath'
-import { removeHighlightFromDOM, updateHighlightColorInDOM } from '../utils/highlightRestorer'
+import {
+  removeHighlightFromDOM,
+  ensureHighlightInDOM,
+} from '../utils/highlightRestorer'
 import {
   type Highlight,
   type Note,
@@ -79,8 +82,11 @@ export function useAnnotations() {
       h.id === id ? { ...h, color } : h
     )
     await setHighlights(highlights.value)
-    updateHighlightColorInDOM(id, color)
-    return highlights.value.find(h => h.id === id)
+    const updated = highlights.value.find(h => h.id === id)
+    if (updated && highlightsVisible.value) {
+      ensureHighlightInDOM(updated)
+    }
+    return updated
   }
 
   async function addNote(data: Omit<Note, 'id' | 'createdAt' | 'updatedAt'>) {

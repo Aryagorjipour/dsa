@@ -107,14 +107,9 @@ function syncMobile() {
   isMobile.value = mobile
 }
 
-function ensureNoteAnchors() {
-  const linked = new Set(
-    pageNotes.value
-      .filter(n => n.anchorType === 'highlight' && n.anchorId)
-      .map(n => n.anchorId),
-  )
+function ensurePageHighlights() {
   for (const hl of pageHighlights.value) {
-    if (linked.has(hl.id)) ensureHighlightInDOM(hl)
+    ensureHighlightInDOM(hl)
   }
 }
 
@@ -123,7 +118,7 @@ function updateLayout() {
     placements.value = []
     return
   }
-  ensureNoteAnchors()
+  ensurePageHighlights()
   measureCards()
   placements.value = layoutMarginNotes(pageNotes.value, highlights.value, cardHeights.value)
 }
@@ -159,6 +154,7 @@ function scheduleLayoutWithRetry() {
 }
 
 function onAnnotationsReady() {
+  ensurePageHighlights()
   if (isOpen.value) {
     scheduleLayoutWithRetry()
   }
@@ -289,9 +285,12 @@ watch(() => route.path, () => {
 
   if (pageNotes.value.length === 0) {
     closePageNotesRail()
-  } else if (isOpen.value) {
-    nextTick(() => scheduleLayoutWithRetry())
   }
+
+  nextTick(() => {
+    ensurePageHighlights()
+    if (isOpen.value) scheduleLayoutWithRetry()
+  })
 })
 
 watch(pageNotes, () => nextTick(scheduleLayout))

@@ -109,7 +109,11 @@ export function buildHighlightRange(highlight: Highlight): Range | null {
 
 export function ensureHighlightInDOM(highlight: Highlight): boolean {
   assignBlockIds()
-  if (findHighlightMark(highlight.id)) return true
+  const existing = findHighlightMark(highlight.id)
+  if (existing) {
+    updateHighlightColorInDOM(highlight.id, highlight.color)
+    return true
+  }
   return applyHighlightToDOM(highlight)
 }
 

@@ -40,6 +40,7 @@ const colors = [
 const editTitle = ref('')
 const editBody = ref('')
 const bodyRef = ref(null)
+const editAreaRef = ref(null)
 
 const cardStyle = computed(() => {
   if (props.dragStyle) return props.dragStyle
@@ -109,11 +110,21 @@ function onEditKeydown(e) {
   }
 }
 
+function isEditAreaFocusMove(related) {
+  if (!(related instanceof Element)) return false
+  if (editAreaRef.value?.contains(related)) return true
+  if (related.closest('.margin-note-card.editing')) return true
+  return false
+}
+
 function onBlur(e) {
   if (!props.editing) return
-  const related = e.relatedTarget
-  if (related instanceof Element && e.currentTarget.contains(related)) return
+  if (isEditAreaFocusMove(e.relatedTarget)) return
   saveEdit()
+}
+
+function onColorPointerDown(e) {
+  e.preventDefault()
 }
 </script>
 
@@ -147,53 +158,68 @@ function onBlur(e) {
       </template>
 
       <template v-else>
-        <span class="margin-note-type">{{ TYPE_LABELS[note.anchorType] || 'Note' }}</span>
-        <input
-          v-if="note.anchorType !== 'highlight'"
-          v-model="editTitle"
-          class="margin-note-title-input"
-          placeholder="Title"
-          @keydown="onEditKeydown"
-        />
-        <textarea
-          ref="bodyRef"
-          v-model="editBody"
-          class="margin-note-body-input"
-          placeholder="Write your note…"
-          rows="3"
-          @input="onBodyInput"
-          @keydown="onEditKeydown"
-          @blur="onBlur"
-        />
-        <div v-if="note.anchorType === 'highlight'" class="margin-note-edit-toolbar">
-          <span class="toolbar-colors-label">Highlight</span>
-          <div class="toolbar-color-row">
-            <button
-              v-for="c in colors"
-              :key="c.id"
-              type="button"
-              class="color-btn"
-              :class="[c.id, { active: highlightColor === c.id }]"
-              :aria-label="`Change to ${c.label}`"
-              :title="c.label"
-              :aria-pressed="highlightColor === c.id"
-              @click.stop="emit('color-change', c.id)"
-            />
+        <div ref="editAreaRef" class="margin-note-edit-area">
+          <span class="margin-note-type">{{ TYPE_LABELS[note.anchorType] || 'Note' }}</span>
+          <input
+            v-if="note.anchorType !== 'highlight'"
+            v-model="editTitle"
+            class="margin-note-title-input"
+            placeholder="Title"
+            @keydown="onEditKeydown"
+            @blur="onBlur"
+          />
+          <textarea
+            ref="bodyRef"
+            v-model="editBody"
+            class="margin-note-body-input"
+            placeholder="Write your note…"
+            rows="3"
+            @input="onBodyInput"
+            @keydown="onEditKeydown"
+            @blur="onBlur"
+          />
+          <div v-if="note.anchorType === 'highlight'" class="margin-note-edit-toolbar">
+            <span class="toolbar-colors-label">Highlight</span>
+            <div class="toolbar-color-row">
+              <button
+                v-for="c in colors"
+                :key="c.id"
+                type="button"
+                class="color-btn"
+                :class="[c.id, { active: highlightColor === c.id }]"
+                :aria-label="`Change to ${c.label}`"
+                :title="c.label"
+                :aria-pressed="highlightColor === c.id"
+                @mousedown.prevent="onColorPointerDown"
+                @click.stop="emit('color-change', c.id)"
+              />
+            </div>
           </div>
+          <div class="margin-note-edit-actions">
+            <button
+              v-if="note.marginLayout"
+              type="button"
+              class="edit-action-btn"
+              @mousedown.prevent
+              @click.stop="emit('reset-position', note.id)"
+            >
+              Reset position
+            </button>
+            <button
+              type="button"
+              class="edit-action-btn primary"
+              @mousedown.prevent
+              @click.stop="saveEdit"
+            >Save</button>
+            <button
+              type="button"
+              class="edit-action-btn"
+              @mousedown.prevent
+              @click.stop="cancelEdit"
+            >Cancel</button>
+          </div>
+          <p class="margin-note-edit-hint">Ctrl+Enter to save · Esc to cancel</p>
         </div>
-        <div class="margin-note-edit-actions">
-          <button
-            v-if="note.marginLayout"
-            type="button"
-            class="edit-action-btn"
-            @click.stop="emit('reset-position', note.id)"
-          >
-            Reset position
-          </button>
-          <button type="button" class="edit-action-btn primary" @click.stop="saveEdit">Save</button>
-          <button type="button" class="edit-action-btn" @click.stop="cancelEdit">Cancel</button>
-        </div>
-        <p class="margin-note-edit-hint">Ctrl+Enter to save · Esc to cancel</p>
       </template>
     </div>
 

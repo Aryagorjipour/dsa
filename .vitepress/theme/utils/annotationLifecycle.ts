@@ -58,9 +58,7 @@ function pageContentReady(highlights: Highlight[]): boolean {
 }
 
 function isRouteAndDocReady(expectedPath: string, highlights: Highlight[]): boolean {
-  if (!context) return false
   if (normalizePagePath(window.location.pathname) !== expectedPath) return false
-  if (normalizePagePath(context.getRoutePath()) !== expectedPath) return false
   return pageContentReady(highlights)
 }
 
@@ -176,6 +174,7 @@ export function setupAnnotationRouter(router: Router): void {
   }
 
   if (typeof window !== 'undefined') {
+    // Popstate does not run onBeforeRouteChange — clear stale marks before VP swaps the page.
     window.addEventListener('popstate', () => {
       onNavigationStart()
     })
