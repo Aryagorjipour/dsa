@@ -72,8 +72,6 @@ We especially welcome:
 - Additional C# / Go implementations
 - Diagrams and visuals
 
-<p class="home-footer-credit">Made with care by <a href="https://github.com/Aryagorjipour">Aryagorjipour</a></p>
-
 ## Related Projects
 
 - **[Structura](https://github.com/Aryagorjipour/structura)** — A dark-fantasy RPG where you master Data Structures & Algorithms by battling 80 bosses. Quizzes, visualizations, and real code duels in 6 languages (including Go & C#).  
