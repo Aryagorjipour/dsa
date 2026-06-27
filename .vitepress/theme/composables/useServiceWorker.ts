@@ -1,9 +1,28 @@
+import { ref, type Ref } from 'vue'
 import { useRegisterSW } from 'virtual:pwa-register/vue'
 import { showToast } from './useToast'
 
-let swApi: ReturnType<typeof useRegisterSW> | null = null
+type ServiceWorkerApi = {
+  needRefresh: Ref<boolean>
+  offlineReady: Ref<boolean>
+  updateServiceWorker: (reloadPage?: boolean) => Promise<void>
+}
 
-export function useServiceWorker() {
+let swApi: ServiceWorkerApi | null = null
+
+function createNoopServiceWorkerApi(): ServiceWorkerApi {
+  return {
+    needRefresh: ref(false),
+    offlineReady: ref(false),
+    updateServiceWorker: async () => {},
+  }
+}
+
+export function useServiceWorker(): ServiceWorkerApi {
+  if (import.meta.env.SSR) {
+    return createNoopServiceWorkerApi()
+  }
+
   if (!swApi) {
     swApi = useRegisterSW({
       immediate: true,
@@ -16,5 +35,6 @@ export function useServiceWorker() {
       },
     })
   }
+
   return swApi
 }

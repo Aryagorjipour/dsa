@@ -2,13 +2,24 @@ import path from 'node:path'
 import { generateSW } from 'workbox-build'
 import { defineConfig } from 'vitepress'
 import { VitePWA } from 'vite-plugin-pwa'
+import {
+  BG_COLOR,
+  SITE_HOST,
+  SITE_NAME,
+  SITE_TAGLINE,
+  THEME_COLOR,
+  buildSiteHead,
+  transformPageHead,
+  withBase,
+} from './seo.mts'
 import { sidebar } from './sidebar'
 
 const DIST = path.resolve('.vitepress/dist')
 
 export default defineConfig({
-  title: 'DSA Handbook',
-  description: 'From Zero to "I Actually Get It and Use It Daily" — A complete, real-world guide to Data Structures & Algorithms in C# and Go.',
+  title: SITE_NAME,
+  description: SITE_TAGLINE,
+  lang: 'en-US',
   base: '/dsa/',
   srcDir: '.',
   cleanUrls: true,
@@ -17,17 +28,15 @@ export default defineConfig({
     'algorithms/22-bst-operations.md': 'algorithms/21-bst-operations.md',
   },
 
-  head: [
-    ['link', { rel: 'icon', href: '/favicon.svg', type: 'image/svg+xml' }],
-    ['link', { rel: 'apple-touch-icon', href: '/icons/icon-192.png', sizes: '192x192' }],
-    ['link', { rel: 'mask-icon', href: '/favicon.svg', color: '#6366f1' }],
-    ['meta', { name: 'theme-color', content: '#6366f1' }],
-    ['meta', { name: 'mobile-web-app-capable', content: 'yes' }],
-    ['meta', { name: 'apple-mobile-web-app-capable', content: 'yes' }],
-    ['meta', { name: 'apple-mobile-web-app-status-bar-style', content: 'black-translucent' }],
-    ['meta', { name: 'viewport', content: 'width=device-width, initial-scale=1, viewport-fit=cover' }],
-    ['link', { rel: 'manifest', href: '/dsa/manifest.webmanifest' }],
-  ],
+  head: buildSiteHead(),
+
+  transformHead(ctx) {
+    return transformPageHead(ctx)
+  },
+
+  sitemap: {
+    hostname: SITE_HOST,
+  },
 
   vite: {
     publicDir: 'public',
@@ -35,21 +44,48 @@ export default defineConfig({
       VitePWA({
         registerType: 'prompt',
         injectRegister: false,
-        includeAssets: ['favicon.svg', 'icons/**/*', 'images/**/*', 'examples-manifest.json'],
+        includeAssets: [
+          'favicon.ico',
+          'favicon.svg',
+          'favicon-16x16.png',
+          'favicon-32x32.png',
+          'apple-touch-icon.png',
+          'logo.png',
+          'logo.svg',
+          'robots.txt',
+          'icons/**/*',
+          'images/**/*',
+          'examples-manifest.json',
+        ],
         manifest: {
-          name: 'DSA Handbook',
+          name: SITE_NAME,
           short_name: 'DSA',
-          description: 'Data Structures & Algorithms — read offline',
-          theme_color: '#6366f1',
-          background_color: '#1b1b1f',
+          description: 'Data Structures & Algorithms — read offline on any device',
+          theme_color: THEME_COLOR,
+          background_color: BG_COLOR,
           display: 'standalone',
-          scope: '/dsa/',
-          start_url: '/dsa/',
-          id: '/dsa/',
+          scope: withBase('/'),
+          start_url: withBase('/'),
+          id: withBase('/'),
           icons: [
-            { src: '/dsa/icons/icon-192.png', sizes: '192x192', type: 'image/png' },
-            { src: '/dsa/icons/icon-512.png', sizes: '512x512', type: 'image/png' },
-            { src: '/dsa/icons/icon-512.png', sizes: '512x512', type: 'image/png', purpose: 'maskable' },
+            {
+              src: withBase('/icons/icon-192.png'),
+              sizes: '192x192',
+              type: 'image/png',
+              purpose: 'any',
+            },
+            {
+              src: withBase('/icons/icon-512.png'),
+              sizes: '512x512',
+              type: 'image/png',
+              purpose: 'any',
+            },
+            {
+              src: withBase('/icons/icon-512.png'),
+              sizes: '512x512',
+              type: 'image/png',
+              purpose: 'maskable',
+            },
           ],
         },
         workbox: {

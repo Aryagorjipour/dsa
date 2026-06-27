@@ -55,6 +55,19 @@ if (!fs.existsSync(manifestPath)) {
   } else {
     pass('manifest has required icon sizes')
   }
+
+  const purposes = new Set((manifest.icons || []).map(i => i.purpose || 'any'))
+  if (!purposes.has('any') || !purposes.has('maskable')) {
+    fail('manifest missing separate any and maskable icon purposes')
+  } else {
+    pass('manifest has any + maskable icon purposes')
+  }
+
+  if (manifest.theme_color !== '#6366f1') {
+    fail(`manifest theme_color is ${manifest.theme_color}, expected #6366f1`)
+  } else {
+    pass('manifest theme_color matches brand')
+  }
 }
 
 const swRoot = path.join(DIST, 'sw.js')
@@ -80,12 +93,29 @@ if (!fs.existsSync(cleanUrlsHelper)) {
   pass('sw-clean-urls.js copied to dist')
 }
 
-const icon192 = path.join(DIST, 'icons/icon-192.png')
-const icon512 = path.join(DIST, 'icons/icon-512.png')
-if (!fs.existsSync(icon192) || !fs.existsSync(icon512)) {
-  fail('PWA icons missing from dist')
+const requiredPublicAssets = [
+  'icons/icon-192.png',
+  'icons/icon-512.png',
+  'favicon.ico',
+  'favicon.svg',
+  'favicon-16x16.png',
+  'favicon-32x32.png',
+  'apple-touch-icon.png',
+  'logo.png',
+  'logo.svg',
+  'robots.txt',
+]
+for (const asset of requiredPublicAssets) {
+  const full = path.join(DIST, asset)
+  if (!fs.existsSync(full)) fail(`missing dist asset: ${asset}`)
+  else pass(`dist asset present: ${asset}`)
+}
+
+const sitemap = path.join(DIST, 'sitemap.xml')
+if (!fs.existsSync(sitemap)) {
+  fail('sitemap.xml missing from dist')
 } else {
-  pass('PWA icons present in dist')
+  pass('sitemap.xml present in dist')
 }
 
 let totalBytes = 0
