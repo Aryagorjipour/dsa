@@ -287,10 +287,9 @@ watch(() => route.path, () => {
     closePageNotesRail()
   }
 
-  nextTick(() => {
-    ensurePageHighlights()
-    if (isOpen.value) scheduleLayoutWithRetry()
-  })
+  if (isOpen.value) {
+    nextTick(() => scheduleLayoutWithRetry())
+  }
 })
 
 watch(pageNotes, () => nextTick(scheduleLayout))

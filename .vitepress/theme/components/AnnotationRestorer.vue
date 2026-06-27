@@ -1,10 +1,11 @@
 <script setup>
-import { watch, onMounted, onUnmounted, nextTick } from 'vue'
-import { useRoute } from 'vitepress'
+import { watch, onMounted, onUnmounted } from 'vue'
+import { useRoute, onContentUpdated } from 'vitepress'
 import { useAnnotations, loadAnnotations } from '../composables/useAnnotations'
 import {
   bindAnnotationRestore,
   onAnnotationsRestored,
+  onPageContentUpdated,
   scheduleAnnotationRestore,
 } from '../utils/annotationLifecycle'
 import { ensureHighlightInDOM } from '../utils/highlightRestorer'
@@ -40,6 +41,9 @@ onMounted(async () => {
   unbindRestoreListener = onAnnotationsRestored(paintCurrentPageHighlights)
   window.addEventListener('hashchange', followNoteHash)
   await loadAnnotations()
+
+  // Initial full load — content is already in the DOM.
+  onPageContentUpdated()
   scheduleAnnotationRestore(true)
 })
 
@@ -48,15 +52,15 @@ onUnmounted(() => {
   window.removeEventListener('hashchange', followNoteHash)
 })
 
+// VitePress fires this after the new page vnode is mounted/updated in .vp-doc.
+onContentUpdated(() => {
+  onPageContentUpdated()
+})
+
 watch(highlightsVisible, visible => {
   document.documentElement.classList.toggle('highlights-hidden', !visible)
   if (visible) paintCurrentPageHighlights()
   scheduleAnnotationRestore(false)
-})
-
-watch(() => route.path, async () => {
-  await nextTick()
-  scheduleAnnotationRestore(true)
 })
 </script>
 

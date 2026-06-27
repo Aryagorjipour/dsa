@@ -22,7 +22,7 @@ let routerHooked = false
 let debounceTimer = 0
 const restoreListeners = new Set<RestoreListener>()
 
-const MAX_ATTEMPTS = 20
+const MAX_ATTEMPTS = 24
 
 /** Pure helper — filter highlights for a canonical page path. */
 export function getHighlightsForPath(all: Highlight[], path: string): Highlight[] {
@@ -42,6 +42,20 @@ function isDocReady(): boolean {
   return !!doc.querySelector('p, h1, h2, h3, h4, li, td, th, blockquote, .custom-block')
 }
 
+/**
+ * Block IDs (data-dsa-block) restart at 0 on every page. During SPA navigation the
+ * previous page may still be in the DOM with the same numeric IDs — require the
+ * highlight's text snapshot to appear in the candidate block before we treat the
+ * page as ready.
+ */
+function blockMatchesHighlight(hl: Highlight): boolean {
+  const block = document.querySelector(`[data-dsa-block="${escapeAttr(hl.blockId)}"]`)
+  if (!block) return false
+  const snap = hl.textSnapshot?.trim()
+  if (!snap) return true
+  return (block.textContent || '').includes(snap)
+}
+
 function pageContentReady(highlights: Highlight[]): boolean {
   if (!isDocReady()) return false
   if (!highlights.length) return true
@@ -49,7 +63,7 @@ function pageContentReady(highlights: Highlight[]): boolean {
   let matched = 0
   const threshold = Math.min(2, highlights.length)
   for (const hl of highlights) {
-    if (document.querySelector(`[data-dsa-block="${escapeAttr(hl.blockId)}"]`)) {
+    if (blockMatchesHighlight(hl)) {
       matched++
       if (matched >= threshold) return true
     }
@@ -57,8 +71,23 @@ function pageContentReady(highlights: Highlight[]): boolean {
   return false
 }
 
+function stampDocPagePath(path: string): void {
+  const doc = document.querySelector('.vp-doc')
+  if (doc) doc.setAttribute('data-dsa-page-path', path)
+}
+
+function docPagePathMatches(expectedPath: string): boolean {
+  const doc = document.querySelector('.vp-doc')
+  if (!doc) return false
+  const stamped = doc.getAttribute('data-dsa-page-path')
+  return stamped === expectedPath
+}
+
 function isRouteAndDocReady(expectedPath: string, highlights: Highlight[]): boolean {
+  if (!context) return false
   if (normalizePagePath(window.location.pathname) !== expectedPath) return false
+  if (normalizePagePath(context.getRoutePath()) !== expectedPath) return false
+  if (!docPagePathMatches(expectedPath)) return false
   return pageContentReady(highlights)
 }
 
@@ -101,7 +130,7 @@ function delay(ms: number): Promise<void> {
 }
 
 function attemptDelay(attempt: number): number {
-  return Math.min(50 + attempt * 35, 300)
+  return Math.min(50 + attempt * 40, 350)
 }
 
 function notifyRestored(): void {
@@ -139,13 +168,19 @@ export function cancelAnnotationRestore(): void {
 function onNavigationStart(): void {
   cancelAnnotationRestore()
   clearExistingMarks()
+  const doc = document.querySelector('.vp-doc')
+  doc?.removeAttribute('data-dsa-page-path')
 }
 
-async function afterRouteSettled(scrollHash: boolean): Promise<void> {
-  await nextTick()
-  await new Promise<void>(resolve => requestAnimationFrame(() => resolve()))
-  await new Promise<void>(resolve => requestAnimationFrame(() => resolve()))
-  scheduleAnnotationRestore(scrollHash)
+/**
+ * Called when VitePress finishes mounting/updating markdown in the DOM.
+ * This is the reliable restore trigger — router hooks fire before the new page vnode exists.
+ */
+export function onPageContentUpdated(): void {
+  if (!context || typeof document === 'undefined') return
+  const path = normalizePagePath(context.getRoutePath())
+  stampDocPagePath(path)
+  scheduleAnnotationRestore(false)
 }
 
 export function setupAnnotationRouter(router: Router): void {
@@ -159,22 +194,12 @@ export function setupAnnotationRouter(router: Router): void {
     onNavigationStart()
   }
 
-  const previousAfter = router.onAfterRouteChange ?? router.onAfterRouteChanged
   const previousAfterPage = router.onAfterPageLoad
-
-  // onAfterPageLoad fires before route.path / component update — do not restore here.
   router.onAfterPageLoad = async href => {
     await previousAfterPage?.(href)
   }
 
-  router.onAfterRouteChange = async href => {
-    await previousAfter?.(href)
-    if (typeof document === 'undefined') return
-    await afterRouteSettled(true)
-  }
-
   if (typeof window !== 'undefined') {
-    // Popstate does not run onBeforeRouteChange — clear stale marks before VP swaps the page.
     window.addEventListener('popstate', () => {
       onNavigationStart()
     })
@@ -227,7 +252,7 @@ async function runRestore(token: number, expectedPath: string, scrollHash: boole
   if (token !== restoreToken) return
 
   const highlights = highlightsForRestore(expectedPath)
-  if (context!.isVisible() && highlights.length > 0) {
+  if (context!.isVisible() && highlights.length > 0 && isRouteAndDocReady(expectedPath, highlights)) {
     if (!cleared) clearExistingMarks()
     applyHighlights(highlights)
   }
@@ -251,5 +276,5 @@ export function scheduleAnnotationRestore(scrollHash = false): void {
     const token = ++restoreToken
     const expectedPath = normalizePagePath(window.location.pathname)
     void runRestore(token, expectedPath, scrollHash)
-  }, 32)
+  }, 16)
 }

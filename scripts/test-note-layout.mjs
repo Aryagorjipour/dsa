@@ -129,5 +129,36 @@ const clamped = applyManualLayout(
 )
 assert(clamped.top === bounds.navBottom, 'clamps top to nav bottom')
 
+// blockMatchesHighlight logic — same-page block IDs must match text snapshot
+function blockMatchesHighlight(hl, blocks) {
+  const block = blocks.find(b => b.id === hl.blockId)
+  if (!block) return false
+  const snap = hl.textSnapshot?.trim()
+  if (!snap) return true
+  return block.text.includes(snap)
+}
+
+const pageABlocks = [
+  { id: '3', text: 'A data structure is just a way to organize data.' },
+  { id: '5', text: 'Think of it like this:' },
+]
+const pageBBlocks = [
+  { id: '3', text: 'Binary search requires a sorted array.' },
+  { id: '5', text: 'The algorithm runs in O(log n).' },
+]
+const highlightForPageA = {
+  blockId: '3',
+  textSnapshot: 'data structure',
+}
+
+assert(
+  blockMatchesHighlight(highlightForPageA, pageABlocks),
+  'snapshot matches correct page blocks',
+)
+assert(
+  !blockMatchesHighlight(highlightForPageA, pageBBlocks),
+  'same block id on wrong page does not match snapshot',
+)
+
 console.log(`\n${passed} passed, ${failed} failed`)
 process.exit(failed > 0 ? 1 : 0)
