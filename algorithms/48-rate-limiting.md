@@ -252,6 +252,10 @@ Every major public API uses sophisticated rate limiting:
 
 Rate limiting is one of the most important applied algorithms in reliable internet services. **Token bucket** gives burst tolerance with O(1) cost; **sliding window log** gives precision when memory allows. In production, combine these with Redis and return proper 429 semantics.
 
+::: tip Quizzes & Challenges
+**Test yourself:** expand **Quizzes & Challenges** at the bottom of this page (or jump to [#quiz](#quiz)). Track progress on the [Quiz Dashboard](/quizzes).
+:::
+
 ::: tip Project Lab
 **Build it yourself:** [API Rate Limiter](/projects/tier-4/18-api-rate-limiter) — token bucket, sliding window log, sliding window counter, and HTTP 429 middleware.
 :::

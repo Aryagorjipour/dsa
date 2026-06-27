@@ -193,6 +193,10 @@ Queues are fundamental to:
 Master both the array-backed circular version and the linked version conceptually.
 
 
+::: tip Quizzes & Challenges
+**Test yourself:** expand **Quizzes & Challenges** at the bottom of this page (or jump to [#quiz](#quiz)). Track progress on the [Quiz Dashboard](/quizzes).
+:::
+
 ::: tip Project Lab
 **Build it yourself:** [Task Queue System](/projects/tier-2/06-task-queue-system) — ring buffer, priority queue, and dependency-aware scheduling.
 :::

@@ -78,3 +78,8 @@ Most modern systems use better sorts, but understanding bubble sort helps unders
 - Implement cocktail shaker sort (bidirectional bubble)
 
 Bubble sort is the "hello world" of sorting algorithms.
+
+::: tip Quizzes & Challenges
+**Test yourself:** expand **Quizzes & Challenges** at the bottom of this page (or jump to [#quiz](#quiz)). Track progress on the [Quiz Dashboard](/quizzes).
+:::
+

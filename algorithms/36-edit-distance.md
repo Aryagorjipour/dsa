@@ -223,6 +223,10 @@ Edit distance is the workhorse of fuzzy string comparison. Fill `dp[i][j]` from 
 
 Every time your phone fixes a typo, Levenshtein (or a close cousin) is likely in the loop.
 
+::: tip Quizzes & Challenges
+**Test yourself:** expand **Quizzes & Challenges** at the bottom of this page (or jump to [#quiz](#quiz)). Track progress on the [Quiz Dashboard](/quizzes).
+:::
+
 ::: tip Project Lab
 **Build it yourself:** [Text Editor Engine](/projects/tier-4/20-text-editor-engine)
 :::

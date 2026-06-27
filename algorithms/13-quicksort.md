@@ -108,6 +108,10 @@ static void QuickSort3Way(int[] arr, int lo, int hi) {
 
 Quicksort is the in-memory speed king with great cache behavior. Pair it with random pivot or 3-way partition for production robustness.
 
+::: tip Quizzes & Challenges
+**Test yourself:** expand **Quizzes & Challenges** at the bottom of this page (or jump to [#quiz](#quiz)). Track progress on the [Quiz Dashboard](/quizzes).
+:::
+
 ::: tip Project Lab
 **Build it yourself:** [Sorting Benchmarker](/projects/tier-1/02-sorting-benchmarker)
 :::

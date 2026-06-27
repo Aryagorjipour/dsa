@@ -205,6 +205,10 @@ Hash Set = the "have I seen this?" superpower.
 
 It is one of the highest leverage data structures in existence. Once you internalize it, you will find dozens of places in your code where using a set instead of a list makes things dramatically faster and cleaner.
 
+::: tip Quizzes & Challenges
+**Test yourself:** expand **Quizzes & Challenges** at the bottom of this page (or jump to [#quiz](#quiz)). Track progress on the [Quiz Dashboard](/quizzes).
+:::
+
 ::: tip Project Lab
 **Build it yourself:** [Hash Map from Scratch](/projects/tier-1/04-hash-map-from-scratch)
 :::

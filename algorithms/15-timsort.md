@@ -92,4 +92,8 @@ Production Timsort adds run detection, merge stack invariants, and galloping —
 
 Timsort proves the best sorter often exploits patterns in real data rather than theoretical purity alone.
 
+::: tip Quizzes & Challenges
+**Test yourself:** expand **Quizzes & Challenges** at the bottom of this page (or jump to [#quiz](#quiz)). Track progress on the [Quiz Dashboard](/quizzes).
+:::
+
 **Next:** [16 - Counting Sort](16-counting-sort.md)

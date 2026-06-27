@@ -75,3 +75,8 @@ func InsertionSort(arr []int) {
 - Hybrid sort implementation
 
 Insertion sort is the practical "small or almost sorted" champion among O(n²) algorithms.
+
+::: tip Quizzes & Challenges
+**Test yourself:** expand **Quizzes & Challenges** at the bottom of this page (or jump to [#quiz](#quiz)). Track progress on the [Quiz Dashboard](/quizzes).
+:::
+

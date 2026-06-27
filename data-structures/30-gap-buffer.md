@@ -211,6 +211,10 @@ Gap Buffer = one of the simplest and most effective data structures for interact
 
 It exploits the locality of human editing behavior (we usually edit near where we were editing before).
 
+::: tip Quizzes & Challenges
+**Test yourself:** expand **Quizzes & Challenges** at the bottom of this page (or jump to [#quiz](#quiz)). Track progress on the [Quiz Dashboard](/quizzes).
+:::
+
 ::: tip Project Lab
 **Build it yourself:** [Text Editor Engine](/projects/tier-4/20-text-editor-engine)
 :::

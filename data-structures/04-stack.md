@@ -201,6 +201,10 @@ If your problem says:
 ...your brain should immediately think **Stack**.
 
 
+::: tip Quizzes & Challenges
+**Test yourself:** expand **Quizzes & Challenges** at the bottom of this page (or jump to [#quiz](#quiz)). Track progress on the [Quiz Dashboard](/quizzes).
+:::
+
 ::: tip Project Lab
 **Build it yourself:** [Stack-Based Expression Evaluator](/projects/tier-1/03-stack-calculator) — infix/postfix parsing, evaluation, and recursive descent.
 :::

@@ -210,6 +210,10 @@ Dynamic array = the best "default list" for 80% of use cases because:
 
 Master it. You will use it every single day.
 
+::: tip Quizzes & Challenges
+**Test yourself:** expand **Quizzes & Challenges** at the bottom of this page (or jump to [#quiz](#quiz)). Track progress on the [Quiz Dashboard](/quizzes).
+:::
+
 ::: tip Project Lab
 **Build it yourself:** [Sorting Benchmarker](/projects/tier-1/02-sorting-benchmarker)
 :::

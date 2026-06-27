@@ -209,6 +209,10 @@ Together they are the foundation of:
 - Many beautiful algorithms we will see later.
 
 Next up: Divide and Conquer.
+::: tip Quizzes & Challenges
+**Test yourself:** expand **Quizzes & Challenges** at the bottom of this page (or jump to [#quiz](#quiz)). Track progress on the [Quiz Dashboard](/quizzes).
+:::
+
 ::: tip Project Lab
 **Build it yourself:** [Stack Calculator](/projects/tier-1/03-stack-calculator) and [DP Toolkit](/projects/tier-3/14-dp-toolkit) — recursion in parsers and dynamic programming.
 :::

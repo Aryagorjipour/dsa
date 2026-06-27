@@ -191,6 +191,10 @@ Rope = tree of string chunks optimized for large-scale text editing and manipula
 
 It is a specialized but beautiful data structure that shows how thinking in trees instead of flat buffers can completely change performance characteristics.
 
+::: tip Quizzes & Challenges
+**Test yourself:** expand **Quizzes & Challenges** at the bottom of this page (or jump to [#quiz](#quiz)). Track progress on the [Quiz Dashboard](/quizzes).
+:::
+
 ::: tip Project Lab
 **Build it yourself:** [Text Editor Engine](/projects/tier-4/20-text-editor-engine) — rope-backed editing with gap buffer and spell-check.
 :::

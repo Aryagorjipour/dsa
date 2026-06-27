@@ -92,4 +92,8 @@ func countByDigit(arr []int, exp int) {
 
 Radix sort exploits digit structure to sort faster than comparison when keys have bounded width.
 
+::: tip Quizzes & Challenges
+**Test yourself:** expand **Quizzes & Challenges** at the bottom of this page (or jump to [#quiz](#quiz)). Track progress on the [Quiz Dashboard](/quizzes).
+:::
+
 **Next:** [18 - Hashing](18-hashing.md)

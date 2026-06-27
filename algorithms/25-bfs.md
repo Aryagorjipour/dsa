@@ -295,6 +295,10 @@ When edge weights vary, BFS is no longer correct — graduate to [Dijkstra](28-d
 
 BFS is the go-to algorithm for shortest paths when every step costs the same. Master the queue + visited pattern on grids and adjacency lists — it is the foundation for topological sort (Kahn's), bidirectional search, and many level-based algorithms.
 
+::: tip Quizzes & Challenges
+**Test yourself:** expand **Quizzes & Challenges** at the bottom of this page (or jump to [#quiz](#quiz)). Track progress on the [Quiz Dashboard](/quizzes).
+:::
+
 ::: tip Project Lab
 **Build it yourself:** [Route Planner](/projects/tier-2/08-route-planner) — start with unweighted grid BFS before adding weighted Dijkstra and A*.
 :::

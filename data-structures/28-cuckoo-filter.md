@@ -295,6 +295,10 @@ Cuckoo Filter = Bloom filter's cooler younger sibling that can also delete thing
 
 It shows how cuckoo hashing techniques can be applied to probabilistic structures.
 
+::: tip Quizzes & Challenges
+**Test yourself:** expand **Quizzes & Challenges** at the bottom of this page (or jump to [#quiz](#quiz)). Track progress on the [Quiz Dashboard](/quizzes).
+:::
+
 ::: tip Project Lab
 **Build it yourself:** [Distributed Cache](/projects/tier-4/17-distributed-cache)
 :::

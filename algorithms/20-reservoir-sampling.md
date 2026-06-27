@@ -70,4 +70,8 @@ func ReservoirSample[T any](stream <-chan T, k int, rng *rand.Rand) []T {
 
 Reservoir sampling gives true uniform random samples with O(k) memory no matter how large the stream.
 
+::: tip Quizzes & Challenges
+**Test yourself:** expand **Quizzes & Challenges** at the bottom of this page (or jump to [#quiz](#quiz)). Track progress on the [Quiz Dashboard](/quizzes).
+:::
+
 **Next:** [21 - BST Operations](21-bst-operations.md)

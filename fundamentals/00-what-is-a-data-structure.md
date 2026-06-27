@@ -201,3 +201,8 @@ Actually, read the algorithm thinking one first.
 > It is a **set of guarantees** about time and memory in exchange for certain capabilities.
 
 Master the guarantees, and you will look at code and instantly see the shape of the data underneath.
+
+::: tip Quizzes & Challenges
+**Test yourself:** expand **Quizzes & Challenges** at the bottom of this page (or jump to [#quiz](#quiz)). Track progress on the [Quiz Dashboard](/quizzes).
+:::
+

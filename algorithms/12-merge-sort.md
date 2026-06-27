@@ -88,6 +88,10 @@ func merge(a, b []int) []int {
 
 Merge sort is the reliable, predictable, stable workhorse. Choose it when stability and worst-case guarantees matter more than in-place memory use.
 
+::: tip Quizzes & Challenges
+**Test yourself:** expand **Quizzes & Challenges** at the bottom of this page (or jump to [#quiz](#quiz)). Track progress on the [Quiz Dashboard](/quizzes).
+:::
+
 ::: tip Project Lab
 **Build it yourself:** [Sorting Benchmarker](/projects/tier-1/02-sorting-benchmarker)
 :::

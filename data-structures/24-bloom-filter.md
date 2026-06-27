@@ -190,6 +190,10 @@ Bloom Filter = one of the most practical probabilistic data structures ever crea
 
 It powers a huge amount of the "fast path" decisions in modern databases, caches, and distributed systems by saying "we can skip this work with high probability".
 
+::: tip Quizzes & Challenges
+**Test yourself:** expand **Quizzes & Challenges** at the bottom of this page (or jump to [#quiz](#quiz)). Track progress on the [Quiz Dashboard](/quizzes).
+:::
+
 ::: tip Project Lab
 **Build it yourself:** [Persistent KV Store](/projects/tier-3/11-key-value-store), [Distributed Cache](/projects/tier-4/17-distributed-cache), and [Stream Analytics](/projects/tier-4/19-stream-analytics-pipeline).
 :::

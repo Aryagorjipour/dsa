@@ -233,6 +233,10 @@ If you ever work on:
 It is one of the most "systems-y" data structures that still appears constantly in application code.
 
 
+::: tip Quizzes & Challenges
+**Test yourself:** expand **Quizzes & Challenges** at the bottom of this page (or jump to [#quiz](#quiz)). Track progress on the [Quiz Dashboard](/quizzes).
+:::
+
 ::: tip Project Lab
 **Build it yourself:** [Task Queue System](/projects/tier-2/06-task-queue-system) and [API Rate Limiter](/projects/tier-4/18-api-rate-limiter) — ring buffers for zero-allocation queues.
 :::

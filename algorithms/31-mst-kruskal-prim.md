@@ -323,6 +323,10 @@ Add `import ("container/heap"; "sort")` at the top of a real Go file. See `examp
 
 MST algorithms are textbook greedy: Kruskal sorts and unions, Prim grows with a heap. Both produce minimum total weight spanning trees. Pair Kruskal with [Union-Find](../data-structures/25-disjoint-set-union-find.md) — one of the most satisfying algorithm + data structure combinations in computer science.
 
+::: tip Quizzes & Challenges
+**Test yourself:** expand **Quizzes & Challenges** at the bottom of this page (or jump to [#quiz](#quiz)). Track progress on the [Quiz Dashboard](/quizzes).
+:::
+
 ::: tip Project Lab
 **Build it yourself:** [Network Optimizer](/projects/tier-3/15-network-optimizer) — Kruskal + Prim on edge lists with Union-Find for backbone design.
 :::

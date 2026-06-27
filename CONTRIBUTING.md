@@ -26,9 +26,10 @@ Thank you for your interest! This handbook aims to be one of the best practical 
 ### 5. Adding Quizzes & Challenges
 - Create a topic file in `quizzes/topics/` (see an existing file for the schema).
 - Run `npm run sync:quizzes` to regenerate `quizzes/registry.ts` from topic files.
+- Run `npm run sync:quiz-callouts` to add the `::: tip Quizzes & Challenges` callout to the handbook chapter.
 - Aim for 8 quiz questions + 2 challenges per topic, mixed difficulty.
 - Questions must align with that chapter's content — no generic trivia.
-- Run `npm run docs:build` to verify the site compiles.
+- Run `npm run verify` to ensure registry, callouts, coverage, examples, and site build all pass.
 
 ### 6. Suggesting New Topics
 Open an issue using the "New Topic Suggestion" template.
@@ -38,7 +39,7 @@ Open an issue using the "New Topic Suggestion" template.
 ```bash
 npm install
 npm run docs:dev
-npm run verify   # coverage audit + Go examples + site build
+npm run verify   # quiz registry/callouts + coverage audit + Go/C# examples + site build
 ```
 
 ## Pull Request Guidelines

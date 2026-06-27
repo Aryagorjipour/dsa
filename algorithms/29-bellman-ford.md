@@ -257,4 +257,8 @@ A negative cycle reachable from the source means you can loop forever, decreasin
 
 Bellman-Ford trades speed for generality: O(V × E) but handles negative edges and finds negative cycles. Use Dijkstra when weights are non-negative; reach for Bellman-Ford when negatives or cycle detection are in play.
 
+::: tip Quizzes & Challenges
+**Test yourself:** expand **Quizzes & Challenges** at the bottom of this page (or jump to [#quiz](#quiz)). Track progress on the [Quiz Dashboard](/quizzes).
+:::
+
 **Next:** [30 - Floyd-Warshall Algorithm](30-floyd-warshall.md)

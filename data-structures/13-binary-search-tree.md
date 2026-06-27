@@ -200,6 +200,10 @@ Plain BSTs are fragile. The next step in evolution is self-balancing trees.
 **Further reading & visuals**: Check [resources/further-reading.md](../resources/further-reading.md) and the diagrams in the images/ folder.
 
 
+::: tip Quizzes & Challenges
+**Test yourself:** expand **Quizzes & Challenges** at the bottom of this page (or jump to [#quiz](#quiz)). Track progress on the [Quiz Dashboard](/quizzes).
+:::
+
 ::: tip Project Lab
 **Build it yourself:** [In-Memory Database Index](/projects/tier-3/10-in-memory-db-index) — BST to self-balancing red-black tree.
 :::

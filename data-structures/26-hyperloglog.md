@@ -207,6 +207,10 @@ It lets companies count unique things at planetary scale with almost no memory.
 
 If you ever work in analytics, big data, or high-scale web systems, you will encounter it.
 
+::: tip Quizzes & Challenges
+**Test yourself:** expand **Quizzes & Challenges** at the bottom of this page (or jump to [#quiz](#quiz)). Track progress on the [Quiz Dashboard](/quizzes).
+:::
+
 ::: tip Project Lab
 **Build it yourself:** [Stream Analytics Pipeline](/projects/tier-4/19-stream-analytics-pipeline) — cardinality estimation at streaming scale.
 :::

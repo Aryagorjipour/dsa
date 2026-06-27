@@ -233,4 +233,8 @@ Otherwise, reach for **Dynamic Array** (next chapter).
 
 ---
 
+::: tip Quizzes & Challenges
+**Test yourself:** expand **Quizzes & Challenges** at the bottom of this page (or jump to [#quiz](#quiz)). Track progress on the [Quiz Dashboard](/quizzes).
+:::
+
 **Next:** [02 - Dynamic Array](02-dynamic-array.md) — what `List<T>` and Go slices actually are.

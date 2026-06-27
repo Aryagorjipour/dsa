@@ -223,6 +223,10 @@ Whenever your problem says:
 
 The deque is the most flexible linear structure. In high-performance concurrent systems it is often preferred over plain queues and stacks because of its two-ended nature and work-stealing friendliness.
 
+::: tip Quizzes & Challenges
+**Test yourself:** expand **Quizzes & Challenges** at the bottom of this page (or jump to [#quiz](#quiz)). Track progress on the [Quiz Dashboard](/quizzes).
+:::
+
 ::: tip Project Lab
 **Build it yourself:** [API Rate Limiter](/projects/tier-4/18-api-rate-limiter)
 :::

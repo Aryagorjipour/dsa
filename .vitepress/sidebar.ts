@@ -131,6 +131,7 @@ export const sidebar: SidebarGroup[] = [
       { text: 'Papers', link: '/resources/papers' },
       { text: 'Visualizations', link: '/resources/visualizations' },
       { text: 'Production Use Cases', link: '/resources/production-use-cases' },
+      { text: 'Complexity Cheat Sheet', link: '/resources/complexity-cheatsheet' },
       { text: 'Implementations', link: '/resources/implementations' },
     ],
   },

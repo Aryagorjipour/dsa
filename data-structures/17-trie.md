@@ -187,6 +187,10 @@ Trie = tree where path from root spells a string.
 It is the go-to structure whenever you care about **prefixes** or need to store a dictionary of strings efficiently for lookup and autocomplete-style operations.
 
 
+::: tip Quizzes & Challenges
+**Test yourself:** expand **Quizzes & Challenges** at the bottom of this page (or jump to [#quiz](#quiz)). Track progress on the [Quiz Dashboard](/quizzes).
+:::
+
 ::: tip Project Lab
 **Build it yourself:** [Autocomplete Engine](/projects/tier-2/07-autocomplete-engine) — prefix search, frequency ranking, and fuzzy suggestions.
 :::

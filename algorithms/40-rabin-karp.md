@@ -158,6 +158,10 @@ For adversarial input, use **two independent moduli** — both must match before
 
 Rabin-Karp replaces expensive substring comparisons with O(1) rolling hash updates. Hash match → verify. Simple, generalizes to 2D and multiple patterns, and underpins real fingerprinting systems.
 
+::: tip Quizzes & Challenges
+**Test yourself:** expand **Quizzes & Challenges** at the bottom of this page (or jump to [#quiz](#quiz)). Track progress on the [Quiz Dashboard](/quizzes).
+:::
+
 ::: tip Project Lab
 **Build it yourself:** [Full-Text Search Engine](/projects/tier-3/13-full-text-search-engine)
 :::

@@ -219,6 +219,10 @@ KD-tree = space-partitioning binary tree that alternates dimensions.
 
 It is a classic tool for nearest-neighbor problems in low-dimensional spaces (especially in ML and graphics).
 
+::: tip Quizzes & Challenges
+**Test yourself:** expand **Quizzes & Challenges** at the bottom of this page (or jump to [#quiz](#quiz)). Track progress on the [Quiz Dashboard](/quizzes).
+:::
+
 ::: tip Project Lab
 **Build it yourself:** [Geospatial Index](/projects/tier-4/21-geospatial-index)
 :::

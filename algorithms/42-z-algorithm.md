@@ -188,4 +188,8 @@ Both are linear and deterministic — choose based on problem shape.
 
 The Z-algorithm computes longest prefix matches for every suffix in O(n). Glue `pattern + sep + text`, scan for `Z[i] == m`, and you have O(n + m) exact pattern matching without an LPS table.
 
+::: tip Quizzes & Challenges
+**Test yourself:** expand **Quizzes & Challenges** at the bottom of this page (or jump to [#quiz](#quiz)). Track progress on the [Quiz Dashboard](/quizzes).
+:::
+
 **Next:** [43 - Aho-Corasick](43-aho-corasick.md)

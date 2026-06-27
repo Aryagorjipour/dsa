@@ -194,6 +194,10 @@ KMP preprocesses the pattern into an LPS table, then scans the text in one pass.
 
 **Next:** [40 - Rabin-Karp](40-rabin-karp.md)
 
+::: tip Quizzes & Challenges
+**Test yourself:** expand **Quizzes & Challenges** at the bottom of this page (or jump to [#quiz](#quiz)). Track progress on the [Quiz Dashboard](/quizzes).
+:::
+
 ::: tip Project Lab
 **Build it yourself:** [Full-Text Search Engine](/projects/tier-3/13-full-text-search-engine) — KMP, Rabin-Karp, Boyer-Moore, and Aho-Corasick.
 :::

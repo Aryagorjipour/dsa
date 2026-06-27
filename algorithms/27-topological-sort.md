@@ -221,6 +221,10 @@ Prefer **Kahn's** when modeling task queues and build pipelines.
 
 Topological sort turns dependency graphs into executable orderings. Kahn's algorithm is the canonical BFS approach: track indegrees, dequeue ready nodes, detect cycles when nodes remain. Every build tool you use runs a variant of this.
 
+::: tip Quizzes & Challenges
+**Test yourself:** expand **Quizzes & Challenges** at the bottom of this page (or jump to [#quiz](#quiz)). Track progress on the [Quiz Dashboard](/quizzes).
+:::
+
 ::: tip Project Lab
 **Build it yourself:** [Task Queue System](/projects/tier-2/06-task-queue-system) — Kahn's algorithm for dependency ordering with cycle detection.
 :::

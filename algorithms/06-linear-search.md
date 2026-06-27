@@ -79,6 +79,10 @@ func LinearSearch(arr []int, target int) int {
 
 This is the starting point. Everything else improves on it when possible.
 
+::: tip Quizzes & Challenges
+**Test yourself:** expand **Quizzes & Challenges** at the bottom of this page (or jump to [#quiz](#quiz)). Track progress on the [Quiz Dashboard](/quizzes).
+:::
+
 ::: tip Project Lab
 **Build it yourself:** [Search Library](/projects/tier-1/01-search-library)
 :::

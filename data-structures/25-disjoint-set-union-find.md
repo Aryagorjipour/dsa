@@ -183,6 +183,10 @@ Disjoint Set / Union-Find is one of the most beautiful "small but mighty" data s
 
 With two clever optimizations it achieves near-constant time for connectivity queries, making it the weapon of choice for MST, component labeling, and many union-heavy problems.
 
+::: tip Quizzes & Challenges
+**Test yourself:** expand **Quizzes & Challenges** at the bottom of this page (or jump to [#quiz](#quiz)). Track progress on the [Quiz Dashboard](/quizzes).
+:::
+
 ::: tip Project Lab
 **Build it yourself:** [Network Optimizer](/projects/tier-3/15-network-optimizer)
 :::

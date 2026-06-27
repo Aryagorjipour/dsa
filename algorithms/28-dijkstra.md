@@ -251,6 +251,10 @@ In production Go, prefer `container/heap` — the inline heap above keeps the ch
 
 Dijkstra is the foundation of weighted shortest-path routing when costs are non-negative. Master the relax step, lazy priority queue, and path reconstruction — then layer A* heuristics or all-pairs algorithms on top.
 
+::: tip Quizzes & Challenges
+**Test yourself:** expand **Quizzes & Challenges** at the bottom of this page (or jump to [#quiz](#quiz)). Track progress on the [Quiz Dashboard](/quizzes).
+:::
+
 ::: tip Project Lab
 **Build it yourself:** [Route Planner](/projects/tier-2/08-route-planner) — Dijkstra on weighted graphs, then A* with admissible heuristics.
 :::

@@ -153,6 +153,10 @@ General trees are the natural way to represent hierarchy.
 
 Once you understand tree traversal and recursion on trees, almost everything that follows (binary trees, BSTs, heaps, tries, segment trees, etc.) becomes much easier.
 
+::: tip Quizzes & Challenges
+**Test yourself:** expand **Quizzes & Challenges** at the bottom of this page (or jump to [#quiz](#quiz)). Track progress on the [Quiz Dashboard](/quizzes).
+:::
+
 ::: tip Project Lab
 **Build it yourself:** [In-Memory Database Index](/projects/tier-3/10-in-memory-db-index)
 :::

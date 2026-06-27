@@ -270,6 +270,10 @@ This is DFS with an explicit undo step. See [44 - Backtracking](44-backtracking.
 
 DFS explores depth-first and excels at structural questions: how many components, is there a cycle, can we reach everything? Pair it with BFS — BFS for shortest unweighted paths, DFS for components, cycles, and backtracking.
 
+::: tip Quizzes & Challenges
+**Test yourself:** expand **Quizzes & Challenges** at the bottom of this page (or jump to [#quiz](#quiz)). Track progress on the [Quiz Dashboard](/quizzes).
+:::
+
 ::: tip Project Lab
 **Build it yourself:** [Route Planner](/projects/tier-2/08-route-planner)
 :::

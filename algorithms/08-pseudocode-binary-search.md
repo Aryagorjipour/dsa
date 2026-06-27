@@ -150,3 +150,8 @@ This chapter builds the mental model used in Exponential Search, Binary Search o
 - First bad version (LeetCode style)
 
 Master pseudocode → real code translation here.
+
+::: tip Quizzes & Challenges
+**Test yourself:** expand **Quizzes & Challenges** at the bottom of this page (or jump to [#quiz](#quiz)). Track progress on the [Quiz Dashboard](/quizzes).
+:::
+

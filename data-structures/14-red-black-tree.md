@@ -361,4 +361,8 @@ It is one of the most successful data structures ever invented for ordered assoc
 
 You will rarely implement one from scratch in application code (use the platform's `SortedSet` / `TreeMap`), but understanding how it works makes you a much better engineer when you need to reason about performance of ordered collections.
 
+::: tip Quizzes & Challenges
+**Test yourself:** expand **Quizzes & Challenges** at the bottom of this page (or jump to [#quiz](#quiz)). Track progress on the [Quiz Dashboard](/quizzes).
+:::
+
 **Next:** [15 - Heap](15-heap.md)

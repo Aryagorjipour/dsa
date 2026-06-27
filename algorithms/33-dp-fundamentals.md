@@ -207,6 +207,10 @@ DP is recursion plus caching, or bottom-up tabulation. Master **state definition
 
 The next chapters apply these ideas to the canonical 2D problems: knapsack, LCS, edit distance, and beyond.
 
+::: tip Quizzes & Challenges
+**Test yourself:** expand **Quizzes & Challenges** at the bottom of this page (or jump to [#quiz](#quiz)). Track progress on the [Quiz Dashboard](/quizzes).
+:::
+
 ::: tip Project Lab
 **Build it yourself:** [Dynamic Programming Toolkit](/projects/tier-3/14-dp-toolkit) — knapsack, LCS, edit distance, and LIS in one CLI.
 :::

@@ -66,4 +66,8 @@ func CountingSort(arr []int, maxVal int) []int {
 
 Counting sort beats comparison sorts when the value range is small — O(n + k) with no comparisons.
 
+::: tip Quizzes & Challenges
+**Test yourself:** expand **Quizzes & Challenges** at the bottom of this page (or jump to [#quiz](#quiz)). Track progress on the [Quiz Dashboard](/quizzes).
+:::
+
 **Next:** [17 - Radix Sort](17-radix-sort.md)

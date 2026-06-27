@@ -206,6 +206,10 @@ When `W` is exponential in input size (e.g. W = 2ⁿ), this is still exponential
 
 Master this table — LCS and edit distance use the same 2D grid thinking on sequences.
 
+::: tip Quizzes & Challenges
+**Test yourself:** expand **Quizzes & Challenges** at the bottom of this page (or jump to [#quiz](#quiz)). Track progress on the [Quiz Dashboard](/quizzes).
+:::
+
 ::: tip Project Lab
 **Build it yourself:** [DP Toolkit](/projects/tier-3/14-dp-toolkit)
 :::

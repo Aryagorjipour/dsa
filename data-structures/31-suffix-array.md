@@ -232,6 +232,10 @@ Suffix Array = sorted list of every possible suffix.
 
 It unlocks a huge class of fast string algorithms that would otherwise be impossible or extremely slow.
 
+::: tip Quizzes & Challenges
+**Test yourself:** expand **Quizzes & Challenges** at the bottom of this page (or jump to [#quiz](#quiz)). Track progress on the [Quiz Dashboard](/quizzes).
+:::
+
 ::: tip Project Lab
 **Build it yourself:** [Full-Text Search Engine](/projects/tier-3/13-full-text-search-engine)
 :::

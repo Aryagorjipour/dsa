@@ -1,0 +1,5 @@
+/home/arysmart/Projects/Learning/dsa/scripts/csharp-verify-template/obj/Debug/net8.0/VerifyExample.GeneratedMSBuildEditorConfig.editorconfig
+/home/arysmart/Projects/Learning/dsa/scripts/csharp-verify-template/obj/Debug/net8.0/VerifyExample.AssemblyInfoInputs.cache
+/home/arysmart/Projects/Learning/dsa/scripts/csharp-verify-template/obj/Debug/net8.0/VerifyExample.AssemblyInfo.cs
+/home/arysmart/Projects/Learning/dsa/scripts/csharp-verify-template/obj/Debug/net8.0/VerifyExample.csproj.CoreCompileInputs.cache
+/home/arysmart/Projects/Learning/dsa/scripts/csharp-verify-template/obj/Debug/net8.0/VerifyExample.sourcelink.json

@@ -111,3 +111,8 @@ func heapify(arr []int, n, i int) {
 - Sort nearly sorted data? Not the best, but guaranteed.
 
 Heapsort is the "reliable in-place guaranteed" sorting algorithm.
+
+::: tip Quizzes & Challenges
+**Test yourself:** expand **Quizzes & Challenges** at the bottom of this page (or jump to [#quiz](#quiz)). Track progress on the [Quiz Dashboard](/quizzes).
+:::
+

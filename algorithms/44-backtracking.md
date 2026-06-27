@@ -180,6 +180,10 @@ Every backtracking problem is this skeleton with different `state`, `choices`, a
 
 Backtracking is brute force with intelligence. The difference between "impossibly slow" and "surprisingly fast" is almost always **pruning** and **good state representation** (bitmasks, constraint propagation).
 
+::: tip Quizzes & Challenges
+**Test yourself:** expand **Quizzes & Challenges** at the bottom of this page (or jump to [#quiz](#quiz)). Track progress on the [Quiz Dashboard](/quizzes).
+:::
+
 ::: tip Project Lab
 **Build it yourself:** [Constraint Solver](/projects/tier-4/22-constraint-solver) — Sudoku, N-Queens, and mini-SAT with backtracking.
 :::

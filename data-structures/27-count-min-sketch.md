@@ -173,6 +173,10 @@ Count-Min Sketch is the go-to tool when you need to estimate **how often** thing
 
 It is another beautiful example of accepting a small, bounded error in exchange for massive scalability.
 
+::: tip Quizzes & Challenges
+**Test yourself:** expand **Quizzes & Challenges** at the bottom of this page (or jump to [#quiz](#quiz)). Track progress on the [Quiz Dashboard](/quizzes).
+:::
+
 ::: tip Project Lab
 **Build it yourself:** [Stream Analytics Pipeline](/projects/tier-4/19-stream-analytics-pipeline)
 :::

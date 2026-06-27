@@ -109,3 +109,8 @@ The exponential + binary idea is related to optimal jump strategies when you hav
 ## Summary
 
 Exponential search elegantly solves the "I don't know how big the search space is" problem by first exponentially expanding to find a bound, then binary searching inside.
+
+::: tip Quizzes & Challenges
+**Test yourself:** expand **Quizzes & Challenges** at the bottom of this page (or jump to [#quiz](#quiz)). Track progress on the [Quiz Dashboard](/quizzes).
+:::
+

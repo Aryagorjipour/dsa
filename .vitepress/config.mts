@@ -8,6 +8,10 @@ export default defineConfig({
   srcDir: '.',
   cleanUrls: true,
 
+  rewrites: {
+    'algorithms/22-bst-operations.md': 'algorithms/21-bst-operations.md',
+  },
+
   head: [
     ['link', { rel: 'icon', href: '/favicon.svg', type: 'image/svg+xml' }],
     ['link', { rel: 'apple-touch-icon', href: '/favicon.svg', sizes: '180x180' }],

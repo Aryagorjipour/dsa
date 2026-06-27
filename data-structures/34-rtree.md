@@ -294,6 +294,10 @@ You now have a comprehensive understanding of 30+ fundamental and advanced data 
 
 **Next major section:** Algorithms.
 
+::: tip Quizzes & Challenges
+**Test yourself:** expand **Quizzes & Challenges** at the bottom of this page (or jump to [#quiz](#quiz)). Track progress on the [Quiz Dashboard](/quizzes).
+:::
+
 ::: tip Project Lab
 **Build it yourself:** [Geospatial Index](/projects/tier-4/21-geospatial-index) — R-tree range and nearest-neighbor queries.
 :::

@@ -192,4 +192,8 @@ Recognize: fill by **increasing interval length**, not by `i` alone.
 
 Matrix chain multiplication teaches **interval DP**: try every split `k`, combine optimal left and right subchains, add merge cost. Store `split[i][j]` to reconstruct the optimal parenthesization.
 
+::: tip Quizzes & Challenges
+**Test yourself:** expand **Quizzes & Challenges** at the bottom of this page (or jump to [#quiz](#quiz)). Track progress on the [Quiz Dashboard](/quizzes).
+:::
+
 **Next:** [38 - Longest Increasing Subsequence (LIS)](38-longest-increasing-subsequence.md)

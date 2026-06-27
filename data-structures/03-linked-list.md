@@ -220,6 +220,10 @@ But they are still important because:
 - Some concurrent data structures use linked nodes.
 - They are the foundation for understanding more complex pointer-based structures (trees, skip lists, etc.).
 
+::: tip Quizzes & Challenges
+**Test yourself:** expand **Quizzes & Challenges** at the bottom of this page (or jump to [#quiz](#quiz)). Track progress on the [Quiz Dashboard](/quizzes).
+:::
+
 ::: tip Project Lab
 **Build it yourself:** [Stack Calculator](/projects/tier-1/03-stack-calculator)
 :::

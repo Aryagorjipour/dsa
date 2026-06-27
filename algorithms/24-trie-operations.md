@@ -169,6 +169,10 @@ Build trie of dictionary words, DFS each cell, prune when trie has no matching c
 
 Trie operations turn prefix problems into tree walks. Insert, search, delete, and autocomplete are the core API.
 
+::: tip Quizzes & Challenges
+**Test yourself:** expand **Quizzes & Challenges** at the bottom of this page (or jump to [#quiz](#quiz)). Track progress on the [Quiz Dashboard](/quizzes).
+:::
+
 ::: tip Project Lab
 **Build it yourself:** [Autocomplete Engine](/projects/tier-2/07-autocomplete-engine) — trie + ranking + prefix DFS.
 :::

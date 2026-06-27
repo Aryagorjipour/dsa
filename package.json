@@ -7,12 +7,17 @@
     "example": "examples"
   },
   "scripts": {
-    "verify:examples": "node scripts/verify-go-examples.mjs",
+    "verify:examples:go": "node scripts/verify-go-examples.mjs",
+    "verify:examples:csharp": "node scripts/verify-csharp-examples.mjs",
+    "verify:examples": "npm run verify:examples:go && npm run verify:examples:csharp",
     "verify:coverage": "python3 scripts/audit_coverage.py --strict",
     "verify:coverage:write": "python3 scripts/audit_coverage.py --write",
-    "verify": "npm run verify:coverage:write && npm run verify:coverage && npm run verify:examples && npm run docs:build",
-    "docs:manifest": "node scripts/generate-examples-manifest.mjs",
     "sync:quizzes": "node scripts/sync-quiz-registry.mjs",
+    "sync:quizzes:check": "node scripts/sync-quiz-registry.mjs --check",
+    "sync:quiz-callouts": "node scripts/sync-quiz-callouts.mjs",
+    "sync:quiz-callouts:check": "node scripts/sync-quiz-callouts.mjs --check",
+    "verify": "npm run sync:quizzes:check && npm run sync:quiz-callouts:check && npm run verify:coverage:write && npm run verify:coverage && npm run verify:examples && npm run docs:build",
+    "docs:manifest": "node scripts/generate-examples-manifest.mjs",
     "docs:dev": "npm run docs:manifest && vitepress dev",
     "docs:build": "npm run docs:manifest && vitepress build",
     "docs:preview": "vitepress preview"

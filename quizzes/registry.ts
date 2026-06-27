@@ -12,7 +12,13 @@ export interface QuizIndexEntry {
 type QuizLoader = () => Promise<{ default: QuizPack }>
 
 const LOADERS: Record<string, QuizLoader> = {
+  '/fundamentals/00-what-is-a-data-structure': () => import('./topics/fundamentals-00-what-is-a-data-structure'),
+  '/fundamentals/00-what-is-an-algorithm': () => import('./topics/fundamentals-00-what-is-an-algorithm'),
   '/fundamentals/01-big-o': () => import('./topics/fundamentals-01-big-o'),
+  '/fundamentals/02-recursion-and-memoization': () => import('./topics/fundamentals-02-recursion-and-memoization'),
+  '/fundamentals/03-divide-and-conquer': () => import('./topics/fundamentals-03-divide-and-conquer'),
+  '/fundamentals/04-greedy-paradigm': () => import('./topics/fundamentals-04-greedy-paradigm'),
+  '/fundamentals/05-two-pointers-sliding-window': () => import('./topics/fundamentals-05-two-pointers-sliding-window'),
   '/data-structures/01-array': () => import('./topics/ds-01-array'),
   '/data-structures/02-dynamic-array': () => import('./topics/ds-02-dynamic-array'),
   '/data-structures/03-linked-list': () => import('./topics/ds-03-linked-list'),
@@ -63,7 +69,6 @@ const LOADERS: Record<string, QuizLoader> = {
   '/algorithms/19-quickselect': () => import('./topics/algo-19-quickselect'),
   '/algorithms/20-reservoir-sampling': () => import('./topics/algo-20-reservoir-sampling'),
   '/algorithms/21-bst-operations': () => import('./topics/algo-21-bst-operations'),
-  '/algorithms/22-bst-operations': () => import('./topics/algo-22-bst-operations'),
   '/algorithms/23-self-balancing-trees': () => import('./topics/algo-23-self-balancing-trees'),
   '/algorithms/24-trie-operations': () => import('./topics/algo-24-trie-operations'),
   '/algorithms/25-bfs': () => import('./topics/algo-25-bfs'),
@@ -93,7 +98,13 @@ const LOADERS: Record<string, QuizLoader> = {
 }
 
 export const QUIZ_INDEX: QuizIndexEntry[] = [
+  { pagePath: '/fundamentals/00-what-is-a-data-structure', topicId: 'what-is-ds', title: 'What is a Data Structure?', section: 'Fundamentals', quizCount: 8, challengeCount: 2 },
+  { pagePath: '/fundamentals/00-what-is-an-algorithm', topicId: 'what-is-algo', title: 'What is an Algorithm?', section: 'Fundamentals', quizCount: 8, challengeCount: 2 },
   { pagePath: '/fundamentals/01-big-o', topicId: 'big-o', title: 'Big O Notation', section: 'Fundamentals', quizCount: 8, challengeCount: 2 },
+  { pagePath: '/fundamentals/02-recursion-and-memoization', topicId: 'recursion', title: 'Recursion and Memoization', section: 'Fundamentals', quizCount: 8, challengeCount: 2 },
+  { pagePath: '/fundamentals/03-divide-and-conquer', topicId: 'divide-and-conquer', title: 'Divide and Conquer', section: 'Fundamentals', quizCount: 8, challengeCount: 2 },
+  { pagePath: '/fundamentals/04-greedy-paradigm', topicId: 'greedy', title: 'Greedy Paradigm', section: 'Fundamentals', quizCount: 8, challengeCount: 2 },
+  { pagePath: '/fundamentals/05-two-pointers-sliding-window', topicId: 'two-pointers', title: 'Two Pointers and Sliding Window', section: 'Fundamentals', quizCount: 8, challengeCount: 2 },
   { pagePath: '/data-structures/01-array', topicId: 'array', title: 'Array', section: 'Data Structures', quizCount: 8, challengeCount: 2 },
   { pagePath: '/data-structures/02-dynamic-array', topicId: 'dynamic-array', title: 'Dynamic Array', section: 'Data Structures', quizCount: 8, challengeCount: 2 },
   { pagePath: '/data-structures/03-linked-list', topicId: 'linked-list', title: 'Linked List', section: 'Data Structures', quizCount: 8, challengeCount: 2 },
@@ -144,7 +155,6 @@ export const QUIZ_INDEX: QuizIndexEntry[] = [
   { pagePath: '/algorithms/19-quickselect', topicId: 'quickselect', title: 'Quickselect', section: 'Algorithms', quizCount: 8, challengeCount: 2 },
   { pagePath: '/algorithms/20-reservoir-sampling', topicId: 'reservoir-sampling', title: 'Reservoir Sampling', section: 'Algorithms', quizCount: 8, challengeCount: 2 },
   { pagePath: '/algorithms/21-bst-operations', topicId: 'bst-operations', title: 'BST Operations', section: 'Algorithms', quizCount: 8, challengeCount: 2 },
-  { pagePath: '/algorithms/22-bst-operations', topicId: 'bst-operations-22', title: 'BST Operations', section: 'Algorithms', quizCount: 8, challengeCount: 2 },
   { pagePath: '/algorithms/23-self-balancing-trees', topicId: 'self-balancing-trees', title: 'Self-Balancing Trees', section: 'Algorithms', quizCount: 8, challengeCount: 2 },
   { pagePath: '/algorithms/24-trie-operations', topicId: 'trie-operations', title: 'Trie Operations', section: 'Algorithms', quizCount: 8, challengeCount: 2 },
   { pagePath: '/algorithms/25-bfs', topicId: 'bfs', title: 'BFS', section: 'Algorithms', quizCount: 8, challengeCount: 2 },

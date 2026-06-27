@@ -53,6 +53,11 @@ See `resources/production-use-cases.md` for detailed evidence from real systems.
 - Go: `go run examples/go/<file>.go`
 - C#: Compile as console app or use `dotnet script`.
 
+## CI Verification
+- `npm run verify:examples:go` — compile and run all Go examples (HyperLogLog output sanity-checked)
+- `npm run verify:examples:csharp` — compile and run all C# examples via temporary `dotnet` projects
+- `npm run verify:examples` — runs both
+
 ## Philosophy
 We selected examples that are:
 - Accurate to how the structure is actually used (Redis, RocksDB, databases, Netflix-scale analytics)

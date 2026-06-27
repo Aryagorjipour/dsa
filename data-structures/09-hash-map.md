@@ -234,6 +234,10 @@ If your problem involves:
 Master them. Then learn their evil twins (when they aren't fast enough): trees, tries, and the probabilistic structures we'll see later (Bloom, HyperLogLog, Count-Min, etc.).
 
 
+::: tip Quizzes & Challenges
+**Test yourself:** expand **Quizzes & Challenges** at the bottom of this page (or jump to [#quiz](#quiz)). Track progress on the [Quiz Dashboard](/quizzes).
+:::
+
 ::: tip Project Lab
 **Build it yourself:** [Hash Map from Scratch](/projects/tier-1/04-hash-map-from-scratch) — separate chaining, open addressing, Robin Hood hashing, and HashDoS awareness.
 :::

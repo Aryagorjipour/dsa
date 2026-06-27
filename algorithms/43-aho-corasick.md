@@ -210,4 +210,8 @@ Failure links in Aho-Corasick are KMP's LPS idea **generalized to a trie**. KMP 
 
 Aho-Corasick is the **multi-pattern king**: build a trie, add failure links by BFS, scan text once. Preprocess all patterns, search each document in O(n) — the backbone of signature scanning and keyword filtering at scale.
 
+::: tip Quizzes & Challenges
+**Test yourself:** expand **Quizzes & Challenges** at the bottom of this page (or jump to [#quiz](#quiz)). Track progress on the [Quiz Dashboard](/quizzes).
+:::
+
 **Next:** [44 - Backtracking](44-backtracking.md)

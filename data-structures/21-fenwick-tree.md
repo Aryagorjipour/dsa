@@ -204,6 +204,10 @@ Fenwick Tree = one of the most elegant data structures ever invented for prefix 
 
 It shows how deep understanding of binary representation can lead to incredibly simple and fast code.
 
+::: tip Quizzes & Challenges
+**Test yourself:** expand **Quizzes & Challenges** at the bottom of this page (or jump to [#quiz](#quiz)). Track progress on the [Quiz Dashboard](/quizzes).
+:::
+
 ::: tip Project Lab
 **Build it yourself:** [Time-Series Analytics](/projects/tier-3/12-time-series-analytics)
 :::

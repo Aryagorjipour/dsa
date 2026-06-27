@@ -269,6 +269,10 @@ It gives you a way to have a single hash that represents an entire (potentially 
 
 It is fundamental to version control, blockchains, distributed systems, and data integrity at scale.
 
+::: tip Quizzes & Challenges
+**Test yourself:** expand **Quizzes & Challenges** at the bottom of this page (or jump to [#quiz](#quiz)). Track progress on the [Quiz Dashboard](/quizzes).
+:::
+
 ::: tip Project Lab
 **Build it yourself:** [Mini Version Control System](/projects/tier-4/16-mini-version-control) — content-addressable storage with Merkle DAGs.
 :::

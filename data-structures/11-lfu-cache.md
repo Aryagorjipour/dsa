@@ -282,6 +282,10 @@ It is more powerful than LRU in many stable workloads, but significantly harder 
 
 Most engineers will implement LRU from scratch at some point. Fewer will need to implement full LFU — but understanding the concepts makes you dangerous in a good way when tuning caches.
 
+::: tip Quizzes & Challenges
+**Test yourself:** expand **Quizzes & Challenges** at the bottom of this page (or jump to [#quiz](#quiz)). Track progress on the [Quiz Dashboard](/quizzes).
+:::
+
 ::: tip Project Lab
 **Build it yourself:** [Cache with Eviction Policies](/projects/tier-2/05-cache-with-eviction) — compare LRU vs heap-LFU vs O(1) bucket-LFU on Zipfian workloads.
 :::

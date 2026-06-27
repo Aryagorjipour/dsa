@@ -29,32 +29,37 @@ func AStar(grid [][]int, start, goal Point) []Point {
 	h := func(p Point) int { return abs(p.r-goal.r) + abs(p.c-goal.c) }
 
 	gScore := map[Point]int{start: 0}
-	fScore := map[Point]int{start: h(start)}
 	open := &PQ{}
 	heap.Init(open)
-	heap.Push(open, &Item{p: start, f: fScore[start]})
+	heap.Push(open, &Item{p: start, f: h(start)})
 
 	cameFrom := map[Point]Point{}
+	closed := map[Point]bool{}
 
-	dirs := []Point{{0,1},{1,0},{0,-1},{-1,0}}
+	dirs := []Point{{0, 1}, {1, 0}, {0, -1}, {-1, 0}}
 
 	for open.Len() > 0 {
 		cur := heap.Pop(open).(*Item).p
+		if closed[cur] {
+			continue
+		}
+		closed[cur] = true
 		if cur == goal {
 			return reconstruct(cameFrom, cur)
 		}
 		for _, d := range dirs {
 			nr, nc := cur.r+d.r, cur.c+d.c
+			np := Point{nr, nc}
 			if nr < 0 || nr >= rows || nc < 0 || nc >= cols || grid[nr][nc] < 0 {
 				continue
 			}
 			tentative := gScore[cur] + grid[nr][nc]
-			if tentative < gScore[Point{nr,nc}] || gScore[Point{nr,nc}] == 0 {
-				cameFrom[Point{nr,nc}] = cur
-				gScore[Point{nr,nc}] = tentative
-				f := tentative + h(Point{nr,nc})
-				heap.Push(open, &Item{p: Point{nr,nc}, f: f})
+			if prev, ok := gScore[np]; ok && tentative >= prev {
+				continue
 			}
+			cameFrom[np] = cur
+			gScore[np] = tentative
+			heap.Push(open, &Item{p: np, f: tentative + h(np)})
 		}
 	}
 	return nil

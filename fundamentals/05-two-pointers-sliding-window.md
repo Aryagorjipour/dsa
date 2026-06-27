@@ -223,6 +223,10 @@ These patterns appear again and again in almost every algorithm we will study.
 Time to start building **concrete data structures**.
 
 Next: [data-structures/01-array.md](../data-structures/01-array.md)
+::: tip Quizzes & Challenges
+**Test yourself:** expand **Quizzes & Challenges** at the bottom of this page (or jump to [#quiz](#quiz)). Track progress on the [Quiz Dashboard](/quizzes).
+:::
+
 ::: tip Project Lab
 **Build it yourself:** [Statistical Sampler](/projects/tier-2/09-statistical-sampler) and [API Rate Limiter](/projects/tier-4/18-api-rate-limiter) — sliding windows in analytics and rate limiting.
 :::

@@ -151,3 +151,8 @@ Many hard problems start as greedy attempts, then become DP when greedy fails.
 ## Next
 
 Two Pointers and Sliding Window — some of the most practical patterns you will use weekly as an engineer.
+
+::: tip Quizzes & Challenges
+**Test yourself:** expand **Quizzes & Challenges** at the bottom of this page (or jump to [#quiz](#quiz)). Track progress on the [Quiz Dashboard](/quizzes).
+:::
+

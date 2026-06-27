@@ -171,6 +171,10 @@ It is a **mindset** of "I can discard half the search space every time" and care
 It appears in almost every system that needs to find boundaries or perform fast lookups in sorted data.
 
 
+::: tip Quizzes & Challenges
+**Test yourself:** expand **Quizzes & Challenges** at the bottom of this page (or jump to [#quiz](#quiz)). Track progress on the [Quiz Dashboard](/quizzes).
+:::
+
 ::: tip Project Lab
 **Build it yourself:** [Search Library](/projects/tier-1/01-search-library) — binary, exponential, and interpolation search with benchmarks.
 :::

@@ -227,6 +227,10 @@ If your problem involves "connections", "dependencies", "networks", "routes", or
 
 Mastering graphs + the algorithms that run on them (BFS, DFS, shortest path, topological sort, MST) will make you dramatically more powerful as an engineer.
 
+::: tip Quizzes & Challenges
+**Test yourself:** expand **Quizzes & Challenges** at the bottom of this page (or jump to [#quiz](#quiz)). Track progress on the [Quiz Dashboard](/quizzes).
+:::
+
 ::: tip Project Lab
 **Build it yourself:** [Route Planner](/projects/tier-2/08-route-planner) and [Network Optimizer](/projects/tier-3/15-network-optimizer) — shortest paths and backbone design.
 :::

@@ -293,6 +293,10 @@ BST operations turn the ordering invariant into fast search, insert, delete, and
 
 Master insert, delete, validate, k-th, and LCA here; self-balancing trees fix the skew problem next.
 
+::: tip Quizzes & Challenges
+**Test yourself:** expand **Quizzes & Challenges** at the bottom of this page (or jump to [#quiz](#quiz)). Track progress on the [Quiz Dashboard](/quizzes).
+:::
+
 ::: tip Project Lab
 **Build it yourself:** [In-Memory Database Index](/projects/tier-3/10-in-memory-db-index) — BST to self-balancing red-black tree.
 :::

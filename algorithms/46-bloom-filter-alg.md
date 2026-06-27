@@ -221,6 +221,10 @@ See `examples/go/bloom_filter.go` and `examples/csharp/BloomFilterDemo.cs` for r
 
 Bloom filters are a textbook trade-off: bounded memory, O(k) operations, zero false negatives, tunable false positives. The algorithm heart is **optimal m/k sizing** and **double hashing** — get those right and you have a production-grade membership sketch.
 
+::: tip Quizzes & Challenges
+**Test yourself:** expand **Quizzes & Challenges** at the bottom of this page (or jump to [#quiz](#quiz)). Track progress on the [Quiz Dashboard](/quizzes).
+:::
+
 ::: tip Project Lab
 **Build it yourself:** [Distributed Cache](/projects/tier-4/17-distributed-cache) — Bloom filter negative lookups alongside consistent hashing and per-node LRU.
 :::

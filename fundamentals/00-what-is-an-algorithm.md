@@ -192,3 +192,8 @@ That's [fundamentals/01-big-o.md](01-big-o.md).
 Then we'll start building actual structures.
 
 Let's keep going.
+
+::: tip Quizzes & Challenges
+**Test yourself:** expand **Quizzes & Challenges** at the bottom of this page (or jump to [#quiz](#quiz)). Track progress on the [Quiz Dashboard](/quizzes).
+:::
+

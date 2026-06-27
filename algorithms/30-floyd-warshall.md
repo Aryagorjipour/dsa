@@ -280,6 +280,10 @@ Add `import "math"` at the top of a real Go file.
 
 Floyd-Warshall is the elegant DP solution for all-pairs shortest paths: one triple loop, O(V³) time, O(V²) space. Use it when the graph is small and dense, you need every pair, or negative edges (without negative cycles) are present.
 
+::: tip Quizzes & Challenges
+**Test yourself:** expand **Quizzes & Challenges** at the bottom of this page (or jump to [#quiz](#quiz)). Track progress on the [Quiz Dashboard](/quizzes).
+:::
+
 ::: tip Project Lab
 **Build it yourself:** [Route Planner](/projects/tier-2/08-route-planner) — compare single-source Dijkstra vs all-pairs Floyd-Warshall for multi-query routing.
 :::

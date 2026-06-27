@@ -179,6 +179,10 @@ See `examples/go/consistent_hashing.go` and `examples/csharp/ConsistentHashing.c
 
 Consistent hashing is why you can add cache servers to a cluster without causing a thundering herd or massive data movement. The ring + virtual nodes + binary search pattern is the foundation of most production sharding systems.
 
+::: tip Quizzes & Challenges
+**Test yourself:** expand **Quizzes & Challenges** at the bottom of this page (or jump to [#quiz](#quiz)). Track progress on the [Quiz Dashboard](/quizzes).
+:::
+
 ::: tip Project Lab
 **Build it yourself:** [Distributed Cache](/projects/tier-4/17-distributed-cache) — virtual nodes, key migration on resize, Bloom filter negative lookups, and per-node LRU.
 :::

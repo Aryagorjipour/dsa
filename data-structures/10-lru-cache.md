@@ -249,6 +249,10 @@ It is one of the highest-ROI structures you can add to any system that has memor
 
 Once you implement it once from scratch, you will understand caching deeply for the rest of your career.
 
+::: tip Quizzes & Challenges
+**Test yourself:** expand **Quizzes & Challenges** at the bottom of this page (or jump to [#quiz](#quiz)). Track progress on the [Quiz Dashboard](/quizzes).
+:::
+
 ::: tip Project Lab
 **Build it yourself:** [Cache with Eviction Policies](/projects/tier-2/05-cache-with-eviction) — LRU, LFU, and benchmarkable eviction policies in a swappable cache system.
 :::

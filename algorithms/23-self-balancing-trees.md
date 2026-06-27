@@ -114,6 +114,10 @@ Full insert/delete with red-black fixup is in [14 - Red-Black Tree](../data-stru
 
 Self-balancing tree operations are BST operations plus invariant restoration. Augment nodes for order statistics and range queries.
 
+::: tip Quizzes & Challenges
+**Test yourself:** expand **Quizzes & Challenges** at the bottom of this page (or jump to [#quiz](#quiz)). Track progress on the [Quiz Dashboard](/quizzes).
+:::
+
 ::: tip Project Lab
 **Build it yourself:** [In-Memory Database Index](/projects/tier-3/10-in-memory-db-index) — plain BST to red-black tree.
 :::

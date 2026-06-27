@@ -208,6 +208,10 @@ Uses only the bad-character rule on the last pattern character — simpler code,
 
 Boyer-Moore matches right-to-left and jumps forward using bad-character and good-suffix rules. Preprocessing is O(m), but search often skips huge stretches of text — why `grep` loves it.
 
+::: tip Quizzes & Challenges
+**Test yourself:** expand **Quizzes & Challenges** at the bottom of this page (or jump to [#quiz](#quiz)). Track progress on the [Quiz Dashboard](/quizzes).
+:::
+
 ::: tip Project Lab
 **Build it yourself:** [Full-Text Search Engine](/projects/tier-3/13-full-text-search-engine)
 :::

@@ -202,4 +202,8 @@ LIS demonstrates **two paradigms in one problem**: classic O(n²) DP on endings,
 
 Know both — interviews often ask for the optimal version after the quadratic warm-up.
 
+::: tip Quizzes & Challenges
+**Test yourself:** expand **Quizzes & Challenges** at the bottom of this page (or jump to [#quiz](#quiz)). Track progress on the [Quiz Dashboard](/quizzes).
+:::
+
 **Next:** [39 - Knuth-Morris-Pratt (KMP)](39-kmp.md)

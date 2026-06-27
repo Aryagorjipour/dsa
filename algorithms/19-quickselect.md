@@ -84,4 +84,8 @@ func QuickSelect(arr []int, k int) int {
 
 Quickselect is quicksort's sibling — partition once per level, recurse one side, find k-th in linear average time.
 
+::: tip Quizzes & Challenges
+**Test yourself:** expand **Quizzes & Challenges** at the bottom of this page (or jump to [#quiz](#quiz)). Track progress on the [Quiz Dashboard](/quizzes).
+:::
+
 **Next:** [20 - Reservoir Sampling](20-reservoir-sampling.md)

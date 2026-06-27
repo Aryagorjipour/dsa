@@ -209,6 +209,10 @@ LCS and edit distance share the same 2D DP grid shape — the recurrence differs
 
 LCS is the classic **two-sequence DP**: match characters diagonally, otherwise take the best of up or left. It powers text differencing and is the gateway to edit distance and sequence alignment.
 
+::: tip Quizzes & Challenges
+**Test yourself:** expand **Quizzes & Challenges** at the bottom of this page (or jump to [#quiz](#quiz)). Track progress on the [Quiz Dashboard](/quizzes).
+:::
+
 ::: tip Project Lab
 **Build it yourself:** [DP Toolkit](/projects/tier-3/14-dp-toolkit)
 :::

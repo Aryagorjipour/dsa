@@ -314,6 +314,10 @@ Skip lists are one of the most beautiful "probabilistic" data structures that cr
 
 They prove that sometimes "good enough with high probability + much simpler code" wins over "perfectly balanced with more complex code".
 
+::: tip Quizzes & Challenges
+**Test yourself:** expand **Quizzes & Challenges** at the bottom of this page (or jump to [#quiz](#quiz)). Track progress on the [Quiz Dashboard](/quizzes).
+:::
+
 ::: tip Project Lab
 **Build it yourself:** [Persistent Key-Value Store](/projects/tier-3/11-key-value-store)
 :::

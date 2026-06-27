@@ -185,4 +185,8 @@ func CountNQueens(n int) int {
 
 Bit manipulation is the "I need to go fast and stay close to the metal" toolkit. Master XOR for cancellation, `n & (n-1)` for popcount, and bitmasks for compact state — then apply them in backtracking, hashing, and systems code.
 
+::: tip Quizzes & Challenges
+**Test yourself:** expand **Quizzes & Challenges** at the bottom of this page (or jump to [#quiz](#quiz)). Track progress on the [Quiz Dashboard](/quizzes).
+:::
+
 **Next:** [46 - Bloom Filter Algorithms](46-bloom-filter-alg.md)

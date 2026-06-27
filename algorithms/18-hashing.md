@@ -97,6 +97,10 @@ func UniqueStrings(items []string) []string {
 
 Hashing is the foundation for hash maps, sets, caches, and probabilistic structures. Master Two Sum and dedup patterns first.
 
+::: tip Quizzes & Challenges
+**Test yourself:** expand **Quizzes & Challenges** at the bottom of this page (or jump to [#quiz](#quiz)). Track progress on the [Quiz Dashboard](/quizzes).
+:::
+
 ::: tip Project Lab
 **Build it yourself:** [Hash Map from Scratch](/projects/tier-1/04-hash-map-from-scratch) — FNV-1a, collision resolution, and resizing.
 :::
