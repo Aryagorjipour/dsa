@@ -5,15 +5,17 @@ import { showToast } from '../composables/useToast'
 import { buildPlaygroundUrl } from '../utils/playgroundUrl'
 import { handbookLink } from '../utils/handbookLink'
 import { normalizePagePath } from '../utils/normalizePagePath'
-import { useAnnotations } from '../composables/useAnnotations'
+import { useAnnotations, loadAnnotations } from '../composables/useAnnotations'
 import { openNoteDialog } from '../composables/useNoteDialog'
+import { findPageNote } from '../utils/findNoteForAnchor'
 
 const { page } = useData()
 const route = useRoute()
-const { addNote, currentPagePath } = useAnnotations()
+const { notes, addNote, updateNote, removeNote, currentPagePath } = useAnnotations()
 
 const title = computed(() => page.value.title || 'DSA Topic')
 const isProjectPage = computed(() => normalizePagePath(route.path).includes('/projects/tier-'))
+const pageNote = computed(() => findPageNote(currentPagePath.value, notes.value))
 
 function playgroundUrl() {
   return buildPlaygroundUrl({ from: route.path })
@@ -24,20 +26,35 @@ function sharePage() {
   showToast('Link copied to clipboard')
 }
 
-async function addPageNote() {
+async function editPageNote() {
+  await loadAnnotations()
+  const existing = pageNote.value
   const body = await openNoteDialog({
     title: `Note for “${title.value}”`,
     placeholder: 'Page-level notes, takeaways, questions…',
+    initial: existing?.body ?? '',
   })
-  if (!body) return
+  if (body === null) return
+
   try {
-    await addNote({
-      pagePath: currentPagePath.value,
-      anchorType: 'free',
-      title: title.value,
-      body: body.trim(),
-    })
-    showToast('Page note saved — see sidebar or My Notes')
+    const trimmed = body.trim()
+    if (existing) {
+      if (!trimmed) {
+        await removeNote(existing.id)
+        showToast('Page note removed')
+      } else {
+        await updateNote(existing.id, trimmed, title.value)
+        showToast('Page note updated')
+      }
+    } else if (trimmed) {
+      await addNote({
+        pagePath: currentPagePath.value,
+        anchorType: 'free',
+        title: title.value,
+        body: trimmed,
+      })
+      showToast('Page note saved — press Shift+N to view on this page')
+    }
   } catch (err) {
     console.error('[dsa] page note failed', err)
     showToast('Could not save page note')
@@ -91,7 +108,9 @@ Start your explanation now.`
       <span class="mobile-notes-hint">Use the <strong>My Notes</strong> panel in the sidebar for this page.</span>
     </p>
     <div class="actions">
-      <button class="btn" @click="addPageNote">Add page note</button>
+      <button class="btn" :class="{ 'has-note': pageNote }" @click="editPageNote">
+        {{ pageNote ? 'Edit page note' : 'Add page note' }}
+      </button>
       <button class="btn" @click="sharePage">Share</button>
       <button class="btn" @click="giveToAI">{{ isProjectPage ? 'Mentor Mode' : 'Give to AI' }}</button>
       <a v-if="isProjectPage" :href="handbookLink('/projects/README')" class="btn">Project Lab</a>
@@ -165,6 +184,11 @@ Start your explanation now.`
   color: var(--vp-c-text-1);
   display: inline-flex;
   align-items: center;
+}
+
+.btn.has-note {
+  border-color: var(--vp-c-brand-1);
+  color: var(--vp-c-brand-1);
 }
 
 .btn.primary {

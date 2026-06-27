@@ -9,10 +9,12 @@ const props = defineProps({
   editing: { type: Boolean, default: false },
   dragStyle: { type: Object, default: null },
   dragging: { type: Boolean, default: false },
+  pinned: { type: Boolean, default: false },
 })
 
 const emit = defineEmits([
   'focus',
+  'detail',
   'delete',
   'save',
   'color-change',
@@ -42,13 +44,34 @@ const editBody = ref('')
 const bodyRef = ref(null)
 const editAreaRef = ref(null)
 
+const LONG_BODY_CHARS = 100
+const LONG_BODY_LINES = 3
+
+const isPageNote = computed(() => props.note.anchorType === 'free')
+const isSectionNote = computed(() => props.note.anchorType === 'heading')
+const isHighlightNote = computed(() => props.note.anchorType === 'highlight')
+
+const isLongContent = computed(() => {
+  const text = props.note.body || ''
+  return text.length > LONG_BODY_CHARS || text.split('\n').length > LONG_BODY_LINES
+})
+
+const isCompactPreview = computed(
+  () => isPageNote.value || isSectionNote.value || (isHighlightNote.value && isLongContent.value),
+)
+
+const showReadHint = computed(
+  () => isPageNote.value || isSectionNote.value || (isHighlightNote.value && isLongContent.value),
+)
+
 const cardStyle = computed(() => {
-  if (props.dragStyle) return props.dragStyle
-  return {
+  const base = {
     top: props.placement.top + 'px',
     left: props.placement.left + 'px',
-    width: props.placement.width + 'px',
+    width: (props.placement.width || 220) + 'px',
   }
+  if (props.dragStyle) return { ...props.dragStyle, width: base.width }
+  return base
 })
 
 watch(
@@ -79,6 +102,10 @@ function onBodyInput() {
 
 function onCardClick() {
   if (props.editing || props.dragging) return
+  if (isPageNote.value || isSectionNote.value || (isHighlightNote.value && isLongContent.value)) {
+    emit('detail', props.note)
+    return
+  }
   emit('focus', props.note)
 }
 
@@ -131,12 +158,22 @@ function onColorPointerDown(e) {
 <template>
   <article
     class="margin-note-card"
-    :class="{ active, [placement.side]: true, editing, dragging }"
+    :class="{
+      active,
+      [placement.side]: true,
+      editing,
+      dragging,
+      pinned,
+      'note-page': isPageNote,
+      'note-section': isSectionNote,
+      adjacent: placement.placementMode === 'adjacent',
+    }"
     :style="cardStyle"
     @click="onCardClick"
     @dblclick="onCardDblClick"
   >
     <button
+      v-if="!pinned"
       type="button"
       class="margin-note-drag-handle"
       aria-label="Drag to reposition note"
@@ -154,7 +191,8 @@ function onColorPointerDown(e) {
       <template v-if="!editing">
         <span class="margin-note-type">{{ TYPE_LABELS[note.anchorType] || 'Note' }}</span>
         <span v-if="note.title" class="margin-note-title">{{ note.title }}</span>
-        <p class="margin-note-body">{{ note.body }}</p>
+        <p class="margin-note-body" :class="{ compact: isCompactPreview }">{{ note.body }}</p>
+        <span v-if="showReadHint" class="margin-note-read-hint">Click to read full note</span>
       </template>
 
       <template v-else>
@@ -197,7 +235,7 @@ function onColorPointerDown(e) {
           </div>
           <div class="margin-note-edit-actions">
             <button
-              v-if="note.marginLayout"
+              v-if="note.marginLayout && !pinned"
               type="button"
               class="edit-action-btn"
               @mousedown.prevent
@@ -262,6 +300,61 @@ function onColorPointerDown(e) {
 
 .margin-note-card.editing {
   border-color: var(--vp-c-brand-1);
+}
+
+/* Page note — soft glow, pinned at top */
+.margin-note-card.note-page {
+  background: color-mix(in srgb, var(--vp-c-brand-1) 10%, var(--vp-c-bg-elv) 90%);
+  border: 1px solid color-mix(in srgb, var(--vp-c-brand-1) 45%, var(--vp-c-divider));
+  animation: page-note-glow 2.8s ease-in-out infinite;
+}
+
+.margin-note-card.note-page .margin-note-type {
+  color: var(--vp-c-brand-1);
+}
+
+.margin-note-card.note-page .margin-note-content {
+  border-radius: 10px;
+}
+
+@keyframes page-note-glow {
+  0%, 100% {
+    box-shadow:
+      0 0 6px color-mix(in srgb, var(--vp-c-brand-1) 30%, transparent),
+      0 6px 18px rgba(0, 0, 0, 0.12);
+  }
+  50% {
+    box-shadow:
+      0 0 16px color-mix(in srgb, var(--vp-c-brand-1) 55%, transparent),
+      0 0 32px color-mix(in srgb, var(--vp-c-brand-1) 22%, transparent),
+      0 8px 22px rgba(0, 0, 0, 0.14);
+  }
+}
+
+/* Section note — sits beside heading, animated border */
+.margin-note-card.note-section {
+  background: color-mix(in srgb, #10b981 8%, var(--vp-c-bg-elv) 92%);
+  border: 2px solid color-mix(in srgb, #34d399 55%, var(--vp-c-divider));
+  animation: section-border-shift 3.2s ease-in-out infinite;
+}
+
+.margin-note-card.note-section .margin-note-type {
+  color: #10b981;
+}
+
+.margin-note-card.note-section.adjacent {
+  z-index: 109;
+}
+
+@keyframes section-border-shift {
+  0%, 100% {
+    border-color: color-mix(in srgb, #34d399 70%, var(--vp-c-divider));
+    box-shadow: 0 4px 14px rgba(16, 185, 129, 0.12);
+  }
+  50% {
+    border-color: color-mix(in srgb, #6ee7b7 80%, var(--vp-c-brand-1));
+    box-shadow: 0 0 12px rgba(52, 211, 153, 0.28);
+  }
 }
 
 .margin-note-drag-handle {
@@ -330,7 +423,20 @@ function onColorPointerDown(e) {
   -webkit-line-clamp: 4;
   -webkit-box-orient: vertical;
   overflow: hidden;
-  white-space: pre-wrap;
+  text-overflow: ellipsis;
+  word-break: break-word;
+}
+
+.margin-note-body.compact {
+  -webkit-line-clamp: 2;
+}
+
+.margin-note-read-hint {
+  display: block;
+  margin-top: 4px;
+  font-size: 10px;
+  color: var(--vp-c-text-3);
+  font-style: italic;
 }
 
 .margin-note-title-input,
@@ -436,5 +542,12 @@ function onColorPointerDown(e) {
   padding: 6px 6px 0 0;
   font-size: 11px;
   line-height: 1;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .margin-note-card.note-page,
+  .margin-note-card.note-section {
+    animation: none;
+  }
 }
 </style>

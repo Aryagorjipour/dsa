@@ -1,6 +1,8 @@
 import type { Highlight, Note } from '../composables/useStorage'
 import { getNoteAnchor } from './scrollToNote'
 
+export type PlacementMode = 'margin' | 'adjacent' | 'pinned'
+
 export interface NotePlacement {
   note: Note
   top: number
@@ -13,15 +15,19 @@ export interface NotePlacement {
   cardAnchorX: number
   cardAnchorY: number
   manual: boolean
+  pinned?: boolean
+  placementMode?: PlacementMode
 }
 
 export const MARGIN_NOTES_MOBILE_MAX = 960
 
 const CARD_WIDTH = 220
+const SECTION_CARD_WIDTH = 200
 const CARD_GAP = 8
 const CARD_EST_HEIGHT = 88
 const VIEWPORT_PAD = 8
 const MARGIN_GAP = 12
+const SECTION_GAP = 10
 
 export interface LayoutBounds {
   contentRect: DOMRect
@@ -187,18 +193,22 @@ function buildPlacement(
   height: number,
   side: 'left' | 'right',
   manual: boolean,
+  options: { pinned?: boolean; placementMode?: PlacementMode; width?: number } = {},
 ): NotePlacement {
+  const width = options.width ?? CARD_WIDTH
   const anchorRect = anchor.rect
   const anchorY = anchorRect.top + anchorRect.height / 2
   const anchorX = side === 'left' ? anchorRect.left : anchorRect.right
-  const cardAnchorX = side === 'left' ? left + CARD_WIDTH : left
+  const cardAnchorX = side === 'left' ? left + width : left
   const cardAnchorY = top + height / 2
+  const pinned = options.pinned ?? false
+  const placementMode = options.placementMode ?? (pinned ? 'pinned' : 'margin')
 
   return {
     note,
     top,
     left,
-    width: CARD_WIDTH,
+    width,
     height,
     side,
     anchorX,
@@ -206,7 +216,52 @@ function buildPlacement(
     cardAnchorX,
     cardAnchorY,
     manual,
+    pinned,
+    placementMode,
   }
+}
+
+function layoutAdjacentHeading(
+  note: Note,
+  anchor: NonNullable<ReturnType<typeof getNoteAnchor>>,
+  bounds: LayoutBounds,
+  height: number,
+  lastBottom: Record<'left' | 'right', number>,
+): NotePlacement | null {
+  const anchorRect = anchor.rect
+  if (!isAnchorInView(anchorRect, bounds.navBottom)) return null
+
+  let side: 'left' | 'right' = 'right'
+  let left = anchorRect.right + SECTION_GAP
+
+  if (left + SECTION_CARD_WIDTH > window.innerWidth - VIEWPORT_PAD) {
+    side = 'left'
+    left = anchorRect.left - SECTION_CARD_WIDTH - SECTION_GAP
+  }
+
+  if (left < VIEWPORT_PAD) {
+    side = bounds.hasRight ? 'right' : 'left'
+    left = side === 'right' ? bounds.rightX : bounds.leftX
+  }
+
+  let top = anchorRect.top + anchorRect.height / 2 - height / 2
+  if (lastBottom[side] > -Infinity && top < lastBottom[side] + CARD_GAP) {
+    top = lastBottom[side] + CARD_GAP
+  }
+
+  top = Math.max(
+    bounds.navBottom,
+    Math.min(top, window.innerHeight - height - VIEWPORT_PAD),
+  )
+
+  if (!isBoxInView(top, height, bounds.navBottom)) return null
+
+  lastBottom[side] = top + height
+
+  return buildPlacement(note, anchor, top, left, height, side, false, {
+    placementMode: 'adjacent',
+    width: SECTION_CARD_WIDTH,
+  })
 }
 
 export function sortNotesByPagePosition(notes: Note[], highlights: Highlight[]): Note[] {
@@ -238,8 +293,34 @@ export function layoutMarginNotes(
   const placements: NotePlacement[] = []
   const lastBottom: Record<'left' | 'right', number> = { left: -Infinity, right: -Infinity }
 
-  const autoItems = items.filter(item => !item.note.marginLayout)
-  const manualItems = items.filter(item => item.note.marginLayout)
+  const pinnedItems = items.filter(item => item.note.anchorType === 'free')
+  const regularItems = items.filter(item => item.note.anchorType !== 'free')
+
+  for (const { note, anchor } of pinnedItems) {
+    const height = heights[note.id] || CARD_EST_HEIGHT
+    let side: 'left' | 'right' = bounds.hasRight ? 'right' : 'left'
+    if (side === 'right' && !bounds.hasRight) side = 'left'
+    if (side === 'left' && !bounds.hasLeft) side = 'right'
+
+    let top = bounds.navBottom
+    if (lastBottom[side] > -Infinity && top < lastBottom[side] + CARD_GAP) {
+      top = lastBottom[side] + CARD_GAP
+    }
+
+    lastBottom[side] = top + height
+    const left = sideX(side, bounds)
+    placements.push(
+      buildPlacement(note, anchor, top, left, height, side, false, {
+        pinned: true,
+        placementMode: 'pinned',
+      }),
+    )
+  }
+
+  const autoItems = regularItems.filter(item => !item.note.marginLayout)
+  const manualItems = regularItems.filter(item => item.note.marginLayout)
+  const headingAutoItems = autoItems.filter(item => item.note.anchorType === 'heading')
+  const marginAutoItems = autoItems.filter(item => item.note.anchorType !== 'heading')
 
   for (const { note, anchor } of manualItems) {
     const height = heights[note.id] || CARD_EST_HEIGHT
@@ -256,11 +337,19 @@ export function layoutMarginNotes(
     if (!isBoxInView(manual.top, height, bounds.navBottom)) continue
 
     placements.push(
-      buildPlacement(note, anchor, manual.top, manual.left, height, manual.side, true),
+      buildPlacement(note, anchor, manual.top, manual.left, height, manual.side, true, {
+        placementMode: note.anchorType === 'heading' ? 'adjacent' : 'margin',
+      }),
     )
   }
 
-  for (const { note, anchor } of autoItems) {
+  for (const { note, anchor } of headingAutoItems) {
+    const height = heights[note.id] || CARD_EST_HEIGHT
+    const placement = layoutAdjacentHeading(note, anchor, bounds, height, lastBottom)
+    if (placement) placements.push(placement)
+  }
+
+  for (const { note, anchor } of marginAutoItems) {
     const anchorRect = anchor.rect
     if (!isAnchorInView(anchorRect, bounds.navBottom)) continue
 
@@ -281,7 +370,9 @@ export function layoutMarginNotes(
     lastBottom[side] = top + height
 
     const left = sideX(side, bounds)
-    placements.push(buildPlacement(note, anchor, top, left, height, side, false))
+    placements.push(
+      buildPlacement(note, anchor, top, left, height, side, false, { placementMode: 'margin' }),
+    )
   }
 
   return placements

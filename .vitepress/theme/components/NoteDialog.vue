@@ -40,7 +40,7 @@ function onKeydown(e) {
   position: fixed;
   inset: 0;
   background: rgba(0, 0, 0, 0.45);
-  z-index: 400;
+  z-index: 410;
   display: flex;
   align-items: center;
   justify-content: center;

@@ -12,6 +12,7 @@ import Toast from './components/Toast.vue'
 import AnnotationToolbar from './components/AnnotationToolbar.vue'
 import AnnotationRestorer from './components/AnnotationRestorer.vue'
 import NoteDialog from './components/NoteDialog.vue'
+import NoteDetailModal from './components/NoteDetailModal.vue'
 import CodeBlockActions from './components/CodeBlockActions.vue'
 import HeadingNotes from './components/HeadingNotes.vue'
 import PageNotesRail from './components/PageNotesRail.vue'
@@ -81,6 +82,7 @@ const showFallbackFocus = computed(() => {
   <Toast />
   <AnnotationToolbar />
   <NoteDialog />
+  <NoteDetailModal />
   <AnnotationRestorer />
   <CodeBlockActions />
   <HeadingNotes />

@@ -12,6 +12,7 @@ import { layoutMarginNotes, connectorPath, isMarginNotesMobile } from '../utils/
 import { onAnnotationsRestored } from '../utils/annotationLifecycle'
 import { handbookLink } from '../utils/handbookLink'
 import { showToast } from '../composables/useToast'
+import { openNoteDetailModal } from '../composables/useNoteDetailModal'
 import MarginNoteCard from './MarginNoteCard.vue'
 
 const route = useRoute()
@@ -69,11 +70,13 @@ const showOnPage = computed(() => {
 })
 
 const connectors = computed(() =>
-  placements.value.map(p => ({
-    id: p.note.id,
-    path: connectorPath(p),
-    active: activeNoteId.value === p.note.id,
-  }))
+  placements.value
+    .filter(p => !p.pinned)
+    .map(p => ({
+      id: p.note.id,
+      path: connectorPath(p),
+      active: activeNoteId.value === p.note.id,
+    }))
 )
 
 function highlightColorForNote(note) {
@@ -170,6 +173,25 @@ async function focusNote(note) {
   scheduleLayout()
 }
 
+async function openNoteDetail(note) {
+  if (justDragged.value) return
+  if (editingNoteId.value) return
+  if (!loaded.value) await loadAnnotations()
+  setActiveNoteId(note.id)
+  openNoteDetailModal(note)
+  if (note.anchorType === 'heading' || note.anchorType === 'highlight') {
+    const ok = await scrollToNote(note, { highlights: highlights.value, block: 'nearest' })
+    if (!ok) {
+      showToast(
+        note.anchorType === 'heading'
+          ? 'Could not find this section on the page'
+          : 'Could not find this highlight on the page',
+      )
+    }
+  }
+  scheduleLayout()
+}
+
 function onToggle() {
   togglePageNotesRail()
   nextTick(() => scheduleLayoutWithRetry())
@@ -193,6 +215,7 @@ async function persistDragPosition(noteId, docTop, docLeft) {
 }
 
 function handleDragPointerDown(e, note, placement) {
+  if (placement.pinned) return
   onDragPointerDown(e, note, placement)
 }
 
@@ -301,7 +324,7 @@ watch(placements, () => nextTick(setupResizeObserver))
   <Teleport to="body">
     <div v-if="showDock" class="page-bottom-dock-wrap">
       <p v-if="marginNotesEnabled && isOpen" class="page-notes-hint" aria-live="polite">
-        Drag handle to reposition · Double-click to edit · <kbd>Esc</kbd> to close
+        Drag to reposition · Click long notes to read full text · Double-click to edit · <kbd>Esc</kbd> to close
         <a :href="handbookLink('/my-notes')" class="hint-link">All notes</a>
       </p>
       <div class="page-bottom-dock">
@@ -358,9 +381,11 @@ watch(placements, () => nextTick(setupResizeObserver))
         :active="activeNoteId === p.note.id"
         :highlight-color="highlightColorForNote(p.note)"
         :editing="editingNoteId === p.note.id"
-        :drag-style="getDragStyle(p.note.id)"
-        :dragging="isDragging(p.note.id)"
+        :pinned="!!p.pinned"
+        :drag-style="p.pinned ? null : getDragStyle(p.note.id)"
+        :dragging="!p.pinned && isDragging(p.note.id)"
         @focus="focusNote"
+        @detail="openNoteDetail"
         @delete="removeNote"
         @save="saveEdit"
         @color-change="changeHighlightColor"

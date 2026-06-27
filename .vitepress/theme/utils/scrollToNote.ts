@@ -182,7 +182,11 @@ function findNoteAnchor(note: Note, highlights: Highlight[]): NoteAnchor | null 
   }
 
   if (note.anchorType === 'free') {
-    const el = document.getElementById('dsa-page-tools')
+    const doc = document.querySelector('.vp-doc')
+    const el =
+      doc?.querySelector('h1') ||
+      doc?.querySelector('h2') ||
+      doc?.firstElementChild
     if (!el) return null
     return { rect: el.getBoundingClientRect(), element: el }
   }
@@ -199,7 +203,13 @@ function findHashTarget(hash: string, highlights: Highlight[]): Element | null {
   }
 
   if (hash === PAGE_NOTE_HASH) {
-    return document.getElementById('dsa-page-tools')
+    const doc = document.querySelector('.vp-doc')
+    return (
+      doc?.querySelector('h1') ||
+      doc?.querySelector('h2') ||
+      doc?.firstElementChild ||
+      null
+    )
   }
 
   const id = hash.startsWith('#') ? hash.slice(1) : hash

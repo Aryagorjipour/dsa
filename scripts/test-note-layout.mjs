@@ -210,5 +210,54 @@ assert(
   'unknown highlight returns undefined',
 )
 
+// findNoteForAnchor logic (mirror of findNoteForAnchor.ts)
+function findNoteForHeading(headingId, pagePath, notes) {
+  return notes.find(
+    n => pathsMatch(n.pagePath, pagePath) && n.anchorType === 'heading' && n.anchorId === headingId,
+  )
+}
+
+function findPageNote(pagePath, notes) {
+  const matches = notes.filter(n => pathsMatch(n.pagePath, pagePath) && n.anchorType === 'free')
+  if (!matches.length) return undefined
+  return matches.sort((a, b) => b.updatedAt - a.updatedAt)[0]
+}
+
+const anchorNotes = [
+  { id: 'h1', pagePath: '/algorithms/07-binary-search', anchorType: 'heading', anchorId: 'complexity', body: 'section', updatedAt: 1 },
+  { id: 'f1', pagePath: '/algorithms/07-binary-search', anchorType: 'free', body: 'older page', updatedAt: 1 },
+  { id: 'f2', pagePath: '/algorithms/07-binary-search', anchorType: 'free', body: 'newer page', updatedAt: 5 },
+  { id: 'h2', pagePath: '/other', anchorType: 'heading', anchorId: 'complexity', body: 'wrong page', updatedAt: 1 },
+]
+
+assert(
+  findNoteForHeading('complexity', '/dsa/algorithms/07-binary-search', anchorNotes)?.body === 'section',
+  'findNoteForHeading matches heading on page',
+)
+assert(
+  findNoteForHeading('complexity', '/algorithms/07-binary-search', anchorNotes)?.body !== 'wrong page',
+  'findNoteForHeading ignores same id on other page',
+)
+assert(
+  findPageNote('/algorithms/07-binary-search', anchorNotes)?.body === 'newer page',
+  'findPageNote returns most recently updated free note',
+)
+assert(
+  findPageNote('/missing', anchorNotes) === undefined,
+  'findPageNote returns undefined when none',
+)
+
+// pinned free notes always placed at navBottom (layout logic mirror)
+function layoutPinnedFreeTop(navBottom, side, lastBottom, height) {
+  let top = navBottom
+  if (lastBottom > -Infinity && top < lastBottom + 8) {
+    top = lastBottom + 8
+  }
+  return top
+}
+
+assert(layoutPinnedFreeTop(72, 'right', -Infinity, 88) === 72, 'pinned page note starts at nav bottom')
+assert(layoutPinnedFreeTop(72, 'right', 160, 88) === 168, 'multiple pinned notes stack with gap')
+
 console.log(`\n${passed} passed, ${failed} failed`)
 process.exit(failed > 0 ? 1 : 0)

@@ -268,3 +268,10 @@ html.dark mark.dsa-hl:hover {
   color: var(--vp-c-brand-1);
   border-color: var(--vp-c-brand-1);
 }
+
+.dsa-heading-note-btn.has-note {
+  opacity: 1;
+  color: var(--vp-c-brand-1);
+  border-color: var(--vp-c-brand-1);
+  background: color-mix(in srgb, var(--vp-c-brand-1) 12%, var(--vp-c-bg-soft));
+}

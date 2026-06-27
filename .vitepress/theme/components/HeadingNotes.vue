@@ -1,12 +1,70 @@
 <script setup>
 import { onMounted, onUnmounted, watch } from 'vue'
 import { useRoute } from 'vitepress'
-import { useAnnotations } from '../composables/useAnnotations'
+import { useAnnotations, loadAnnotations } from '../composables/useAnnotations'
 import { openNoteDialog } from '../composables/useNoteDialog'
 import { showToast } from '../composables/useToast'
+import { findNoteForHeading } from '../utils/findNoteForAnchor'
 
 const route = useRoute()
-const { addNote, currentPagePath } = useAnnotations()
+const { notes, addNote, updateNote, removeNote, currentPagePath } = useAnnotations()
+
+function updateHeadingButtonStates() {
+  document.querySelectorAll('.dsa-heading-note-btn').forEach(btn => {
+    const heading = btn.closest('h2, h3')
+    const id = heading?.id
+    if (!id) return
+
+    const hasNote = !!findNoteForHeading(id, currentPagePath.value, notes.value)
+    const sectionTitle = heading.textContent?.trim() || 'Section note'
+
+    btn.classList.toggle('has-note', hasNote)
+    btn.title = hasNote ? 'Edit section note' : 'Add section note'
+    btn.setAttribute(
+      'aria-label',
+      hasNote ? `Edit note for section: ${sectionTitle}` : `Add note to section: ${sectionTitle}`,
+    )
+  })
+}
+
+async function onHeadingNoteClick(heading, headingId) {
+  const sectionTitle = heading.textContent?.trim() || 'Section note'
+  await loadAnnotations()
+
+  const existing = findNoteForHeading(headingId, currentPagePath.value, notes.value)
+  const body = await openNoteDialog({
+    title: `Note for “${sectionTitle}”`,
+    placeholder: 'Section notes, reminders, questions…',
+    initial: existing?.body ?? '',
+  })
+  if (body === null) return
+
+  try {
+    const trimmed = body.trim()
+    if (existing) {
+      if (!trimmed) {
+        await removeNote(existing.id)
+        showToast('Section note removed')
+      } else {
+        await updateNote(existing.id, trimmed, sectionTitle)
+        showToast('Section note updated')
+      }
+    } else if (trimmed) {
+      await addNote({
+        pagePath: currentPagePath.value,
+        anchorType: 'heading',
+        anchorId: headingId,
+        title: sectionTitle,
+        body: trimmed,
+      })
+      showToast('Section note saved')
+    }
+    updateHeadingButtonStates()
+  } catch (err) {
+    console.error('[dsa] section note failed', err)
+    showToast('Could not save section note')
+  }
+}
 
 function injectHeadingButtons() {
   const doc = document.querySelector('.vp-doc')
@@ -20,36 +78,18 @@ function injectHeadingButtons() {
     const btn = document.createElement('button')
     btn.className = 'dsa-heading-note-btn'
     btn.type = 'button'
-    btn.title = 'Add section note'
-    btn.setAttribute('aria-label', `Add note to section: ${heading.textContent}`)
     btn.textContent = '+'
     btn.addEventListener('click', async e => {
       e.preventDefault()
       e.stopPropagation()
-      const title = heading.textContent?.trim() || 'Section note'
-      const body = await openNoteDialog({
-        title: `Note for “${title}”`,
-        placeholder: 'Section notes, reminders, questions…',
-      })
-      if (!body) return
-      try {
-        await addNote({
-          pagePath: currentPagePath.value,
-          anchorType: 'heading',
-          anchorId: id,
-          title,
-          body: body.trim(),
-        })
-        showToast('Section note saved')
-      } catch (err) {
-        console.error('[dsa] section note failed', err)
-        showToast('Could not save section note')
-      }
+      await onHeadingNoteClick(heading, id)
     })
 
     heading.classList.add('dsa-heading-with-note')
     heading.appendChild(btn)
   })
+
+  updateHeadingButtonStates()
 }
 
 function cleanup() {
@@ -62,7 +102,6 @@ function cleanup() {
 function scheduleInject() {
   requestAnimationFrame(() => {
     injectHeadingButtons()
-    // Firefox can paint .vp-doc slightly after route change; retry once.
     setTimeout(injectHeadingButtons, 100)
   })
 }
@@ -77,6 +116,8 @@ watch(() => route.path, () => {
   cleanup()
   scheduleInject()
 })
+
+watch(notes, () => updateHeadingButtonStates(), { deep: true })
 </script>
 
 <template>
