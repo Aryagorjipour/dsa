@@ -22,6 +22,12 @@ export interface Highlight {
   textSnapshot: string
 }
 
+export interface NoteMarginLayout {
+  docTop: number
+  docLeft: number
+  updatedAt: number
+}
+
 export interface Note {
   id: string
   pagePath: string
@@ -31,6 +37,7 @@ export interface Note {
   body: string
   createdAt: number
   updatedAt: number
+  marginLayout?: NoteMarginLayout
 }
 
 export interface PlaygroundSnippet {

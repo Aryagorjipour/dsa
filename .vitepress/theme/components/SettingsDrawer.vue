@@ -3,6 +3,7 @@ import { ref } from 'vue'
 import { exportUserData, importUserData, clearAllUserData } from '../composables/useStorage'
 import { showToast } from '../composables/useToast'
 import { loadAnnotations } from '../composables/useAnnotations'
+import { scheduleAnnotationRestore } from '../utils/annotationLifecycle'
 
 const open = ref(false)
 const fileInput = ref(null)
@@ -32,6 +33,7 @@ async function handleImport(e) {
     const mode = confirm('Merge with existing data? (Cancel = replace all)') ? 'merge' : 'replace'
     await importUserData(data, mode)
     await loadAnnotations()
+    scheduleAnnotationRestore(true)
     showToast('Data imported successfully')
   } catch {
     showToast('Import failed — invalid file format')

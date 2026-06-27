@@ -7,19 +7,22 @@ import {
   scheduleAnnotationRestore,
 } from '../utils/annotationLifecycle'
 import { scrollToHash } from '../utils/scrollToNote'
+import { normalizePagePath } from '../utils/normalizePagePath'
 
 const route = useRoute()
-const { pageHighlights, highlightsVisible } = useAnnotations()
+const { highlights, highlightsVisible } = useAnnotations()
 
 function followNoteHash() {
   const hash = window.location.hash
   if (!hash) return
-  scrollToHash(hash, pageHighlights.value)
+  scrollToHash(hash, highlights.value)
 }
 
 onMounted(async () => {
   bindAnnotationRestore({
-    getHighlights: () => pageHighlights.value,
+    getAllHighlights: () => highlights.value,
+    getActivePath: () => normalizePagePath(window.location.pathname),
+    getRoutePath: () => route.path,
     isVisible: () => highlightsVisible.value,
   })
 

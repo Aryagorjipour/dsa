@@ -6,6 +6,7 @@ import { removeHighlightFromDOM, updateHighlightColorInDOM } from '../utils/high
 import {
   type Highlight,
   type Note,
+  type NoteMarginLayout,
   getHighlights,
   setHighlights,
   getNotes,
@@ -105,6 +106,21 @@ export function useAnnotations() {
     await setNotes(notes.value)
   }
 
+  async function updateNoteMarginLayout(
+    id: string,
+    layout: NoteMarginLayout | null,
+  ) {
+    notes.value = notes.value.map(n => {
+      if (n.id !== id) return n
+      if (!layout) {
+        const { marginLayout: _removed, ...rest } = n
+        return { ...rest, updatedAt: Date.now() }
+      }
+      return { ...n, marginLayout: layout, updatedAt: Date.now() }
+    })
+    await setNotes(notes.value)
+  }
+
   async function removeNote(id: string) {
     notes.value = notes.value.filter(n => n.id !== id)
     highlights.value = highlights.value.map(h =>
@@ -132,6 +148,7 @@ export function useAnnotations() {
     updateHighlightColor,
     addNote,
     updateNote,
+    updateNoteMarginLayout,
     removeNote,
     toggleHighlightsVisible,
     loadAnnotations,

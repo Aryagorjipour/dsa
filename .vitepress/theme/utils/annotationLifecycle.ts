@@ -4,10 +4,13 @@ import type { Highlight } from '../composables/useStorage'
 import { assignBlockIds } from './assignBlockIds'
 import { ensureHighlightInDOM } from './highlightRestorer'
 import { normalizePagePath } from './normalizePagePath'
+import { pathsMatch } from './pagePathKey'
 import { scrollToHash } from './scrollToNote'
 
 export interface AnnotationRestoreContext {
-  getHighlights: () => Highlight[]
+  getAllHighlights: () => Highlight[]
+  getActivePath: () => string
+  getRoutePath: () => string
   isVisible: () => boolean
 }
 
@@ -20,6 +23,11 @@ let debounceTimer = 0
 const restoreListeners = new Set<RestoreListener>()
 
 const MAX_ATTEMPTS = 20
+
+/** Pure helper — filter highlights for a canonical page path. */
+export function getHighlightsForPath(all: Highlight[], path: string): Highlight[] {
+  return all.filter(h => pathsMatch(h.pagePath, path))
+}
 
 function escapeAttr(value: string): string {
   if (typeof CSS !== 'undefined' && typeof CSS.escape === 'function') {
@@ -47,6 +55,13 @@ function pageContentReady(highlights: Highlight[]): boolean {
     }
   }
   return false
+}
+
+function isRouteAndDocReady(expectedPath: string, highlights: Highlight[]): boolean {
+  if (!context) return false
+  if (normalizePagePath(window.location.pathname) !== expectedPath) return false
+  if (normalizePagePath(context.getRoutePath()) !== expectedPath) return false
+  return pageContentReady(highlights)
 }
 
 function countAppliedMarks(highlights: Highlight[]): number {
@@ -101,6 +116,11 @@ function notifyRestored(): void {
   }
 }
 
+function highlightsForRestore(expectedPath: string): Highlight[] {
+  if (!context) return []
+  return getHighlightsForPath(context.getAllHighlights(), expectedPath)
+}
+
 export function bindAnnotationRestore(ctx: AnnotationRestoreContext): void {
   context = ctx
 }
@@ -118,6 +138,18 @@ export function cancelAnnotationRestore(): void {
   }
 }
 
+function onNavigationStart(): void {
+  cancelAnnotationRestore()
+  clearExistingMarks()
+}
+
+async function afterRouteSettled(scrollHash: boolean): Promise<void> {
+  await nextTick()
+  await new Promise<void>(resolve => requestAnimationFrame(() => resolve()))
+  await new Promise<void>(resolve => requestAnimationFrame(() => resolve()))
+  scheduleAnnotationRestore(scrollHash)
+}
+
 export function setupAnnotationRouter(router: Router): void {
   if (routerHooked) return
   routerHooked = true
@@ -126,26 +158,27 @@ export function setupAnnotationRouter(router: Router): void {
   router.onBeforeRouteChange = async href => {
     if ((await previousBefore?.(href)) === false) return false
     if (typeof document === 'undefined') return
-    cancelAnnotationRestore()
-    clearExistingMarks()
+    onNavigationStart()
   }
 
   const previousAfter = router.onAfterRouteChange ?? router.onAfterRouteChanged
   const previousAfterPage = router.onAfterPageLoad
 
+  // onAfterPageLoad fires before route.path / component update — do not restore here.
   router.onAfterPageLoad = async href => {
     await previousAfterPage?.(href)
-    if (typeof document === 'undefined') return
-    await nextTick()
-    scheduleAnnotationRestore(true)
   }
 
   router.onAfterRouteChange = async href => {
     await previousAfter?.(href)
     if (typeof document === 'undefined') return
-    await nextTick()
-    await new Promise<void>(resolve => requestAnimationFrame(() => resolve()))
-    scheduleAnnotationRestore(true)
+    await afterRouteSettled(true)
+  }
+
+  if (typeof window !== 'undefined') {
+    window.addEventListener('popstate', () => {
+      onNavigationStart()
+    })
   }
 }
 
@@ -156,10 +189,10 @@ async function runRestore(token: number, expectedPath: string, scrollHash: boole
     if (token !== restoreToken) return
     if (normalizePagePath(window.location.pathname) !== expectedPath) return
 
-    const highlights = context!.getHighlights()
+    const highlights = highlightsForRestore(expectedPath)
     const visible = context!.isVisible()
 
-    if (!pageContentReady(highlights)) {
+    if (!isRouteAndDocReady(expectedPath, highlights)) {
       await delay(attemptDelay(attempt))
       continue
     }
@@ -194,7 +227,7 @@ async function runRestore(token: number, expectedPath: string, scrollHash: boole
 
   if (token !== restoreToken) return
 
-  const highlights = context!.getHighlights()
+  const highlights = highlightsForRestore(expectedPath)
   if (context!.isVisible() && highlights.length > 0) {
     if (!cleared) clearExistingMarks()
     applyHighlights(highlights)

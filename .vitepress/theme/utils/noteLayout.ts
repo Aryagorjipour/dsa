@@ -12,6 +12,7 @@ export interface NotePlacement {
   anchorY: number
   cardAnchorX: number
   cardAnchorY: number
+  manual: boolean
 }
 
 export const MARGIN_NOTES_MOBILE_MAX = 960
@@ -22,7 +23,7 @@ const CARD_EST_HEIGHT = 88
 const VIEWPORT_PAD = 8
 const MARGIN_GAP = 12
 
-interface LayoutBounds {
+export interface LayoutBounds {
   contentRect: DOMRect
   navBottom: number
   leftX: number
@@ -47,7 +48,7 @@ function contentColumnRect(): DOMRect | null {
   return el?.getBoundingClientRect() ?? null
 }
 
-function layoutBounds(): LayoutBounds | null {
+export function layoutBounds(): LayoutBounds | null {
   const contentRect = contentColumnRect()
   if (!contentRect) return null
 
@@ -98,6 +99,47 @@ export interface NoteSortKey {
   x: number
 }
 
+export function docToViewportTop(docTop: number, scrollY: number): number {
+  return docTop - scrollY
+}
+
+export function viewportToDocTop(viewportTop: number, scrollY: number): number {
+  return viewportTop + scrollY
+}
+
+export function viewportToDocLeft(viewportLeft: number, scrollX: number): number {
+  return viewportLeft + scrollX
+}
+
+export function applyManualLayout(
+  note: Note,
+  bounds: LayoutBounds,
+  height: number,
+  scrollY: number,
+  scrollX: number,
+  viewportHeight: number,
+  viewportWidth: number,
+): { top: number; left: number; side: 'left' | 'right' } | null {
+  if (!note.marginLayout) return null
+
+  const rawTop = docToViewportTop(note.marginLayout.docTop, scrollY)
+  const rawLeft = note.marginLayout.docLeft - scrollX
+
+  const top = Math.max(
+    bounds.navBottom,
+    Math.min(rawTop, viewportHeight - height - VIEWPORT_PAD),
+  )
+  const left = Math.max(
+    VIEWPORT_PAD,
+    Math.min(rawLeft, viewportWidth - CARD_WIDTH - VIEWPORT_PAD),
+  )
+
+  const contentCenter = bounds.contentRect.left + bounds.contentRect.width / 2
+  const side: 'left' | 'right' = left + CARD_WIDTH / 2 < contentCenter ? 'left' : 'right'
+
+  return { top, left, side }
+}
+
 export function getNoteSortKey(note: Note, highlights: Highlight[]): NoteSortKey {
   const anchor = getNoteAnchor(note, highlights)
   if (!anchor) return { y: Number.POSITIVE_INFINITY, x: Number.POSITIVE_INFINITY }
@@ -137,6 +179,36 @@ function isBoxInView(top: number, height: number, topBound: number): boolean {
   return top + height > topBound && top < window.innerHeight - VIEWPORT_PAD
 }
 
+function buildPlacement(
+  note: Note,
+  anchor: NonNullable<ReturnType<typeof getNoteAnchor>>,
+  top: number,
+  left: number,
+  height: number,
+  side: 'left' | 'right',
+  manual: boolean,
+): NotePlacement {
+  const anchorRect = anchor.rect
+  const anchorY = anchorRect.top + anchorRect.height / 2
+  const anchorX = side === 'left' ? anchorRect.left : anchorRect.right
+  const cardAnchorX = side === 'left' ? left + CARD_WIDTH : left
+  const cardAnchorY = top + height / 2
+
+  return {
+    note,
+    top,
+    left,
+    width: CARD_WIDTH,
+    height,
+    side,
+    anchorX,
+    anchorY,
+    cardAnchorX,
+    cardAnchorY,
+    manual,
+  }
+}
+
 export function sortNotesByPagePosition(notes: Note[], highlights: Highlight[]): Note[] {
   return [...notes].sort((a, b) =>
     compareNoteSortKeys(getNoteSortKey(a, highlights), getNoteSortKey(b, highlights)),
@@ -153,6 +225,9 @@ export function layoutMarginNotes(
   const bounds = layoutBounds()
   if (!bounds) return []
 
+  const scrollY = window.scrollY
+  const scrollX = window.scrollX
+
   const items = sortNotesByPagePosition(notes, highlights)
     .map(note => ({
       note,
@@ -163,7 +238,29 @@ export function layoutMarginNotes(
   const placements: NotePlacement[] = []
   const lastBottom: Record<'left' | 'right', number> = { left: -Infinity, right: -Infinity }
 
-  for (const { note, anchor } of items) {
+  const autoItems = items.filter(item => !item.note.marginLayout)
+  const manualItems = items.filter(item => item.note.marginLayout)
+
+  for (const { note, anchor } of manualItems) {
+    const height = heights[note.id] || CARD_EST_HEIGHT
+    const manual = applyManualLayout(
+      note,
+      bounds,
+      height,
+      scrollY,
+      scrollX,
+      window.innerHeight,
+      window.innerWidth,
+    )
+    if (!manual) continue
+    if (!isBoxInView(manual.top, height, bounds.navBottom)) continue
+
+    placements.push(
+      buildPlacement(note, anchor, manual.top, manual.left, height, manual.side, true),
+    )
+  }
+
+  for (const { note, anchor } of autoItems) {
     const anchorRect = anchor.rect
     if (!isAnchorInView(anchorRect, bounds.navBottom)) continue
 
@@ -184,23 +281,7 @@ export function layoutMarginNotes(
     lastBottom[side] = top + height
 
     const left = sideX(side, bounds)
-    const anchorY = anchorRect.top + anchorRect.height / 2
-    const anchorX = side === 'left' ? anchorRect.left : anchorRect.right
-    const cardAnchorX = side === 'left' ? left + CARD_WIDTH : left
-    const cardAnchorY = top + height / 2
-
-    placements.push({
-      note,
-      top,
-      left,
-      width: CARD_WIDTH,
-      height,
-      side,
-      anchorX,
-      anchorY,
-      cardAnchorX,
-      cardAnchorY,
-    })
+    placements.push(buildPlacement(note, anchor, top, left, height, side, false))
   }
 
   return placements

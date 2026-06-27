@@ -4,6 +4,7 @@ import { useRoute, useData } from 'vitepress'
 import { useAnnotations, loadAnnotations } from '../composables/useAnnotations'
 import { usePageNotesRail } from '../composables/usePageNotesRail'
 import { useFocusMode } from '../composables/useFocusMode'
+import { useNoteCardDrag } from '../composables/useNoteCardDrag'
 import { normalizePagePath } from '../utils/normalizePagePath'
 import { scrollToNote } from '../utils/scrollToNote'
 import { ensureHighlightInDOM } from '../utils/highlightRestorer'
@@ -11,6 +12,7 @@ import { layoutMarginNotes, connectorPath, isMarginNotesMobile } from '../utils/
 import { onAnnotationsRestored } from '../utils/annotationLifecycle'
 import { handbookLink } from '../utils/handbookLink'
 import { showToast } from '../composables/useToast'
+import MarginNoteCard from './MarginNoteCard.vue'
 
 const route = useRoute()
 const { page } = useData()
@@ -23,11 +25,31 @@ const {
   setActiveNoteId,
 } = usePageNotesRail()
 
-const { pageNotes, pageHighlights, highlights, loaded, removeNote } = useAnnotations()
+const {
+  pageNotes,
+  pageHighlights,
+  highlights,
+  loaded,
+  removeNote,
+  updateNote,
+  updateNoteMarginLayout,
+  updateHighlightColor,
+} = useAnnotations()
+
+const {
+  justDragged,
+  onDragPointerDown,
+  onDragPointerMove,
+  onDragPointerUp,
+  onDragKeyDown,
+  getDragStyle,
+  isDragging,
+} = useNoteCardDrag()
 
 const placements = ref([])
 const cardHeights = ref({})
 const cardRefs = ref({})
+const editingNoteId = ref(null)
 const isMobile = ref(false)
 let resizeObserver = null
 let layoutRaf = 0
@@ -36,12 +58,6 @@ let unbindRestoreListener = null
 
 const showDock = computed(() => showOnPage.value && !isMobile.value)
 const marginNotesEnabled = computed(() => showDock.value && !isFocusMode.value)
-
-const TYPE_LABELS = {
-  highlight: 'Highlight',
-  heading: 'Section',
-  free: 'Page',
-}
 
 const showOnPage = computed(() => {
   if (page.value.frontmatter.layout === 'home') return false
@@ -59,6 +75,11 @@ const connectors = computed(() =>
     active: activeNoteId.value === p.note.id,
   }))
 )
+
+function highlightColorForNote(note) {
+  if (note.anchorType !== 'highlight' || !note.anchorId) return null
+  return highlights.value.find(h => h.id === note.anchorId)?.color ?? null
+}
 
 function setCardRef(id, el) {
   if (el) cardRefs.value[id] = el
@@ -118,6 +139,7 @@ function scheduleLayout() {
 }
 
 function scheduleLayoutWithRetry() {
+  if (!isOpen.value) return
   scheduleLayout()
   if (layoutRetryTimer) window.clearTimeout(layoutRetryTimer)
 
@@ -136,7 +158,15 @@ function scheduleLayoutWithRetry() {
   layoutRetryTimer = window.setTimeout(retry, 120)
 }
 
+function onAnnotationsReady() {
+  if (isOpen.value) {
+    scheduleLayoutWithRetry()
+  }
+}
+
 async function focusNote(note) {
+  if (justDragged.value) return
+  if (editingNoteId.value) return
   if (!loaded.value) await loadAnnotations()
   setActiveNoteId(note.id)
   const ok = await scrollToNote(note, { highlights: highlights.value })
@@ -157,14 +187,72 @@ function setupResizeObserver() {
   }
 }
 
+async function persistDragPosition(noteId, docTop, docLeft) {
+  await updateNoteMarginLayout(noteId, {
+    docTop,
+    docLeft,
+    updatedAt: Date.now(),
+  })
+  scheduleLayout()
+}
+
+function handleDragPointerDown(e, note, placement) {
+  onDragPointerDown(e, note, placement)
+}
+
+function handleDragPointerMove(e) {
+  onDragPointerMove(e)
+}
+
+async function handleDragPointerUp(e) {
+  await onDragPointerUp(e, persistDragPosition)
+}
+
+function startEdit(noteId) {
+  editingNoteId.value = noteId
+}
+
+function cancelEdit() {
+  editingNoteId.value = null
+}
+
+async function saveEdit({ id, body, title }) {
+  if (!body.trim()) {
+    await removeNote(id)
+    showToast('Note removed')
+  } else {
+    await updateNote(id, body, title)
+    showToast('Note updated')
+  }
+  editingNoteId.value = null
+  scheduleLayout()
+}
+
+async function changeHighlightColor(color) {
+  const note = pageNotes.value.find(n => n.id === editingNoteId.value)
+  if (!note?.anchorId) return
+  await updateHighlightColor(note.anchorId, color)
+}
+
+async function resetPosition(noteId) {
+  await updateNoteMarginLayout(noteId, null)
+  scheduleLayout()
+}
+
+function onEscapeKey(e) {
+  if (e.key !== 'Escape' || !editingNoteId.value) return
+  e.stopImmediatePropagation()
+  cancelEdit()
+}
+
 onMounted(async () => {
   await loadAnnotations()
   syncMobile()
-  unbindRestoreListener = onAnnotationsRestored(() => {
-    if (isOpen.value) scheduleLayoutWithRetry()
-  })
+  unbindRestoreListener = onAnnotationsRestored(onAnnotationsReady)
   window.addEventListener('scroll', scheduleLayout, { passive: true })
   window.addEventListener('resize', onResize, { passive: true })
+  document.addEventListener('keydown', onDragKeyDown)
+  document.addEventListener('keydown', onEscapeKey, true)
 })
 
 function onResize() {
@@ -179,6 +267,8 @@ onUnmounted(() => {
   resizeObserver?.disconnect()
   window.removeEventListener('scroll', scheduleLayout)
   window.removeEventListener('resize', onResize)
+  document.removeEventListener('keydown', onDragKeyDown)
+  document.removeEventListener('keydown', onEscapeKey, true)
 })
 
 watch(isOpen, open => {
@@ -187,17 +277,25 @@ watch(isOpen, open => {
   } else {
     placements.value = []
     activeNoteId.value = null
+    editingNoteId.value = null
   }
 })
 
 watch(() => route.path, () => {
-  closePageNotesRail()
   cardRefs.value = {}
   cardHeights.value = {}
+  editingNoteId.value = null
+  setActiveNoteId(null)
+
+  if (pageNotes.value.length === 0) {
+    closePageNotesRail()
+  } else if (isOpen.value) {
+    nextTick(() => scheduleLayoutWithRetry())
+  }
 })
 
 watch(pageNotes, () => nextTick(scheduleLayout))
-
+watch(pageHighlights, () => nextTick(scheduleLayout))
 watch(placements, () => nextTick(setupResizeObserver))
 </script>
 
@@ -205,7 +303,7 @@ watch(placements, () => nextTick(setupResizeObserver))
   <Teleport to="body">
     <div v-if="showDock" class="page-bottom-dock-wrap">
       <p v-if="marginNotesEnabled && isOpen" class="page-notes-hint" aria-live="polite">
-        Notes follow page order · <kbd>Esc</kbd> to close
+        Drag handle to reposition · Double-click to edit · <kbd>Esc</kbd> to close
         <a :href="handbookLink('/my-notes')" class="hint-link">All notes</a>
       </p>
       <div class="page-bottom-dock">
@@ -253,26 +351,28 @@ watch(placements, () => nextTick(setupResizeObserver))
     </div>
 
     <template v-if="marginNotesEnabled">
-      <article
+      <MarginNoteCard
         v-for="p in placements"
         :key="p.note.id"
-        :ref="el => setCardRef(p.note.id, el)"
-        class="margin-note-card"
-        :class="{ active: activeNoteId === p.note.id, [p.side]: true }"
-        :style="{ top: p.top + 'px', left: p.left + 'px', width: p.width + 'px' }"
-      >
-        <button type="button" class="margin-note-main" @click="focusNote(p.note)">
-          <span class="margin-note-type">{{ TYPE_LABELS[p.note.anchorType] || 'Note' }}</span>
-          <span v-if="p.note.title" class="margin-note-title">{{ p.note.title }}</span>
-          <p class="margin-note-body">{{ p.note.body }}</p>
-        </button>
-        <button
-          type="button"
-          class="margin-note-delete"
-          aria-label="Delete note"
-          @click.stop="removeNote(p.note.id)"
-        >✕</button>
-      </article>
+        :ref="el => setCardRef(p.note.id, el?.$el ?? el)"
+        :note="p.note"
+        :placement="p"
+        :active="activeNoteId === p.note.id"
+        :highlight-color="highlightColorForNote(p.note)"
+        :editing="editingNoteId === p.note.id"
+        :drag-style="getDragStyle(p.note.id)"
+        :dragging="isDragging(p.note.id)"
+        @focus="focusNote"
+        @delete="removeNote"
+        @save="saveEdit"
+        @color-change="changeHighlightColor"
+        @start-edit="startEdit"
+        @cancel-edit="cancelEdit"
+        @reset-position="resetPosition"
+        @drag-pointerdown="e => handleDragPointerDown(e, p.note, p)"
+        @drag-pointermove="handleDragPointerMove"
+        @drag-pointerup="handleDragPointerUp"
+      />
 
       <svg v-if="isOpen && connectors.length" class="note-connectors" aria-hidden="true">
         <path
@@ -423,81 +523,6 @@ watch(placements, () => nextTick(setupResizeObserver))
 .hint-link:hover {
   text-decoration: underline;
 }
-
-.margin-note-card {
-  position: fixed;
-  z-index: 108;
-  display: flex;
-  gap: 2px;
-  border-radius: 10px;
-  border: 1px solid var(--vp-c-divider);
-  background: color-mix(in srgb, var(--vp-c-bg-elv) 94%, transparent);
-  backdrop-filter: blur(10px);
-  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.14);
-  transition: border-color 0.15s, box-shadow 0.15s;
-  pointer-events: auto;
-  will-change: top, left;
-}
-
-.margin-note-card.active {
-  border-color: var(--vp-c-brand-1);
-  box-shadow: 0 0 0 1px color-mix(in srgb, var(--vp-c-brand-1) 40%, transparent),
-    0 8px 24px rgba(99, 102, 241, 0.18);
-}
-
-.margin-note-main {
-  flex: 1;
-  text-align: left;
-  padding: 8px 10px;
-  border: none;
-  background: transparent;
-  cursor: pointer;
-  min-width: 0;
-}
-
-.margin-note-type {
-  display: block;
-  font-size: 9px;
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
-  font-weight: 700;
-  color: var(--vp-c-brand-1);
-  margin-bottom: 3px;
-}
-
-.margin-note-title {
-  display: block;
-  font-size: 11px;
-  font-weight: 600;
-  color: var(--vp-c-text-1);
-  margin-bottom: 3px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.margin-note-body {
-  margin: 0;
-  font-size: 12px;
-  line-height: 1.4;
-  color: var(--vp-c-text-2);
-  display: -webkit-box;
-  -webkit-line-clamp: 4;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-}
-
-.margin-note-delete {
-  background: none;
-  border: none;
-  color: var(--vp-c-text-3);
-  cursor: pointer;
-  padding: 6px 6px 0 0;
-  font-size: 11px;
-  line-height: 1;
-}
-
-
 </style>
 
 <style>
