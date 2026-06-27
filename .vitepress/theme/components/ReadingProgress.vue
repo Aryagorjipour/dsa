@@ -83,11 +83,13 @@ watch(() => route.path, () => {
 <style scoped>
 .reading-progress {
   position: fixed;
-  top: var(--vp-nav-height, 64px);
+  top: var(--dsa-chrome-bottom, var(--vp-nav-height, 64px));
   left: 0;
   right: 0;
   height: 2px;
-  z-index: 50;
+  z-index: 51;
+  margin: 0;
+  padding: 0;
   background: transparent;
   pointer-events: none;
 }

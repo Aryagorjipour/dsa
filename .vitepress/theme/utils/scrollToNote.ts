@@ -1,6 +1,7 @@
 import type { Highlight, Note } from '../composables/useStorage'
 import { assignBlockIds } from './assignBlockIds'
 import { buildHighlightRange, ensureHighlightInDOM } from './highlightRestorer'
+import { findSnapshotAtOccurrence } from './highlightMatching'
 import { normalizePagePath } from './normalizePagePath'
 import { handbookLink } from './handbookLink'
 
@@ -75,7 +76,12 @@ function mergeRangeRects(range: Range): DOMRect | null {
 
 function findTextRangeInDoc(
   snapshot: string,
-  options: { blockId?: string } = {},
+  options: {
+    blockId?: string
+    occurrenceIndex?: number
+    prefixContext?: string
+    suffixContext?: string
+  } = {},
 ): Range | null {
   const needle = snapshot?.trim()
   if (!needle) return null
@@ -90,17 +96,33 @@ function findTextRangeInDoc(
   if (!blocks.length && !options.blockId) blocks.push(doc)
 
   for (const block of blocks) {
+    const blockText = block.textContent || ''
+    const match = findSnapshotAtOccurrence(
+      blockText,
+      needle,
+      options.occurrenceIndex ?? 0,
+      {
+        prefixContext: options.prefixContext,
+        suffixContext: options.suffixContext,
+      },
+    )
+    if (!match) continue
+
     const walker = document.createTreeWalker(block, NodeFilter.SHOW_TEXT)
     let node: Node | null
+    let pos = 0
     while ((node = walker.nextNode())) {
-      const text = node.textContent || ''
-      const idx = text.indexOf(needle)
-      if (idx < 0) continue
-
-      const range = document.createRange()
-      range.setStart(node, idx)
-      range.setEnd(node, Math.min(idx + needle.length, text.length))
-      if (mergeRangeRects(range)) return range
+      const len = node.textContent?.length ?? 0
+      if (pos + len > match.start) {
+        const startOff = match.start - pos
+        const endOff = Math.min(match.end - pos, len)
+        const range = document.createRange()
+        range.setStart(node, startOff)
+        range.setEnd(node, endOff)
+        if (mergeRangeRects(range)) return range
+        break
+      }
+      pos += len
     }
   }
 
@@ -141,7 +163,12 @@ function prepareHighlightAnchor(
     if (anchor) return anchor
   }
 
-  const textRange = findTextRangeInDoc(highlight.textSnapshot, { blockId: highlight.blockId })
+  const textRange = findTextRangeInDoc(highlight.textSnapshot, {
+    blockId: highlight.blockId,
+    occurrenceIndex: highlight.occurrenceIndex,
+    prefixContext: highlight.prefixContext,
+    suffixContext: highlight.suffixContext,
+  })
   if (textRange) {
     return anchorFromRange(textRange, document.body)
   }
@@ -166,7 +193,12 @@ function findNoteAnchor(note: Note, highlights: Highlight[]): NoteAnchor | null 
 
     const highlight = findHighlightById(note.anchorId, highlights)
     if (highlight) {
-      const range = findTextRangeInDoc(highlight.textSnapshot, { blockId: highlight.blockId })
+      const range = findTextRangeInDoc(highlight.textSnapshot, {
+        blockId: highlight.blockId,
+        occurrenceIndex: highlight.occurrenceIndex,
+        prefixContext: highlight.prefixContext,
+        suffixContext: highlight.suffixContext,
+      })
       if (range) return anchorFromRange(range, document.body)
     }
 

@@ -22,6 +22,7 @@ import OfflineBanner from './components/OfflineBanner.vue'
 import PwaUpdatePrompt from './components/PwaUpdatePrompt.vue'
 import OfflineUncachedNotice from './components/OfflineUncachedNotice.vue'
 import { useFocusMode } from './composables/useFocusMode'
+import { useChromeOffset } from './composables/useChromeOffset'
 
 import { openShortcuts, useKeyboardShortcuts } from './composables/useKeyboardShortcuts'
 import { normalizePagePath } from './utils/normalizePagePath'
@@ -35,6 +36,7 @@ const { page } = useData()
 const { Layout } = DefaultTheme
 const { isFocusMode, toggleFocusMode } = useFocusMode()
 useKeyboardShortcuts()
+useChromeOffset()
 
 const isHomePage = computed(() => page.value.frontmatter.layout === 'home')
 

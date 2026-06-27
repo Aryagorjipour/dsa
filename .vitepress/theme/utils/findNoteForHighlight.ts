@@ -11,20 +11,8 @@ function onPage(note: Note, pagePath: string): boolean {
   return pathsMatch(note.pagePath, pagePath)
 }
 
-function normalizeSnap(value: string | undefined): string {
-  return value?.trim().replace(/\s+/g, ' ') ?? ''
-}
-
-function snapshotsMatch(a: string | undefined, b: string | undefined): boolean {
-  const left = normalizeSnap(a)
-  const right = normalizeSnap(b)
-  if (!left || !right) return false
-  return left === right || left.includes(right) || right.includes(left)
-}
-
 /**
- * Find the note linked to a highlight mark. Matches by anchorId, highlight.noteId,
- * or same-passage text snapshot (handles duplicate highlights on identical text).
+ * Find the note linked to a highlight mark by anchorId or highlight.noteId.
  */
 export function findNoteForHighlight(
   highlightId: string | null | undefined,
@@ -44,27 +32,6 @@ export function findNoteForHighlight(
   if (clicked?.noteId) {
     const viaNoteId = notes.find(n => n.id === clicked.noteId && onPage(n, pagePath))
     if (viaNoteId) return viaNoteId
-  }
-
-  const snap = normalizeSnap(clicked?.textSnapshot)
-  const quote = normalizeSnap(clicked?.textSnapshot)
-
-  if (snap || quote) {
-    for (const note of notes) {
-      if (!onPage(note, pagePath) || note.anchorType !== 'highlight' || !note.anchorId) continue
-      if (note.anchorId === highlightId) return note
-
-      const anchorHl = highlights.find(h => h.id === note.anchorId)
-      if (!anchorHl) continue
-
-      if (
-        snapshotsMatch(anchorHl.textSnapshot, snap) ||
-        snapshotsMatch(note.title, quote) ||
-        snapshotsMatch(note.title, snap)
-      ) {
-        return note
-      }
-    }
   }
 
   return undefined

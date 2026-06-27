@@ -20,6 +20,12 @@ export interface Highlight {
   noteId?: string
   createdAt: number
   textSnapshot: string
+  /** 0-based nth match of textSnapshot within the block */
+  occurrenceIndex?: number
+  /** ~20 chars before selection for disambiguation */
+  prefixContext?: string
+  /** ~20 chars after selection for disambiguation */
+  suffixContext?: string
 }
 
 export interface NoteMarginLayout {

@@ -1,5 +1,11 @@
 import type { Highlight } from '../composables/useStorage'
 import { assignBlockIds, ensureBlockId, findContentBlock } from './assignBlockIds'
+import {
+  blockMatchesHighlight,
+  computeOccurrenceIndex,
+  extractContext,
+  findSnapshotAtOccurrence,
+} from './highlightMatching'
 
 function escapeAttr(value: string): string {
   if (typeof CSS !== 'undefined' && typeof CSS.escape === 'function') {
@@ -15,13 +21,14 @@ function findHighlightMark(id: string): HTMLElement | null {
 function resolveBlock(highlight: Highlight): Element | null {
   const matches = document.querySelectorAll(`[data-dsa-block="${escapeAttr(highlight.blockId)}"]`)
   if (matches.length === 0) return null
-  if (matches.length === 1) return matches[0]
 
-  const snap = highlight.textSnapshot
+  const snap = highlight.textSnapshot?.trim()
   for (const el of matches) {
-    if (snap && (el.textContent || '').includes(snap)) return el
+    const text = el.textContent || ''
+    if (!snap || blockMatchesHighlight(highlight, text)) return el
   }
-  return matches[0]
+
+  return null
 }
 
 function getTextNodes(element: Node): Text[] {
@@ -37,7 +44,7 @@ function getTextNodes(element: Node): Text[] {
 function findOffsetPosition(
   block: Element,
   startOffset: number,
-  endOffset: number
+  endOffset: number,
 ): { startNode: Text; startOff: number; endNode: Text; endOff: number } | null {
   const textNodes = getTextNodes(block)
   let pos = 0
@@ -65,11 +72,26 @@ function findOffsetPosition(
   return null
 }
 
-function fuzzyFindSnapshot(block: Element, snapshot: string): { start: number; end: number } | null {
+function isInsideExistingMark(block: Element, start: number, end: number): boolean {
+  const pos = findOffsetPosition(block, start, end)
+  if (!pos) return false
+  const range = document.createRange()
+  range.setStart(pos.startNode, pos.startOff)
+  range.setEnd(pos.endNode, pos.endOff)
+  const container = range.commonAncestorContainer
+  const el = container instanceof Element ? container : container.parentElement
+  return !!el?.closest('mark[data-highlight-id]')
+}
+
+function fuzzyFindSnapshot(
+  block: Element,
+  highlight: Highlight,
+): { start: number; end: number } | null {
   const text = block.textContent || ''
-  const idx = text.indexOf(snapshot)
-  if (idx >= 0) return { start: idx, end: idx + snapshot.length }
-  return null
+  return findSnapshotAtOccurrence(text, highlight.textSnapshot, highlight.occurrenceIndex ?? 0, {
+    prefixContext: highlight.prefixContext,
+    suffixContext: highlight.suffixContext,
+  })
 }
 
 function resolveHighlightOffsets(
@@ -81,12 +103,28 @@ function resolveHighlightOffsets(
 
   let pos = findOffsetPosition(block, start, end)
   if (!pos) {
-    const fuzzy = fuzzyFindSnapshot(block, highlight.textSnapshot)
+    const fuzzy = fuzzyFindSnapshot(block, highlight)
     if (!fuzzy) return null
     start = fuzzy.start
     end = fuzzy.end
     pos = findOffsetPosition(block, start, end)
     if (!pos) return null
+  }
+
+  const blockText = block.textContent || ''
+  const atOccurrence = findSnapshotAtOccurrence(
+    blockText,
+    highlight.textSnapshot,
+    highlight.occurrenceIndex ?? 0,
+    { prefixContext: highlight.prefixContext, suffixContext: highlight.suffixContext },
+  )
+  if (atOccurrence && (atOccurrence.start !== start || atOccurrence.end !== end)) {
+    const corrected = findOffsetPosition(block, atOccurrence.start, atOccurrence.end)
+    if (corrected) {
+      start = atOccurrence.start
+      end = atOccurrence.end
+      pos = corrected
+    }
   }
 
   return { start, end, pos }
@@ -144,6 +182,8 @@ function applyHighlightToBlock(
   end: number,
   highlight: Highlight,
 ): boolean {
+  if (isInsideExistingMark(block, start, end)) return false
+
   const pos = findOffsetPosition(block, start, end)
   if (!pos) return false
 
@@ -160,27 +200,22 @@ function applyHighlightBySnapshot(highlight: Highlight): boolean {
   const doc = document.querySelector('.vp-doc')
   if (!doc) return false
 
-  const blocks = highlight.blockId
-    ? [...doc.querySelectorAll(`[data-dsa-block="${escapeAttr(highlight.blockId)}"]`)]
-    : [...doc.querySelectorAll('[data-dsa-block]')]
-
-  const seen = new Set<Element>()
-  for (const block of blocks) {
-    if (seen.has(block)) continue
-    seen.add(block)
-
-    const fuzzy = fuzzyFindSnapshot(block, snap)
-    if (!fuzzy) continue
-    if (applyHighlightToBlock(block, fuzzy.start, fuzzy.end, highlight)) return true
-  }
-
   if (highlight.blockId) {
-    for (const block of doc.querySelectorAll('[data-dsa-block]')) {
-      if (seen.has(block)) continue
-      const fuzzy = fuzzyFindSnapshot(block, snap)
+    const blocks = [...doc.querySelectorAll(`[data-dsa-block="${escapeAttr(highlight.blockId)}"]`)]
+    for (const block of blocks) {
+      const text = block.textContent || ''
+      if (!blockMatchesHighlight(highlight, text)) continue
+      const fuzzy = fuzzyFindSnapshot(block, highlight)
       if (!fuzzy) continue
       if (applyHighlightToBlock(block, fuzzy.start, fuzzy.end, highlight)) return true
     }
+    return false
+  }
+
+  for (const block of doc.querySelectorAll('[data-dsa-block]')) {
+    const fuzzy = fuzzyFindSnapshot(block, highlight)
+    if (!fuzzy) continue
+    if (applyHighlightToBlock(block, fuzzy.start, fuzzy.end, highlight)) return true
   }
 
   return false
@@ -215,6 +250,9 @@ export function getSelectionAnchor(): {
   startOffset: number
   endOffset: number
   textSnapshot: string
+  occurrenceIndex: number
+  prefixContext: string
+  suffixContext: string
 } | null {
   const sel = window.getSelection()
   if (!sel || sel.isCollapsed || sel.rangeCount === 0) return null
@@ -243,10 +281,34 @@ export function getSelectionAnchor(): {
 
   if (!textSnapshot.trim()) return null
 
+  const blockText = block.textContent || ''
+  const occurrenceIndex = computeOccurrenceIndex(blockText, textSnapshot, startOffset)
+  const { prefixContext, suffixContext } = extractContext(blockText, startOffset, endOffset)
+
   return {
     blockId,
     startOffset,
     endOffset,
     textSnapshot,
+    occurrenceIndex,
+    prefixContext,
+    suffixContext,
   }
+}
+
+export function sortHighlightsForRestore(highlights: Highlight[]): Highlight[] {
+  if (typeof document === 'undefined') return highlights
+
+  const blockOrder = new Map<Element, number>()
+  const blocks = [...document.querySelectorAll('.vp-doc [data-dsa-block]')]
+  blocks.forEach((el, i) => blockOrder.set(el, i))
+
+  return [...highlights].sort((a, b) => {
+    const blockA = resolveBlock(a)
+    const blockB = resolveBlock(b)
+    const orderA = blockA ? (blockOrder.get(blockA) ?? 0) : 0
+    const orderB = blockB ? (blockOrder.get(blockB) ?? 0) : 0
+    if (orderA !== orderB) return orderB - orderA
+    return b.startOffset - a.startOffset
+  })
 }

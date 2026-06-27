@@ -28,6 +28,9 @@ const visible = ref(false)
 const mode = ref('select')
 const x = ref(0)
 const y = ref(0)
+const placeBelow = ref(false)
+const useMobileSheet = ref(false)
+const toolbarRef = ref(null)
 const activeHighlightId = ref(null)
 const activeHighlightQuote = ref('')
 const activeHighlightColor = ref('yellow')
@@ -106,22 +109,53 @@ function updateToolbar() {
     return
   }
 
-  const rect = range.getBoundingClientRect()
-  x.value = rect.left + rect.width / 2
-  y.value = Math.max(8, rect.top - 8)
   mode.value = 'select'
   visible.value = true
+  useMobileSheet.value = isCoarsePointer()
+  nextTick(() => positionToolbar(range.getBoundingClientRect()))
 }
 
 let debounceTimer = null
 
+function isCoarsePointer() {
+  if (typeof window === 'undefined') return false
+  return window.matchMedia('(pointer: coarse)').matches
+}
+
+function positionToolbar(rect) {
+  if (useMobileSheet.value) return
+
+  const pad = 12
+  const vw = window.innerWidth
+  const vh = window.innerHeight
+  const toolbarW = toolbarRef.value?.offsetWidth ?? 200
+  const toolbarH = toolbarRef.value?.offsetHeight ?? 40
+
+  let centerX = rect.left + rect.width / 2
+  centerX = Math.max(pad + toolbarW / 2, Math.min(vw - pad - toolbarW / 2, centerX))
+
+  const preferBelow = rect.top < 80 || isCoarsePointer()
+  placeBelow.value = preferBelow
+
+  let topY
+  if (preferBelow) {
+    topY = Math.min(vh - pad - toolbarH, rect.bottom + 8)
+  } else {
+    topY = Math.max(pad + toolbarH, rect.top - 8)
+  }
+
+  x.value = centerX
+  y.value = topY
+}
+
 function scheduleUpdate() {
   if (visible.value && pendingAnchor.value) return
   if (debounceTimer) clearTimeout(debounceTimer)
+  const delay = isCoarsePointer() ? 400 : 30
   debounceTimer = setTimeout(() => {
     debounceTimer = null
     updateToolbar()
-  }, 30)
+  }, delay)
 }
 
 function noteLookupContext() {
@@ -151,9 +185,9 @@ async function showHighlightMenu(mark) {
   activeHighlightId.value = id
   activeHighlightQuote.value = mark.textContent?.trim() || ''
   mode.value = 'highlight'
-  x.value = rect.left + rect.width / 2
-  y.value = Math.max(8, rect.top - 8)
+  useMobileSheet.value = isCoarsePointer()
   visible.value = true
+  nextTick(() => positionToolbar(rect))
   window.getSelection()?.removeAllRanges()
 }
 
@@ -174,6 +208,9 @@ async function applyColor(color) {
     endOffset: anchor.endOffset,
     color,
     textSnapshot: anchor.textSnapshot,
+    occurrenceIndex: anchor.occurrenceIndex,
+    prefixContext: anchor.prefixContext,
+    suffixContext: anchor.suffixContext,
   })
 
   if (highlightsVisible.value) {
@@ -207,6 +244,9 @@ async function addNoteFromSelection() {
     endOffset: anchor.endOffset,
     color: 'yellow',
     textSnapshot: anchor.textSnapshot,
+    occurrenceIndex: anchor.occurrenceIndex,
+    prefixContext: anchor.prefixContext,
+    suffixContext: anchor.suffixContext,
   })
 
   if (highlightsVisible.value) {
@@ -309,7 +349,12 @@ function onSelectionChange() {
 
 function onMouseUp(e) {
   if (isIgnoredTarget(e.target)) return
-  // Capture anchor immediately while the selection still exists.
+  captureSelectionAnchor()
+  scheduleUpdate()
+}
+
+function onTouchEnd(e) {
+  if (isIgnoredTarget(e.target)) return
   captureSelectionAnchor()
   scheduleUpdate()
 }
@@ -369,6 +414,7 @@ onMounted(() => {
   preparePage()
   document.addEventListener('selectionchange', onSelectionChange)
   document.addEventListener('mouseup', onMouseUp)
+  document.addEventListener('touchend', onTouchEnd, { passive: true })
   document.addEventListener('click', onClick, true)
   document.addEventListener('mousedown', onDocumentMouseDown)
   document.addEventListener('keydown', onKeyDown)
@@ -379,6 +425,7 @@ onUnmounted(() => {
   if (toolbarPressTimer) clearTimeout(toolbarPressTimer)
   document.removeEventListener('selectionchange', onSelectionChange)
   document.removeEventListener('mouseup', onMouseUp)
+  document.removeEventListener('touchend', onTouchEnd)
   document.removeEventListener('click', onClick, true)
   document.removeEventListener('mousedown', onDocumentMouseDown)
   document.removeEventListener('keydown', onKeyDown)
@@ -393,10 +440,16 @@ watch(() => route.path, () => {
 <template>
   <Teleport to="body">
     <div
+      v-if="visible && useMobileSheet"
+      class="annotation-sheet-backdrop"
+      @click="hide"
+    />
+    <div
       v-if="visible"
+      ref="toolbarRef"
       class="annotation-toolbar"
-      :class="mode"
-      :style="{ left: x + 'px', top: y + 'px' }"
+      :class="[mode, { sheet: useMobileSheet, below: placeBelow && !useMobileSheet }]"
+      :style="useMobileSheet ? undefined : { left: x + 'px', top: y + 'px' }"
       role="toolbar"
       :aria-label="mode === 'highlight' ? 'Highlight actions' : 'Highlight options'"
       @pointerdown.stop="onToolbarPointerDown"
@@ -405,25 +458,35 @@ watch(() => route.path, () => {
       @mousedown.stop
     >
       <template v-if="mode === 'select'">
-        <button
-          v-for="c in colors"
-          :key="c.id"
-          type="button"
-          class="color-btn"
-          :class="c.id"
-          :aria-label="`Highlight ${c.label}`"
-          :title="c.label"
-          @click.stop="applyColor(c.id)"
-        />
-        <span class="divider" />
-        <button
-          type="button"
-          class="action-btn"
-          title="Add note"
-          @click.stop="addNoteFromSelection"
-        >
-          Note
-        </button>
+        <div class="select-actions" :class="{ 'sheet-row': useMobileSheet }">
+          <button
+            v-for="c in colors"
+            :key="c.id"
+            type="button"
+            class="color-btn"
+            :class="c.id"
+            :aria-label="`Highlight ${c.label}`"
+            :title="c.label"
+            @click.stop="applyColor(c.id)"
+          />
+          <span v-if="!useMobileSheet" class="divider" />
+          <button
+            type="button"
+            class="action-btn"
+            title="Add note"
+            @click.stop="addNoteFromSelection"
+          >
+            Note
+          </button>
+          <button
+            v-if="useMobileSheet"
+            type="button"
+            class="action-btn"
+            @click.stop="hide"
+          >
+            Cancel
+          </button>
+        </div>
       </template>
 
       <template v-else>
@@ -475,6 +538,13 @@ watch(() => route.path, () => {
 </template>
 
 <style scoped>
+.annotation-sheet-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 299;
+  background: rgba(0, 0, 0, 0.35);
+}
+
 .annotation-toolbar {
   position: fixed;
   transform: translate(-50%, -100%);
@@ -486,8 +556,44 @@ watch(() => route.path, () => {
   border: 1px solid var(--vp-c-divider);
   border-radius: 10px;
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
-  z-index: 250;
+  z-index: 300;
   user-select: none;
+  touch-action: manipulation;
+  max-width: calc(100vw - 24px);
+}
+
+.annotation-toolbar.below {
+  transform: translate(-50%, 0);
+}
+
+.annotation-toolbar.sheet {
+  left: 12px !important;
+  right: 12px;
+  bottom: calc(16px + var(--dsa-safe-bottom, 0px));
+  top: auto !important;
+  transform: none;
+  width: auto;
+  padding: 12px;
+  flex-direction: column;
+  align-items: stretch;
+}
+
+.select-actions.sheet-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.select-actions.sheet-row .color-btn {
+  width: 32px;
+  height: 32px;
+}
+
+.select-actions.sheet-row .action-btn {
+  min-height: 36px;
+  padding: 6px 14px;
 }
 
 .annotation-toolbar.highlight {

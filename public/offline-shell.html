@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#6366f1">
+  <title>DSA Handbook — Offline</title>
+  <style>
+    body {
+      margin: 0;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: #0f172a;
+      color: #e2e8f0;
+      font-family: system-ui, -apple-system, sans-serif;
+      text-align: center;
+      padding: 24px;
+    }
+    img { width: 64px; height: 64px; margin-bottom: 16px; }
+    p { margin: 8px 0; line-height: 1.5; max-width: 320px; }
+    #status { color: #94a3b8; font-size: 14px; }
+  </style>
+</head>
+<body>
+  <div>
+    <img src="/dsa/logo.png" alt="DSA Handbook" width="64" height="64">
+    <p><strong>DSA Handbook</strong></p>
+    <p>Loading offline content…</p>
+    <p id="status">Waiting for cache…</p>
+  </div>
+  <script>
+    (async function () {
+      const status = document.getElementById('status')
+      try {
+        if ('serviceWorker' in navigator) {
+          await navigator.serviceWorker.ready
+          status.textContent = 'Retrying…'
+          location.reload()
+          return
+        }
+      } catch (e) { /* ignore */ }
+      status.textContent = 'Go online once to cache the handbook, then try again.'
+    })()
+  </script>
+</body>
+</html>

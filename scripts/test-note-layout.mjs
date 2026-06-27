@@ -177,14 +177,6 @@ function findNoteForHighlight(highlightId, ctx) {
     if (via) return via
   }
 
-  const snap = (clicked?.textSnapshot || '').trim()
-  if (snap) {
-    for (const note of notes) {
-      if (!onPage(note) || note.anchorType !== 'highlight' || !note.anchorId) continue
-      const anchorHl = highlights.find(h => h.id === note.anchorId)
-      if (anchorHl?.textSnapshot?.trim() === snap) return note
-    }
-  }
   return undefined
 }
 
@@ -202,8 +194,8 @@ assert(
   'direct anchorId lookup',
 )
 assert(
-  findNoteForHighlight('h2', { notes: noteFixtures, highlights: hlFixtures, pagePath: fixturePage })?.body === 'This is dsa',
-  'snapshot fallback finds note on duplicate highlight id',
+  findNoteForHighlight('h2', { notes: noteFixtures, highlights: hlFixtures, pagePath: fixturePage }) === undefined,
+  'duplicate highlight id does not cross-match note via snapshot',
 )
 assert(
   findNoteForHighlight('h9', { notes: noteFixtures, highlights: hlFixtures, pagePath: fixturePage }) === undefined,

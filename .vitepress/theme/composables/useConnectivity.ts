@@ -24,6 +24,18 @@ export function useConnectivity() {
       window.addEventListener('online', handleOnline)
       window.addEventListener('offline', handleOffline)
       isOnline.value = navigator.onLine
+
+      if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.addEventListener('controllerchange', () => {
+          if (document.body?.dataset.dsaOfflineRecovering === '1') return
+          const isBareOffline = document.body?.childElementCount === 1
+            && document.body?.textContent?.trim() === 'Offline'
+          if (isBareOffline) {
+            document.body.dataset.dsaOfflineRecovering = '1'
+            window.location.reload()
+          }
+        })
+      }
     }
   })
 

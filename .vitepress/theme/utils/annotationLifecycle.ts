@@ -1,7 +1,7 @@
 import type { Router } from 'vitepress'
 import type { Highlight } from '../composables/useStorage'
 import { assignBlockIds } from './assignBlockIds'
-import { ensureHighlightInDOM } from './highlightRestorer'
+import { ensureHighlightInDOM, sortHighlightsForRestore } from './highlightRestorer'
 import { getHighlightsForPath } from './highlightPaths'
 import { pageKeyFromRelativePath } from './pagePathKey'
 
@@ -68,7 +68,8 @@ export function restoreHighlightsNow(): void {
   applying = true
   try {
     assignBlockIds()
-    for (const hl of highlights) {
+    const ordered = sortHighlightsForRestore(highlights)
+    for (const hl of ordered) {
       ensureHighlightInDOM(hl)
     }
     notifyRestored()

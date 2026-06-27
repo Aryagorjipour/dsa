@@ -79,7 +79,7 @@ if (!swFile) {
 } else {
   pass(`service worker found: ${path.basename(swFile)}`)
   const swText = fs.readFileSync(swFile, 'utf8')
-  const required = ['index.html', '404.html', 'examples-manifest.json', 'playground.html']
+  const required = ['index.html', '404.html', 'offline-shell.html', 'examples-manifest.json', 'playground.html']
   for (const item of required) {
     if (!swText.includes(item)) fail(`precache manifest missing ${item}`)
     else pass(`precache includes ${item}`)
@@ -91,6 +91,12 @@ if (!fs.existsSync(cleanUrlsHelper)) {
   fail('sw-clean-urls.js missing from dist')
 } else {
   pass('sw-clean-urls.js copied to dist')
+  const helperText = fs.readFileSync(cleanUrlsHelper, 'utf8')
+  if (helperText.includes("new Response('Offline'")) {
+    fail('sw-clean-urls.js still returns bare Offline text')
+  } else {
+    pass('sw-clean-urls.js uses HTML fallbacks instead of bare Offline')
+  }
 }
 
 const requiredPublicAssets = [

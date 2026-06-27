@@ -43,7 +43,7 @@ export default defineConfig({
     plugins: [
       VitePWA({
         registerType: 'prompt',
-        injectRegister: false,
+        injectRegister: 'script',
         includeAssets: [
           'favicon.ico',
           'favicon.svg',
@@ -53,6 +53,7 @@ export default defineConfig({
           'logo.png',
           'logo.svg',
           'robots.txt',
+          'offline-shell.html',
           'icons/**/*',
           'images/**/*',
           'examples-manifest.json',
@@ -64,6 +65,8 @@ export default defineConfig({
           theme_color: THEME_COLOR,
           background_color: BG_COLOR,
           display: 'standalone',
+          display_override: ['standalone', 'browser'],
+          categories: ['education', 'books'],
           scope: withBase('/'),
           start_url: withBase('/'),
           id: withBase('/'),
@@ -89,11 +92,13 @@ export default defineConfig({
           ],
         },
         workbox: {
-          globPatterns: ['**/*.{js,css,ico,png,svg,json,woff2,webp}'],
+          globPatterns: ['**/*.{js,css,html,ico,png,svg,json,woff2,webp}'],
           globIgnores: ['**/hashmap.json'],
-          cleanupOutdatedCaches: true,
+          cleanupOutdatedCaches: false,
           maximumFileSizeToCacheInBytes: 5 * 1024 * 1024,
           importScripts: ['sw-clean-urls.js'],
+          navigateFallback: withBase('/index.html'),
+          navigateFallbackDenylist: [/^\/dsa\/api\//],
         },
       }),
     ],
@@ -160,11 +165,13 @@ export default defineConfig({
       globPatterns: ['**/*.{js,css,html,ico,png,svg,json,woff2,webp}'],
       globIgnores: ['**/hashmap.json', 'sw.js', 'workbox-*.js'],
       importScripts: ['sw-clean-urls.js'],
-      cleanupOutdatedCaches: true,
+      cleanupOutdatedCaches: false,
       maximumFileSizeToCacheInBytes: 5 * 1024 * 1024,
       modifyURLPrefix: {
         '': '/dsa/',
       },
+      navigateFallback: '/dsa/index.html',
+      navigateFallbackDenylist: [/^\/dsa\/api\//],
       skipWaiting: false,
       clientsClaim: true,
     })
