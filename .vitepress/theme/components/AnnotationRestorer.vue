@@ -1,21 +1,26 @@
 <script setup>
-import { watch, onMounted, onUnmounted } from 'vue'
-import { useRoute, onContentUpdated } from 'vitepress'
+import { watch, onMounted, onUnmounted, nextTick } from 'vue'
+import { useData, onContentUpdated } from 'vitepress'
 import { useAnnotations, loadAnnotations } from '../composables/useAnnotations'
 import {
   bindAnnotationRestore,
   onAnnotationsRestored,
-  onPageContentUpdated,
+  restoreHighlightsNow,
   scheduleAnnotationRestore,
 } from '../utils/annotationLifecycle'
 import { ensureHighlightInDOM } from '../utils/highlightRestorer'
 import { scrollToHash } from '../utils/scrollToNote'
-import { normalizePagePath } from '../utils/normalizePagePath'
+import { pageKeyFromRelativePath } from '../utils/pagePathKey'
 
-const route = useRoute()
+const { page } = useData()
 const { highlights, pageHighlights, highlightsVisible } = useAnnotations()
 
 let unbindRestoreListener = null
+let docObserver = null
+
+function currentPageKey() {
+  return pageKeyFromRelativePath(page.value.relativePath || '')
+}
 
 function followNoteHash() {
   const hash = window.location.hash
@@ -30,11 +35,22 @@ function paintCurrentPageHighlights() {
   }
 }
 
+function attachDocObserver() {
+  docObserver?.disconnect()
+  const doc = document.querySelector('.vp-doc')
+  if (!doc) return
+
+  docObserver = new MutationObserver(mutations => {
+    const structural = mutations.some(m => m.type === 'childList' && m.target === doc)
+    if (structural) scheduleAnnotationRestore()
+  })
+  docObserver.observe(doc, { childList: true })
+}
+
 onMounted(async () => {
   bindAnnotationRestore({
     getAllHighlights: () => highlights.value,
-    getActivePath: () => normalizePagePath(window.location.pathname),
-    getRoutePath: () => route.path,
+    getPageKey: currentPageKey,
     isVisible: () => highlightsVisible.value,
   })
 
@@ -42,25 +58,35 @@ onMounted(async () => {
   window.addEventListener('hashchange', followNoteHash)
   await loadAnnotations()
 
-  // Initial full load — content is already in the DOM.
-  onPageContentUpdated()
-  scheduleAnnotationRestore(true)
+  attachDocObserver()
+  restoreHighlightsNow()
+
+  if (import.meta.env.DEV) {
+    window.__dsaRestore = restoreHighlightsNow
+  }
 })
 
 onUnmounted(() => {
   unbindRestoreListener?.()
+  docObserver?.disconnect()
   window.removeEventListener('hashchange', followNoteHash)
 })
 
-// VitePress fires this after the new page vnode is mounted/updated in .vp-doc.
 onContentUpdated(() => {
-  onPageContentUpdated()
+  nextTick(() => scheduleAnnotationRestore())
 })
+
+watch(
+  () => page.value.relativePath,
+  () => {
+    nextTick(() => scheduleAnnotationRestore())
+  },
+  { flush: 'post' },
+)
 
 watch(highlightsVisible, visible => {
   document.documentElement.classList.toggle('highlights-hidden', !visible)
-  if (visible) paintCurrentPageHighlights()
-  scheduleAnnotationRestore(false)
+  if (visible) restoreHighlightsNow()
 })
 </script>
 

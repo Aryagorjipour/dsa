@@ -8,3 +8,12 @@ export function pagePathKey(path: string): string {
 export function pathsMatch(stored: string, current: string): boolean {
   return pagePathKey(stored) === pagePathKey(current)
 }
+
+/** Convert VitePress `page.relativePath` (e.g. `fundamentals/00-foo.md`) to annotation page key. */
+export function pageKeyFromRelativePath(relativePath: string): string {
+  let normalized = relativePath.replace(/(?:(^|\/)index)?\.md$/i, '$1')
+  if (!normalized.startsWith('/')) {
+    normalized = `/${normalized}`
+  }
+  return normalizePagePath(normalized)
+}

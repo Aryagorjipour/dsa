@@ -114,13 +114,11 @@ export function ensureHighlightInDOM(highlight: Highlight): boolean {
     updateHighlightColorInDOM(highlight.id, highlight.color)
     return true
   }
-  return applyHighlightToDOM(highlight)
+  if (applyHighlightToDOM(highlight)) return true
+  return applyHighlightBySnapshot(highlight)
 }
 
-export function applyHighlightToDOM(highlight: Highlight): boolean {
-  const range = buildHighlightRange(highlight)
-  if (!range) return false
-
+function insertMarkFromRange(range: Range, highlight: Highlight): boolean {
   const mark = document.createElement('mark')
   mark.className = `dsa-hl dsa-hl-${highlight.color}`
   mark.dataset.highlightId = highlight.id
@@ -138,6 +136,60 @@ export function applyHighlightToDOM(highlight: Highlight): boolean {
       return false
     }
   }
+}
+
+function applyHighlightToBlock(
+  block: Element,
+  start: number,
+  end: number,
+  highlight: Highlight,
+): boolean {
+  const pos = findOffsetPosition(block, start, end)
+  if (!pos) return false
+
+  const range = document.createRange()
+  range.setStart(pos.startNode, pos.startOff)
+  range.setEnd(pos.endNode, pos.endOff)
+  return insertMarkFromRange(range, highlight)
+}
+
+function applyHighlightBySnapshot(highlight: Highlight): boolean {
+  const snap = highlight.textSnapshot?.trim()
+  if (!snap) return false
+
+  const doc = document.querySelector('.vp-doc')
+  if (!doc) return false
+
+  const blocks = highlight.blockId
+    ? [...doc.querySelectorAll(`[data-dsa-block="${escapeAttr(highlight.blockId)}"]`)]
+    : [...doc.querySelectorAll('[data-dsa-block]')]
+
+  const seen = new Set<Element>()
+  for (const block of blocks) {
+    if (seen.has(block)) continue
+    seen.add(block)
+
+    const fuzzy = fuzzyFindSnapshot(block, snap)
+    if (!fuzzy) continue
+    if (applyHighlightToBlock(block, fuzzy.start, fuzzy.end, highlight)) return true
+  }
+
+  if (highlight.blockId) {
+    for (const block of doc.querySelectorAll('[data-dsa-block]')) {
+      if (seen.has(block)) continue
+      const fuzzy = fuzzyFindSnapshot(block, snap)
+      if (!fuzzy) continue
+      if (applyHighlightToBlock(block, fuzzy.start, fuzzy.end, highlight)) return true
+    }
+  }
+
+  return false
+}
+
+export function applyHighlightToDOM(highlight: Highlight): boolean {
+  const range = buildHighlightRange(highlight)
+  if (!range) return applyHighlightBySnapshot(highlight)
+  return insertMarkFromRange(range, highlight)
 }
 
 const HIGHLIGHT_COLOR_CLASSES = ['dsa-hl-yellow', 'dsa-hl-green', 'dsa-hl-blue', 'dsa-hl-pink'] as const

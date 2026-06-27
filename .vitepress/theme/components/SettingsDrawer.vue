@@ -33,7 +33,7 @@ async function handleImport(e) {
     const mode = confirm('Merge with existing data? (Cancel = replace all)') ? 'merge' : 'replace'
     await importUserData(data, mode)
     await loadAnnotations()
-    scheduleAnnotationRestore(true)
+    scheduleAnnotationRestore()
     showToast('Data imported successfully')
   } catch {
     showToast('Import failed — invalid file format')
