@@ -173,11 +173,11 @@ function onColorPointerDown(e) {
     @dblclick="onCardDblClick"
   >
     <button
-      v-if="!pinned"
+      v-if="!pinned || isPageNote"
       type="button"
       class="margin-note-drag-handle"
-      aria-label="Drag to reposition note"
-      title="Drag to reposition"
+      :aria-label="isPageNote ? 'Drag page note horizontally' : 'Drag to reposition note'"
+      :title="isPageNote ? 'Drag horizontally — stays under navbar on scroll' : 'Drag to reposition'"
       @pointerdown.stop="emit('drag-pointerdown', $event)"
       @pointermove.stop="emit('drag-pointermove', $event)"
       @pointerup.stop="emit('drag-pointerup', $event)"
@@ -235,7 +235,7 @@ function onColorPointerDown(e) {
           </div>
           <div class="margin-note-edit-actions">
             <button
-              v-if="note.marginLayout && !pinned"
+              v-if="note.marginLayout && (!pinned || isPageNote)"
               type="button"
               class="edit-action-btn"
               @mousedown.prevent

@@ -206,25 +206,31 @@ function setupResizeObserver() {
 }
 
 async function persistDragPosition(noteId, docTop, docLeft) {
-  await updateNoteMarginLayout(noteId, {
-    docTop,
-    docLeft,
-    updatedAt: Date.now(),
-  })
+  const note = pageNotes.value.find(n => n.id === noteId)
+  const layout =
+    note?.anchorType === 'free'
+      ? { docTop: 0, docLeft, updatedAt: Date.now() }
+      : { docTop, docLeft, updatedAt: Date.now() }
+
+  await updateNoteMarginLayout(noteId, layout)
   scheduleLayout()
 }
 
+function isPageNoteDrag(placement) {
+  return placement.pinned && placement.note.anchorType === 'free'
+}
+
 function handleDragPointerDown(e, note, placement) {
-  if (placement.pinned) return
+  if (placement.pinned && note.anchorType !== 'free') return
   onDragPointerDown(e, note, placement)
 }
 
-function handleDragPointerMove(e) {
-  onDragPointerMove(e)
+function handleDragPointerMove(e, note, placement) {
+  onDragPointerMove(e, isPageNoteDrag(placement))
 }
 
-async function handleDragPointerUp(e) {
-  await onDragPointerUp(e, persistDragPosition)
+async function handleDragPointerUp(e, note, placement) {
+  await onDragPointerUp(e, persistDragPosition, { horizontalOnly: isPageNoteDrag(placement) })
 }
 
 function startEdit(noteId) {
@@ -324,7 +330,7 @@ watch(placements, () => nextTick(setupResizeObserver))
   <Teleport to="body">
     <div v-if="showDock" class="page-bottom-dock-wrap">
       <p v-if="marginNotesEnabled && isOpen" class="page-notes-hint" aria-live="polite">
-        Drag to reposition · Click long notes to read full text · Double-click to edit · <kbd>Esc</kbd> to close
+        Page notes stick under the navbar · Drag horizontally to move · Double-click to edit · <kbd>Esc</kbd> to close
         <a :href="handbookLink('/my-notes')" class="hint-link">All notes</a>
       </p>
       <div class="page-bottom-dock">
@@ -382,8 +388,8 @@ watch(placements, () => nextTick(setupResizeObserver))
         :highlight-color="highlightColorForNote(p.note)"
         :editing="editingNoteId === p.note.id"
         :pinned="!!p.pinned"
-        :drag-style="p.pinned ? null : getDragStyle(p.note.id)"
-        :dragging="!p.pinned && isDragging(p.note.id)"
+        :drag-style="p.pinned && p.note.anchorType !== 'free' ? null : getDragStyle(p.note.id)"
+        :dragging="(p.pinned ? p.note.anchorType === 'free' : true) && isDragging(p.note.id)"
         @focus="focusNote"
         @detail="openNoteDetail"
         @delete="removeNote"
@@ -393,8 +399,8 @@ watch(placements, () => nextTick(setupResizeObserver))
         @cancel-edit="cancelEdit"
         @reset-position="resetPosition"
         @drag-pointerdown="e => handleDragPointerDown(e, p.note, p)"
-        @drag-pointermove="handleDragPointerMove"
-        @drag-pointerup="handleDragPointerUp"
+        @drag-pointermove="e => handleDragPointerMove(e, p.note, p)"
+        @drag-pointerup="e => handleDragPointerUp(e, p.note, p)"
       />
 
       <svg v-if="isOpen && connectors.length" class="note-connectors" aria-hidden="true">

@@ -1,107 +1,15 @@
 <script setup>
 import { computed } from 'vue'
-import { useData, useRoute } from 'vitepress'
-import { showToast } from '../composables/useToast'
+import { useRoute } from 'vitepress'
 import { buildPlaygroundUrl } from '../utils/playgroundUrl'
 import { handbookLink } from '../utils/handbookLink'
 import { normalizePagePath } from '../utils/normalizePagePath'
-import { useAnnotations, loadAnnotations } from '../composables/useAnnotations'
-import { openNoteDialog } from '../composables/useNoteDialog'
-import { findPageNote } from '../utils/findNoteForAnchor'
-import { assertOnline } from '../utils/networkFeatures'
 
-const { page } = useData()
 const route = useRoute()
-const { notes, addNote, updateNote, removeNote, currentPagePath } = useAnnotations()
-
-const title = computed(() => page.value.title || 'DSA Topic')
 const isProjectPage = computed(() => normalizePagePath(route.path).includes('/projects/tier-'))
-const pageNote = computed(() => findPageNote(currentPagePath.value, notes.value))
 
 function playgroundUrl() {
   return buildPlaygroundUrl({ from: route.path })
-}
-
-function sharePage() {
-  navigator.clipboard.writeText(window.location.href)
-  showToast('Link copied to clipboard')
-}
-
-async function editPageNote() {
-  await loadAnnotations()
-  const existing = pageNote.value
-  const body = await openNoteDialog({
-    title: `Note for “${title.value}”`,
-    placeholder: 'Page-level notes, takeaways, questions…',
-    initial: existing?.body ?? '',
-  })
-  if (body === null) return
-
-  try {
-    const trimmed = body.trim()
-    if (existing) {
-      if (!trimmed) {
-        await removeNote(existing.id)
-        showToast('Page note removed')
-      } else {
-        await updateNote(existing.id, trimmed, title.value)
-        showToast('Page note updated')
-      }
-    } else if (trimmed) {
-      await addNote({
-        pagePath: currentPagePath.value,
-        anchorType: 'free',
-        title: title.value,
-        body: trimmed,
-      })
-      showToast('Page note saved — press Shift+N to view on this page')
-    }
-  } catch (err) {
-    console.error('[dsa] page note failed', err)
-    showToast('Could not save page note')
-  }
-}
-
-function giveToAI() {
-  const prompt = isProjectPage.value
-    ? `You are a senior software architect mentoring a developer through a "Build Your Own X" project from the DSA Handbook Project Lab.
-
-Project: ${title.value}
-Page: ${window.location.href}
-
-Act as a Socratic tutor. Help me design and implement this project WITHOUT giving complete solutions. For each milestone:
-- Ask what I've tried so far
-- Point out design trade-offs
-- Suggest what handbook chapters to re-read
-- Give small hints, not full code
-
-Start by asking which milestone I'm on and what I've built so far.`
-    : `You are an expert tutor on Data Structures and Algorithms.
-
-Please explain the following topic from the "DSA Handbook" in a clear, beginner-friendly way. Include:
-- The core problem it solves
-- Intuitive explanation
-- Real-world use cases
-- Simple code examples in Go and C#
-
-Topic: ${title.value}
-
-Page: ${window.location.href}
-
-Start your explanation now.`
-
-  navigator.clipboard.writeText(prompt)
-  const chatCheck = assertOnline('chatgpt', navigator.onLine)
-  if (!chatCheck.ok) {
-    showToast('Prompt copied — connect to the internet to open ChatGPT', undefined, 5000)
-    return
-  }
-  showToast('Prompt copied', {
-    label: 'Open ChatGPT',
-    onClick: () => {
-      window.open(`https://chat.openai.com/?q=${encodeURIComponent(prompt)}`, '_blank', 'noopener')
-    },
-  })
 }
 </script>
 
@@ -114,11 +22,6 @@ Start your explanation now.`
       <span class="mobile-notes-hint">Use the <strong>My Notes</strong> panel in the sidebar for this page.</span>
     </p>
     <div class="actions">
-      <button class="btn" :class="{ 'has-note': pageNote }" @click="editPageNote">
-        {{ pageNote ? 'Edit page note' : 'Add page note' }}
-      </button>
-      <button class="btn" @click="sharePage">Share</button>
-      <button class="btn" @click="giveToAI">{{ isProjectPage ? 'Mentor Mode' : 'Give to AI' }}</button>
       <a v-if="isProjectPage" :href="handbookLink('/projects/README')" class="btn">Project Lab</a>
       <a v-if="isProjectPage" :href="handbookLink('/projects/contributing')" class="btn">Contribute</a>
       <a
@@ -190,11 +93,6 @@ Start your explanation now.`
   color: var(--vp-c-text-1);
   display: inline-flex;
   align-items: center;
-}
-
-.btn.has-note {
-  border-color: var(--vp-c-brand-1);
-  color: var(--vp-c-brand-1);
 }
 
 .btn.primary {

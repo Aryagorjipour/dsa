@@ -117,6 +117,38 @@ export function viewportToDocLeft(viewportLeft: number, scrollX: number): number
   return viewportLeft + scrollX
 }
 
+export function clampHorizontalLeft(
+  rawLeft: number,
+  width: number,
+  viewportWidth: number,
+): number {
+  return Math.max(VIEWPORT_PAD, Math.min(rawLeft, viewportWidth - width - VIEWPORT_PAD))
+}
+
+/** Page notes stick under the navbar; only horizontal position is user-controlled. */
+export function applyPageNoteStickyLayout(
+  note: Note,
+  bounds: LayoutBounds,
+  height: number,
+  scrollX: number,
+  viewportWidth: number,
+  stackedTop: number,
+): { top: number; left: number; side: 'left' | 'right' } {
+  let side: 'left' | 'right' = bounds.hasRight ? 'right' : 'left'
+  if (side === 'right' && !bounds.hasRight) side = 'left'
+  if (side === 'left' && !bounds.hasLeft) side = 'right'
+
+  let left = sideX(side, bounds)
+  if (note.marginLayout) {
+    left = clampHorizontalLeft(note.marginLayout.docLeft - scrollX, CARD_WIDTH, viewportWidth)
+    const contentCenter = bounds.contentRect.left + bounds.contentRect.width / 2
+    side = left + CARD_WIDTH / 2 < contentCenter ? 'left' : 'right'
+  }
+
+  const top = Math.max(bounds.navBottom, stackedTop)
+  return { top, left, side }
+}
+
 export function applyManualLayout(
   note: Note,
   bounds: LayoutBounds,
@@ -127,6 +159,7 @@ export function applyManualLayout(
   viewportWidth: number,
 ): { top: number; left: number; side: 'left' | 'right' } | null {
   if (!note.marginLayout) return null
+  if (note.anchorType === 'free') return null
 
   const rawTop = docToViewportTop(note.marginLayout.docTop, scrollY)
   const rawLeft = note.marginLayout.docLeft - scrollX
@@ -135,10 +168,7 @@ export function applyManualLayout(
     bounds.navBottom,
     Math.min(rawTop, viewportHeight - height - VIEWPORT_PAD),
   )
-  const left = Math.max(
-    VIEWPORT_PAD,
-    Math.min(rawLeft, viewportWidth - CARD_WIDTH - VIEWPORT_PAD),
-  )
+  const left = clampHorizontalLeft(rawLeft, CARD_WIDTH, viewportWidth)
 
   const contentCenter = bounds.contentRect.left + bounds.contentRect.width / 2
   const side: 'left' | 'right' = left + CARD_WIDTH / 2 < contentCenter ? 'left' : 'right'
@@ -302,15 +332,23 @@ export function layoutMarginNotes(
     if (side === 'right' && !bounds.hasRight) side = 'left'
     if (side === 'left' && !bounds.hasLeft) side = 'right'
 
-    let top = bounds.navBottom
-    if (lastBottom[side] > -Infinity && top < lastBottom[side] + CARD_GAP) {
-      top = lastBottom[side] + CARD_GAP
+    let stackedTop = bounds.navBottom
+    if (lastBottom[side] > -Infinity && stackedTop < lastBottom[side] + CARD_GAP) {
+      stackedTop = lastBottom[side] + CARD_GAP
     }
 
-    lastBottom[side] = top + height
-    const left = sideX(side, bounds)
+    const sticky = applyPageNoteStickyLayout(
+      note,
+      bounds,
+      height,
+      scrollX,
+      window.innerWidth,
+      stackedTop,
+    )
+
+    lastBottom[sticky.side] = sticky.top + height
     placements.push(
-      buildPlacement(note, anchor, top, left, height, side, false, {
+      buildPlacement(note, anchor, sticky.top, sticky.left, height, sticky.side, !!note.marginLayout, {
         pinned: true,
         placementMode: 'pinned',
       }),

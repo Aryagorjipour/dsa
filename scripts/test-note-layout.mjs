@@ -259,5 +259,52 @@ function layoutPinnedFreeTop(navBottom, side, lastBottom, height) {
 assert(layoutPinnedFreeTop(72, 'right', -Infinity, 88) === 72, 'pinned page note starts at nav bottom')
 assert(layoutPinnedFreeTop(72, 'right', 160, 88) === 168, 'multiple pinned notes stack with gap')
 
+function clampHorizontalLeft(rawLeft, width, viewportWidth) {
+  const VIEWPORT_PAD = 8
+  return Math.max(VIEWPORT_PAD, Math.min(rawLeft, viewportWidth - width - VIEWPORT_PAD))
+}
+
+function applyPageNoteStickyLayout(note, bounds, height, scrollX, viewportWidth, stackedTop) {
+  const CARD_WIDTH = 220
+  let side = bounds.hasRight ? 'right' : 'left'
+  if (side === 'right' && !bounds.hasRight) side = 'left'
+  if (side === 'left' && !bounds.hasLeft) side = 'right'
+
+  let left = side === 'left' ? bounds.leftX : bounds.rightX
+  if (note.marginLayout) {
+    left = clampHorizontalLeft(note.marginLayout.docLeft - scrollX, CARD_WIDTH, viewportWidth)
+    const contentCenter = bounds.contentRect.left + bounds.contentRect.width / 2
+    side = left + CARD_WIDTH / 2 < contentCenter ? 'left' : 'right'
+  }
+
+  const top = Math.max(bounds.navBottom, stackedTop)
+  return { top, left, side }
+}
+
+const stickyBounds = {
+  contentRect: { left: 300, width: 700 },
+  navBottom: 72,
+  leftX: 40,
+  rightX: 1020,
+  hasLeft: true,
+  hasRight: true,
+}
+
+const stickyDefault = applyPageNoteStickyLayout({ anchorType: 'free' }, stickyBounds, 88, 0, 1280, 72)
+assert(stickyDefault.top === 72, 'sticky page note uses nav bottom')
+assert(stickyDefault.left === 1020, 'sticky page note defaults to right margin')
+
+const stickyMoved = applyPageNoteStickyLayout(
+  { anchorType: 'free', marginLayout: { docLeft: 500, docTop: 9999 } },
+  stickyBounds,
+  88,
+  0,
+  1280,
+  72,
+)
+assert(stickyMoved.top === 72, 'dragged page note still sticks to nav bottom')
+assert(stickyMoved.left === 500, 'dragged page note keeps horizontal position')
+assert(stickyMoved.side === 'left', 'page note side follows horizontal position')
+
 console.log(`\n${passed} passed, ${failed} failed`)
 process.exit(failed > 0 ? 1 : 0)

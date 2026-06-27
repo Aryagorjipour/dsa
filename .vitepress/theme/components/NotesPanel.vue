@@ -6,6 +6,7 @@ import { handbookLink } from '../utils/handbookLink'
 import { scrollToNote } from '../utils/scrollToNote'
 import { sortNotesByPagePosition, isMarginNotesMobile } from '../utils/noteLayout'
 import { showToast } from '../composables/useToast'
+import { usePageActions } from '../composables/usePageActions'
 
 const PREVIEW_LIMIT = 3
 
@@ -30,6 +31,8 @@ const hasManyNotes = computed(() => noteCount.value > PREVIEW_LIMIT)
 const previewNotes = computed(() => orderedPageNotes.value.slice(0, PREVIEW_LIMIT))
 
 const marginNotesAvailable = computed(() => !isMarginNotesMobile())
+
+const { pageNote, isProjectPage, sharePage, editPageNote, giveToAI } = usePageActions()
 
 onMounted(async () => {
   await loadAnnotations()
@@ -66,6 +69,21 @@ function openOnPage() {
     </button>
 
     <div v-if="!collapsed" class="notes-content">
+      <div class="page-actions">
+        <button
+          type="button"
+          class="page-action-btn"
+          :class="{ 'has-note': pageNote }"
+          @click="editPageNote"
+        >
+          {{ pageNote ? 'Edit page note' : 'Add page note' }}
+        </button>
+        <button type="button" class="page-action-btn" @click="sharePage">Share</button>
+        <button type="button" class="page-action-btn" @click="giveToAI">
+          {{ isProjectPage ? 'Mentor Mode' : 'Give to AI' }}
+        </button>
+      </div>
+
       <p v-if="!noteCount && !highlightCount" class="empty">
         Select text to highlight, or use <strong>+</strong> on headings to add notes.
       </p>
@@ -193,6 +211,37 @@ function openOnPage() {
 
 .notes-content {
   margin-top: 10px;
+}
+
+.page-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 12px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--vp-c-divider);
+}
+
+.page-action-btn {
+  width: 100%;
+  padding: 7px 10px;
+  border: 1px solid var(--vp-c-divider);
+  background: var(--vp-c-bg);
+  border-radius: 6px;
+  font-size: 12px;
+  color: var(--vp-c-text-1);
+  cursor: pointer;
+  text-align: left;
+  transition: border-color 0.15s;
+}
+
+.page-action-btn:hover {
+  border-color: var(--vp-c-brand-1);
+}
+
+.page-action-btn.has-note {
+  border-color: var(--vp-c-brand-1);
+  color: var(--vp-c-brand-1);
 }
 
 .empty {

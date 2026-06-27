@@ -42,25 +42,26 @@ export function useNoteCardDrag() {
     document.body.style.userSelect = 'none'
   }
 
-  function onDragPointerMove(e: PointerEvent) {
+  function onDragPointerMove(e: PointerEvent, horizontalOnly = false) {
     const state = dragState.value
     if (!state) return
 
     const dx = e.clientX - state.startX
-    const dy = e.clientY - state.startY
+    const dy = horizontalOnly ? 0 : e.clientY - state.startY
 
     if (!state.dragging) {
       if (Math.hypot(dx, dy) < DRAG_THRESHOLD_PX) return
       state.dragging = true
     }
 
-    state.currentTop = state.originTop + dy
+    state.currentTop = horizontalOnly ? state.originTop : state.originTop + dy
     state.currentLeft = state.originLeft + dx
   }
 
   async function onDragPointerUp(
     e: PointerEvent,
     onPersist: (noteId: string, docTop: number, docLeft: number) => Promise<void>,
+    options: { horizontalOnly?: boolean } = {},
   ) {
     const state = dragState.value
     if (!state) return
@@ -70,7 +71,7 @@ export function useNoteCardDrag() {
     document.body.style.userSelect = ''
 
     if (state.dragging) {
-      const docTop = viewportToDocTop(state.currentTop, window.scrollY)
+      const docTop = options.horizontalOnly ? 0 : viewportToDocTop(state.currentTop, window.scrollY)
       const docLeft = state.currentLeft + window.scrollX
       await onPersist(state.noteId, docTop, docLeft)
       justDragged.value = true
