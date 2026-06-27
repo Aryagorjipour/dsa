@@ -306,5 +306,19 @@ assert(stickyMoved.top === 72, 'dragged page note still sticks to nav bottom')
 assert(stickyMoved.left === 500, 'dragged page note keeps horizontal position')
 assert(stickyMoved.side === 'left', 'page note side follows horizontal position')
 
+function applyManualLayoutTop(rawTop, viewportHeight, height) {
+  const VIEWPORT_PAD = 8
+  return Math.min(rawTop, viewportHeight - height - VIEWPORT_PAD)
+}
+
+assert(
+  applyManualLayoutTop(-120, 800, 88) === -120,
+  'manual non-page note does not clamp to navbar when scrolled away',
+)
+assert(
+  applyManualLayoutTop(200, 800, 88) === 200,
+  'manual non-page note keeps viewport position while visible',
+)
+
 console.log(`\n${passed} passed, ${failed} failed`)
 process.exit(failed > 0 ? 1 : 0)

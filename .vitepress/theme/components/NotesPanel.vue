@@ -32,7 +32,7 @@ const previewNotes = computed(() => orderedPageNotes.value.slice(0, PREVIEW_LIMI
 
 const marginNotesAvailable = computed(() => !isMarginNotesMobile())
 
-const { pageNote, isProjectPage, sharePage, editPageNote, giveToAI } = usePageActions()
+const { pageNote, isProjectPage, editPageNote, giveToAI } = usePageActions()
 
 onMounted(async () => {
   await loadAnnotations()
@@ -68,22 +68,21 @@ function openOnPage() {
       <span class="arrow" aria-hidden="true">{{ collapsed ? '▸' : '▾' }}</span>
     </button>
 
-    <div v-if="!collapsed" class="notes-content">
-      <div class="page-actions">
-        <button
-          type="button"
-          class="page-action-btn"
-          :class="{ 'has-note': pageNote }"
-          @click="editPageNote"
-        >
-          {{ pageNote ? 'Edit page note' : 'Add page note' }}
-        </button>
-        <button type="button" class="page-action-btn" @click="sharePage">Share</button>
-        <button type="button" class="page-action-btn" @click="giveToAI">
-          {{ isProjectPage ? 'Mentor Mode' : 'Give to AI' }}
-        </button>
-      </div>
+    <div class="page-actions-quick">
+      <button
+        type="button"
+        class="page-action-btn"
+        :class="{ 'has-note': pageNote }"
+        @click="editPageNote"
+      >
+        {{ pageNote ? 'Edit page note' : 'Add page note' }}
+      </button>
+      <button type="button" class="page-action-btn" @click="giveToAI">
+        {{ isProjectPage ? 'Mentor' : 'Give to AI' }}
+      </button>
+    </div>
 
+    <div v-if="!collapsed" class="notes-content">
       <p v-if="!noteCount && !highlightCount" class="empty">
         Select text to highlight, or use <strong>+</strong> on headings to add notes.
       </p>
@@ -209,29 +208,23 @@ function openOnPage() {
   font-size: 11px;
 }
 
-.notes-content {
-  margin-top: 10px;
-}
-
-.page-actions {
-  display: flex;
-  flex-direction: column;
+.page-actions-quick {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
   gap: 6px;
-  margin-bottom: 12px;
-  padding-bottom: 12px;
-  border-bottom: 1px solid var(--vp-c-divider);
+  margin-top: 8px;
 }
 
 .page-action-btn {
   width: 100%;
-  padding: 7px 10px;
+  padding: 6px 8px;
   border: 1px solid var(--vp-c-divider);
   background: var(--vp-c-bg);
   border-radius: 6px;
-  font-size: 12px;
+  font-size: 11px;
   color: var(--vp-c-text-1);
   cursor: pointer;
-  text-align: left;
+  text-align: center;
   transition: border-color 0.15s;
 }
 
@@ -242,6 +235,10 @@ function openOnPage() {
 .page-action-btn.has-note {
   border-color: var(--vp-c-brand-1);
   color: var(--vp-c-brand-1);
+}
+
+.notes-content {
+  margin-top: 10px;
 }
 
 .empty {

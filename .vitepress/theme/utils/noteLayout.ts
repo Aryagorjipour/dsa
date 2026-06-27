@@ -164,10 +164,8 @@ export function applyManualLayout(
   const rawTop = docToViewportTop(note.marginLayout.docTop, scrollY)
   const rawLeft = note.marginLayout.docLeft - scrollX
 
-  const top = Math.max(
-    bounds.navBottom,
-    Math.min(rawTop, viewportHeight - height - VIEWPORT_PAD),
-  )
+  // Non-page notes follow their dragged position and scroll away — only page notes stick under the navbar.
+  const top = Math.min(rawTop, viewportHeight - height - VIEWPORT_PAD)
   const left = clampHorizontalLeft(rawLeft, CARD_WIDTH, viewportWidth)
 
   const contentCenter = bounds.contentRect.left + bounds.contentRect.width / 2

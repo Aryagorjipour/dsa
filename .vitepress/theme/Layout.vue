@@ -17,6 +17,7 @@ import CodeBlockActions from './components/CodeBlockActions.vue'
 import HeadingNotes from './components/HeadingNotes.vue'
 import PageNotesRail from './components/PageNotesRail.vue'
 import SettingsDrawer from './components/SettingsDrawer.vue'
+import NavShareButton from './components/NavShareButton.vue'
 import KeyboardShortcutsSheet from './components/KeyboardShortcutsSheet.vue'
 import OfflineBanner from './components/OfflineBanner.vue'
 import PwaUpdatePrompt from './components/PwaUpdatePrompt.vue'
@@ -62,6 +63,7 @@ const showFallbackFocus = computed(() => {
     </template>
 
     <template #nav-bar-content-after>
+      <NavShareButton v-if="showDocPage" />
       <SettingsDrawer />
     </template>
 
