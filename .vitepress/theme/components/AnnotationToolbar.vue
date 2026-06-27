@@ -6,6 +6,7 @@ import { openNoteDialog } from '../composables/useNoteDialog'
 import { showToast } from '../composables/useToast'
 import { assignBlockIds } from '../utils/assignBlockIds'
 import { getSelectionAnchor, applyHighlightToDOM, removeHighlightFromDOM } from '../utils/highlightRestorer'
+import { findNoteForHighlight } from '../utils/findNoteForHighlight'
 
 const route = useRoute()
 const {
@@ -16,9 +17,11 @@ const {
   removeHighlight,
   updateHighlightColor,
   highlights,
+  notes,
   highlightsVisible,
+  loaded,
+  loadAnnotations,
   currentPagePath,
-  pageNotes,
 } = useAnnotations()
 
 const visible = ref(false)
@@ -121,9 +124,23 @@ function scheduleUpdate() {
   }, 30)
 }
 
-function showHighlightMenu(mark) {
+function noteLookupContext() {
+  return {
+    notes: notes.value,
+    highlights: highlights.value,
+    pagePath: currentPagePath.value,
+  }
+}
+
+function noteForHighlight(highlightId) {
+  return findNoteForHighlight(highlightId, noteLookupContext())
+}
+
+async function showHighlightMenu(mark) {
   const id = mark.dataset.highlightId
   if (!id) return
+
+  if (!loaded.value) await loadAnnotations()
 
   const stored = highlights.value.find(h => h.id === id)
   const fromClass = [...mark.classList].find(c => c.startsWith('dsa-hl-'))?.slice(7)
@@ -221,12 +238,6 @@ async function addNoteFromSelection() {
   }
 }
 
-function noteForHighlight(highlightId) {
-  return pageNotes.value.find(
-    n => n.anchorType === 'highlight' && n.anchorId === highlightId
-  )
-}
-
 async function editHighlightNote() {
   const highlightId = activeHighlightId.value
   if (!highlightId) return
@@ -310,7 +321,7 @@ function onClick(e) {
 
   e.preventDefault()
   e.stopPropagation()
-  showHighlightMenu(mark)
+  void showHighlightMenu(mark)
 }
 
 let toolbarPressTimer = 0

@@ -160,5 +160,55 @@ assert(
   'same block id on wrong page does not match snapshot',
 )
 
+// findNoteForHighlight logic (mirror of findNoteForHighlight.ts)
+function findNoteForHighlight(highlightId, ctx) {
+  if (!highlightId) return undefined
+  const { notes, highlights, pagePath } = ctx
+  const onPage = n => pathsMatch(n.pagePath, pagePath)
+
+  const direct = notes.find(
+    n => onPage(n) && n.anchorType === 'highlight' && n.anchorId === highlightId,
+  )
+  if (direct) return direct
+
+  const clicked = highlights.find(h => h.id === highlightId)
+  if (clicked?.noteId) {
+    const via = notes.find(n => n.id === clicked.noteId && onPage(n))
+    if (via) return via
+  }
+
+  const snap = (clicked?.textSnapshot || '').trim()
+  if (snap) {
+    for (const note of notes) {
+      if (!onPage(note) || note.anchorType !== 'highlight' || !note.anchorId) continue
+      const anchorHl = highlights.find(h => h.id === note.anchorId)
+      if (anchorHl?.textSnapshot?.trim() === snap) return note
+    }
+  }
+  return undefined
+}
+
+const noteFixtures = [
+  { id: 'n1', pagePath: '/fundamentals/00-what-is-a-data-structure', anchorType: 'highlight', anchorId: 'h1', title: 'data structure', body: 'This is dsa' },
+]
+const hlFixtures = [
+  { id: 'h1', pagePath: '/fundamentals/00-what-is-a-data-structure', textSnapshot: 'data structure', color: 'green' },
+  { id: 'h2', pagePath: '/fundamentals/00-what-is-a-data-structure', textSnapshot: 'data structure', color: 'yellow' },
+]
+const fixturePage = '/fundamentals/00-what-is-a-data-structure'
+
+assert(
+  findNoteForHighlight('h1', { notes: noteFixtures, highlights: hlFixtures, pagePath: fixturePage })?.body === 'This is dsa',
+  'direct anchorId lookup',
+)
+assert(
+  findNoteForHighlight('h2', { notes: noteFixtures, highlights: hlFixtures, pagePath: fixturePage })?.body === 'This is dsa',
+  'snapshot fallback finds note on duplicate highlight id',
+)
+assert(
+  findNoteForHighlight('h9', { notes: noteFixtures, highlights: hlFixtures, pagePath: fixturePage }) === undefined,
+  'unknown highlight returns undefined',
+)
+
 console.log(`\n${passed} passed, ${failed} failed`)
 process.exit(failed > 0 ? 1 : 0)

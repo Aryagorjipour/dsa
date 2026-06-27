@@ -30,14 +30,26 @@ export async function loadAnnotations() {
     getNotes(),
     getHighlightsVisible(),
   ])
-  highlights.value = h.map(item => ({
+  const normalizedHighlights = h.map(item => ({
     ...item,
     pagePath: normalizePagePath(item.pagePath),
   }))
-  notes.value = n.map(item => ({
+  const normalizedNotes = n.map(item => ({
     ...item,
     pagePath: normalizePagePath(item.pagePath),
   }))
+
+  const noteIdByHighlight = new Map<string, string>()
+  for (const note of normalizedNotes) {
+    if (note.anchorType === 'highlight' && note.anchorId) {
+      noteIdByHighlight.set(note.anchorId, note.id)
+    }
+  }
+  highlights.value = normalizedHighlights.map(hl => {
+    const noteId = noteIdByHighlight.get(hl.id)
+    return noteId && hl.noteId !== noteId ? { ...hl, noteId } : hl
+  })
+  notes.value = normalizedNotes
   highlightsVisible.value = vis
   loaded.value = true
 }
@@ -99,6 +111,12 @@ export function useAnnotations() {
       updatedAt: now,
     }
     notes.value = [...notes.value, note]
+    if (note.anchorType === 'highlight' && note.anchorId) {
+      highlights.value = highlights.value.map(h =>
+        h.id === note.anchorId ? { ...h, noteId: note.id } : h,
+      )
+      await setHighlights(highlights.value)
+    }
     await setNotes(notes.value)
     return note
   }
