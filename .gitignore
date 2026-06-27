@@ -1,5 +1,7 @@
 node_modules/
 scripts/.dotnet-local/
+scripts/csharp-verify-template/obj/
+scripts/csharp-verify-template/bin/
 .vitepress/cache/
 .vitepress/dist/
 .DS_Store
