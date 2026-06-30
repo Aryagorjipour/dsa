@@ -21,6 +21,7 @@ import {
   testProviderConnection,
 } from '../tts/providers'
 import { GROK_FALLBACK_VOICES } from '../tts/providers/grok'
+import { resolveSyncedCloudFields, syncCloudTtsConnection } from '../tts/cloudTtsSync'
 
 const { visible, closeTtsConfigModal } = useTtsConfigModal()
 const {
@@ -50,6 +51,9 @@ const testing = ref(false)
 const testError = ref('')
 const testOk = ref(false)
 const savedVoiceId = ref('coral')
+const savedModel = ref('tts-1')
+const suppressProviderReset = ref(false)
+const backgroundSyncing = ref(false)
 
 const newMatch = ref('')
 const newSpoken = ref('')
@@ -58,14 +62,69 @@ const glossaryFile = ref(null)
 const showBaseUrl = computed(() => provider.value === 'custom')
 const openaiVoices = OPENAI_VOICES.map(v => ({ id: v, label: v }))
 
+async function persistCloudSelection(extra = {}) {
+  const stored = await loadCloudTtsConfig()
+  const resolvedModel = provider.value === 'grok' ? 'xai-tts' : model.value.trim()
+  await saveCloudTtsConfig({
+    provider: provider.value,
+    baseUrl: baseUrl.value.trim(),
+    model: resolvedModel,
+    voiceId: voiceId.value,
+    configured: stored.configured || (testOk.value && hasKey.value),
+    lastSyncedAt: stored.lastSyncedAt,
+    ...extra,
+  })
+  savedModel.value = resolvedModel
+  await refreshCloudConfigured()
+}
+
+async function applySyncToForm(config, payload) {
+  const { model: syncedModel, voiceId: syncedVoice, models: syncedModels } =
+    resolveSyncedCloudFields(config, payload)
+  models.value = syncedModels
+  model.value = syncedModel
+  savedModel.value = syncedModel
+  if (payload.voices?.length) {
+    voices.value = payload.voices
+    voiceId.value = syncedVoice
+    savedVoiceId.value = syncedVoice
+  } else {
+    voiceId.value = syncedVoice
+    savedVoiceId.value = syncedVoice
+    refreshVoiceOptions()
+  }
+  testOk.value = true
+  testError.value = ''
+}
+
+async function backgroundSyncStoredConfig() {
+  if (!hasKey.value) return
+  backgroundSyncing.value = true
+  try {
+    const result = await syncCloudTtsConnection(true)
+    if (result.ok && result.config && result.payload) {
+      await applySyncToForm(result.config, result.payload)
+    } else if (result.error && result.config?.configured) {
+      testOk.value = true
+    }
+  } catch {
+    /* keep stored model/voice on transient failures */
+  } finally {
+    backgroundSyncing.value = false
+  }
+}
+
 async function loadConfig() {
+  suppressProviderReset.value = true
   const config = await loadCloudTtsConfig()
   provider.value = config.provider
   baseUrl.value = config.baseUrl || PROVIDER_DEFAULTS[config.provider]
-  model.value = config.model
+  model.value = config.model || defaultCloudConfig(config.provider).model
+  savedModel.value = model.value
   voiceId.value = config.voiceId
   savedVoiceId.value = config.voiceId
   testOk.value = config.configured
+  testError.value = ''
   hasKey.value = await hasStoredApiKey()
   if (hasKey.value) {
     const key = await getCloudApiKey()
@@ -74,35 +133,38 @@ async function loadConfig() {
   if (provider.value === 'grok') {
     models.value = ['xai-tts']
     model.value = 'xai-tts'
-    if (hasKey.value) {
-      try {
-        const key = await getCloudApiKey()
-        if (key) {
-          const result = await testProviderConnection('grok', baseUrl.value, key)
-          if (result.voices?.length) voices.value = result.voices
-        }
-      } catch {
-        /* fallback voices below */
-      }
-    }
+    savedModel.value = 'xai-tts'
+  } else if (model.value) {
+    models.value = [model.value]
+  } else {
+    models.value = []
   }
   refreshVoiceOptions()
+  suppressProviderReset.value = false
+
+  if (hasKey.value && config.configured) {
+    void backgroundSyncStoredConfig()
+  }
 }
 
 watch(visible, open => {
   if (open) void loadConfig()
 })
 
-watch(provider, p => {
+function onProviderChange() {
+  if (suppressProviderReset.value) return
+  const p = provider.value
   if (p !== 'custom') baseUrl.value = PROVIDER_DEFAULTS[p]
   const defaults = defaultCloudConfig(p)
   model.value = defaults.model
-  if (!models.value.length) {
-    voiceId.value = defaults.voiceId
-  }
-  if (p === 'grok') models.value = ['xai-tts']
+  savedModel.value = defaults.model
+  voiceId.value = defaults.voiceId
+  savedVoiceId.value = defaults.voiceId
+  models.value = p === 'grok' ? ['xai-tts'] : []
+  testOk.value = false
+  testError.value = ''
   refreshVoiceOptions()
-})
+}
 
 function refreshVoiceOptions() {
   if (provider.value === 'openai' || provider.value === 'custom') {
@@ -139,27 +201,25 @@ async function onTestConnection() {
     if (!resolvedKey) throw new Error('No API key available')
 
     const result = await testProviderConnection(provider.value, baseUrl.value, resolvedKey)
-    models.value = result.models
-    if (result.models.length && !result.models.includes(model.value)) {
-      model.value = result.models[0]
+    const draft = {
+      provider: provider.value,
+      baseUrl: baseUrl.value.trim(),
+      model: provider.value === 'grok' ? 'xai-tts' : model.value.trim(),
+      voiceId: voiceId.value,
+      configured: true,
     }
-    if (result.voices?.length) {
-      voices.value = result.voices
-      if (!result.voices.some(v => v.id === voiceId.value)) {
-        voiceId.value = result.voices[0].id
-      }
-    } else {
-      refreshVoiceOptions()
-    }
+    await applySyncToForm(draft, result)
 
     if (key) await saveCloudApiKey(key)
     await saveCloudTtsConfig({
       provider: provider.value,
       baseUrl: baseUrl.value.trim(),
-      model: model.value,
+      model: provider.value === 'grok' ? 'xai-tts' : model.value.trim(),
       voiceId: voiceId.value,
       configured: true,
+      lastSyncedAt: Date.now(),
     })
+    savedModel.value = model.value
 
     hasKey.value = true
     maskedKey.value = maskApiKey(key || resolvedKey)
@@ -179,13 +239,16 @@ async function onTestConnection() {
 
 async function onSave() {
   const voiceChanged = voiceId.value !== savedVoiceId.value
+  const stored = await loadCloudTtsConfig()
   await saveCloudTtsConfig({
     provider: provider.value,
     baseUrl: baseUrl.value.trim(),
     model: provider.value === 'grok' ? 'xai-tts' : model.value.trim(),
     voiceId: voiceId.value,
-    configured: testOk.value && hasKey.value,
+    configured: stored.configured || (testOk.value && hasKey.value),
+    lastSyncedAt: stored.lastSyncedAt,
   })
+  savedModel.value = model.value
   if (apiKeyInput.value.trim()) await saveCloudApiKey(apiKeyInput.value.trim())
   await refreshCloudConfigured()
   savedVoiceId.value = voiceId.value
@@ -210,17 +273,21 @@ async function applyVoiceIfListening() {
   ) {
     return
   }
-  const config = await loadCloudTtsConfig()
-  await saveCloudTtsConfig({
-    provider: provider.value,
-    baseUrl: baseUrl.value.trim(),
-    model: provider.value === 'grok' ? 'xai-tts' : model.value,
-    voiceId: voiceId.value,
-    configured: config.configured || (testOk.value && hasKey.value),
-  })
+  await persistCloudSelection()
   savedVoiceId.value = voiceId.value
   reloadCloudVoice()
   showToast('Voice updated — continuing from here')
+}
+
+async function onModelChange() {
+  if (model.value === savedModel.value) return
+  await persistCloudSelection()
+  if (
+    ttsEngine.value === 'cloud' &&
+    (status.value === 'playing' || status.value === 'paused' || status.value === 'synthesizing')
+  ) {
+    reloadCloudVoice()
+  }
 }
 
 function onVoiceChange() {
@@ -337,7 +404,7 @@ if (typeof window !== 'undefined') refreshVoiceOptions()
 
             <label class="tts-field">
               <span class="tts-label">Provider</span>
-              <select v-model="provider" class="tts-input">
+              <select v-model="provider" class="tts-input" @change="onProviderChange">
                 <option value="openai">OpenAI</option>
                 <option value="gemini">Gemini</option>
                 <option value="grok">Grok</option>
@@ -370,10 +437,10 @@ if (typeof window !== 'undefined') refreshVoiceOptions()
             <div class="tts-row">
               <label v-if="provider !== 'grok'" class="tts-field tts-field-grow">
                 <span class="tts-label">Model</span>
-                <select v-if="models.length" v-model="model" class="tts-input">
+                <select v-if="models.length" v-model="model" class="tts-input" @change="onModelChange">
                   <option v-for="m in models" :key="m" :value="m">{{ m }}</option>
                 </select>
-                <input v-else v-model="model" class="tts-input" placeholder="tts-1" />
+                <input v-else v-model="model" class="tts-input" placeholder="tts-1" @change="onModelChange" />
               </label>
 
               <label class="tts-field tts-field-grow">
@@ -386,7 +453,10 @@ if (typeof window !== 'undefined') refreshVoiceOptions()
             </div>
 
             <p v-if="testError" class="tts-error">{{ testError }}</p>
-            <p v-else-if="testOk" class="tts-success">Connected — select Cloud AI in Listen panel to use.</p>
+            <p v-else-if="testOk" class="tts-success">
+              Connected — select Cloud AI in Listen panel to use.
+              <span v-if="backgroundSyncing" class="tts-sync-hint"> Syncing models…</span>
+            </p>
 
             <div class="tts-actions">
               <button type="button" class="btn-secondary" :disabled="testing" @click="onClearCredentials">
@@ -557,6 +627,10 @@ if (typeof window !== 'undefined') refreshVoiceOptions()
   margin: 0;
   font-size: 12px;
   color: #34d399;
+}
+
+.tts-sync-hint {
+  opacity: 0.75;
 }
 
 .tts-actions {

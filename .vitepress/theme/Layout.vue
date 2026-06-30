@@ -26,6 +26,8 @@ import OfflineUncachedNotice from './components/OfflineUncachedNotice.vue'
 import { useFocusMode } from './composables/useFocusMode'
 import { useChromeOffset } from './composables/useChromeOffset'
 import { useHandbookPage } from './composables/useHandbookPage'
+import { useCloudTtsSync } from './composables/useCloudTtsSync'
+import { refreshCloudConfigured } from './composables/useHandbookTts'
 
 import { openShortcuts, useKeyboardShortcuts } from './composables/useKeyboardShortcuts'
 import { useCoarsePointer } from './composables/useCoarsePointer'
@@ -42,6 +44,7 @@ useChromeOffset()
 const { isCoarsePointer } = useCoarsePointer()
 
 const { isHomePage, showDocPage } = useHandbookPage()
+useCloudTtsSync(refreshCloudConfigured)
 
 const showFallbackFocus = computed(() => {
   if (isHomePage.value) return false

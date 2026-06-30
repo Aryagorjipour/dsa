@@ -27,7 +27,8 @@ import {
   saveGlossaryOverrides,
   type GlossaryRule,
 } from '../tts/glossary/glossaryStore'
-import { isCloudTtsConfigured } from '../tts/ttsSecretStore'
+import { isCloudSyncDue, syncCloudTtsConnection } from '../tts/cloudTtsSync'
+import { isCloudTtsConfigured, loadCloudTtsConfig } from '../tts/ttsSecretStore'
 import type { TtsEngine, TtsEngineCallbacks, TtsStatus } from '../tts/types'
 
 export type { TtsStatus, GlossaryRule }
@@ -219,7 +220,7 @@ async function refreshModelCached(): Promise<void> {
   modelCached.value = await getEngine().isVoiceCached()
 }
 
-async function refreshCloudConfigured(): Promise<void> {
+export async function refreshCloudConfigured(): Promise<void> {
   cloudConfigured.value = await isCloudTtsConfigured()
 }
 
@@ -228,6 +229,10 @@ async function ensureEngineReady(): Promise<boolean> {
   modelProgress.value = 0
   try {
     if (ttsEngine.value === 'cloud') {
+      const cloudConfig = await loadCloudTtsConfig()
+      if (isCloudSyncDue(cloudConfig)) {
+        await syncCloudTtsConnection(false)
+      }
       await refreshCloudConfigured()
       if (!cloudConfigured.value) {
         showToast('Configure Cloud AI in Listen settings first')

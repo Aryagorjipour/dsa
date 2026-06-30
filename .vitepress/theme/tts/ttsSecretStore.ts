@@ -8,6 +8,8 @@ export interface CloudTtsConfig {
   model: string
   voiceId: string
   configured: boolean
+  /** Unix ms — last successful provider sync / connection test. */
+  lastSyncedAt?: number
 }
 
 interface EncryptedSecret {
