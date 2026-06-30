@@ -9,6 +9,7 @@ import Breadcrumbs from './components/Breadcrumbs.vue'
 import ChapterNav from './components/ChapterNav.vue'
 import ReadingProgress from './components/ReadingProgress.vue'
 import ListenBar from './components/ListenBar.vue'
+import TtsConfigModal from './components/TtsConfigModal.vue'
 import Toast from './components/Toast.vue'
 import AnnotationToolbar from './components/AnnotationToolbar.vue'
 import AnnotationRestorer from './components/AnnotationRestorer.vue'
@@ -83,6 +84,7 @@ const showFallbackFocus = computed(() => {
 
   <ReadingProgress />
   <ListenBar v-if="showDocPage" />
+  <TtsConfigModal />
   <Toast />
   <AnnotationToolbar />
   <NoteDialog />

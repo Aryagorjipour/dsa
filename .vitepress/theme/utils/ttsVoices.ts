@@ -13,26 +13,19 @@ export const PIPER_VOICES_CURATED: Array<{ id: string; label: string }> = [
 export const TTS_PIPER_VOICE_KEY = 'dsa-tts-piper-voice'
 export const TTS_ENGINE_KEY = 'dsa-tts-engine'
 
-export type TtsEngineChoice = 'piper' | 'online'
+export type TtsEngineChoice = 'piper' | 'cloud'
 
 export function loadStoredTtsEngine(): TtsEngineChoice {
   if (typeof localStorage === 'undefined') return 'piper'
   const raw = localStorage.getItem(TTS_ENGINE_KEY)
-  return raw === 'online' ? 'online' : 'piper'
+  if (raw === 'cloud') return 'cloud'
+  if (raw === 'online') return 'cloud'
+  return 'piper'
 }
 
 export function saveStoredTtsEngine(engine: TtsEngineChoice): void {
   if (typeof localStorage === 'undefined') return
   localStorage.setItem(TTS_ENGINE_KEY, engine)
-}
-
-export function canUseOnlineTts(): boolean {
-  return (
-    typeof window !== 'undefined' &&
-    'speechSynthesis' in window &&
-    typeof navigator !== 'undefined' &&
-    navigator.onLine
-  )
 }
 
 // macOS novelty voices only — do not block espeak (common on Linux).

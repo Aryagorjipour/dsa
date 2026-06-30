@@ -204,6 +204,7 @@ html.dark mark.dsa-hl:hover {
 
 /* Listen mode — highlight block being read aloud */
 .vp-doc .dsa-tts-active {
+  position: relative;
   outline: 2px solid color-mix(in srgb, var(--vp-c-brand-1) 70%, transparent);
   outline-offset: 4px;
   border-radius: 6px;
@@ -215,16 +216,16 @@ html.dark .vp-doc .dsa-tts-active {
   background: color-mix(in srgb, var(--vp-c-brand-1) 14%, transparent);
 }
 
-.vp-doc .dsa-tts-active .dsa-tts-word-current {
-  text-decoration: underline;
-  text-decoration-color: var(--vp-c-brand-1);
-  text-decoration-thickness: 2px;
-  text-underline-offset: 3px;
-}
-
-.vp-doc .dsa-tts-active .dsa-tts-word-next {
-  opacity: 0.55;
-  transition: opacity 0.15s ease;
+.vp-doc .dsa-tts-active .dsa-tts-line-pointer {
+  position: absolute;
+  left: -14px;
+  width: 0;
+  height: 0;
+  border-top: 5px solid transparent;
+  border-bottom: 5px solid transparent;
+  border-left: 8px solid var(--vp-c-brand-1);
+  pointer-events: none;
+  transition: top 0.12s ease-out;
 }
 
 /* Playground full-page layout */

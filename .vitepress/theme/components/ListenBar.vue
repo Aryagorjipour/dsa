@@ -1,8 +1,8 @@
 <script setup>
-import { computed, ref } from 'vue'
+import { computed } from 'vue'
 import { useHandbookTts } from '../composables/useHandbookTts'
 import { useCoarsePointer } from '../composables/useCoarsePointer'
-import { showToast } from '../composables/useToast'
+import { openTtsConfigModal } from '../composables/useTtsConfigModal'
 
 const { isCoarsePointer } = useCoarsePointer()
 
@@ -15,15 +15,13 @@ const {
   currentLabel,
   panelOpen,
   isSupported,
-  onlineAvailable,
+  cloudConfigured,
   piperVoices,
   piperVoiceId,
   ttsEngine,
   modelLoading,
   modelProgress,
   modelCached,
-  glossaryOverrides,
-  defaultGlossary,
   play,
   pause,
   resume,
@@ -32,10 +30,6 @@ const {
   setRate,
   setPiperVoice,
   setTtsEngine,
-  addGlossaryOverride,
-  removeGlossaryOverride,
-  exportGlossaryOverrides,
-  importGlossaryOverrides,
   openPanel,
 } = useHandbookTts()
 
@@ -45,11 +39,6 @@ const expanded = computed({
     panelOpen.value = v
   },
 })
-
-const showGlossary = ref(false)
-const newMatch = ref('')
-const newSpoken = ref('')
-const glossaryFile = ref(null)
 
 const ratePresets = [0.85, 0.9, 0.95, 1, 1.1, 1.25]
 const isPlaying = computed(() => status.value === 'playing')
@@ -74,43 +63,8 @@ function onClose() {
   expanded.value = false
 }
 
-function onAddOverride() {
-  const match = newMatch.value.trim()
-  const spoken = newSpoken.value.trim()
-  if (!match || !spoken) return
-  addGlossaryOverride({ match, spoken })
-  newMatch.value = ''
-  newSpoken.value = ''
-  showToast('Pronunciation rule added')
-}
-
-function onExportGlossary() {
-  const blob = new Blob([exportGlossaryOverrides()], { type: 'application/json' })
-  const url = URL.createObjectURL(blob)
-  const a = document.createElement('a')
-  a.href = url
-  a.download = 'dsa-tts-glossary.json'
-  a.click()
-  URL.revokeObjectURL(url)
-}
-
-function onImportClick() {
-  glossaryFile.value?.click()
-}
-
-function onImportGlossary(e) {
-  const file = e.target.files?.[0]
-  if (!file) return
-  const reader = new FileReader()
-  reader.onload = () => {
-    if (importGlossaryOverrides(String(reader.result))) {
-      showToast('Pronunciation rules imported')
-    } else {
-      showToast('Invalid glossary JSON')
-    }
-  }
-  reader.readAsText(file)
-  e.target.value = ''
+function onConfigure() {
+  openTtsConfigModal()
 }
 </script>
 
@@ -147,7 +101,10 @@ function onImportGlossary(e) {
             {{ modelLoading ? 'Downloading voice' : isPlaying ? 'Playing' : isPaused ? 'Paused' : 'Ready' }}
           </span>
         </div>
-        <button type="button" class="listen-icon-btn" aria-label="Close listen mode" @click="onClose">✕</button>
+        <div class="listen-header-actions">
+          <button type="button" class="listen-icon-btn" aria-label="Configure listen settings" title="Configure" @click="onConfigure">⚙</button>
+          <button type="button" class="listen-icon-btn" aria-label="Close listen mode" @click="onClose">✕</button>
+        </div>
       </header>
 
       <div
@@ -228,7 +185,7 @@ function onImportGlossary(e) {
           @change="setTtsEngine($event.target.value)"
         >
           <option value="piper">Offline (Piper)</option>
-          <option value="online" :disabled="!onlineAvailable">Online (browser neural)</option>
+          <option value="cloud" :disabled="!cloudConfigured">Cloud AI</option>
         </select>
       </label>
 
@@ -269,30 +226,9 @@ function onImportGlossary(e) {
         </select>
       </label>
 
-      <details class="listen-glossary" :open="showGlossary" @toggle="showGlossary = $event.target.open">
-        <summary class="listen-glossary-summary">Pronunciation rules</summary>
-        <p class="listen-hint">{{ defaultGlossary.length }} handbook rules built in.</p>
-        <ul v-if="glossaryOverrides.length" class="glossary-list">
-          <li v-for="(rule, i) in glossaryOverrides" :key="i">
-            <span class="glossary-rule">{{ rule.match }} → {{ rule.spoken }}</span>
-            <button type="button" class="glossary-remove" @click="removeGlossaryOverride(i)">✕</button>
-          </li>
-        </ul>
-        <div class="glossary-add">
-          <input v-model="newMatch" class="glossary-input" placeholder="Match (e.g. C#)" />
-          <input v-model="newSpoken" class="glossary-input" placeholder="Spoken (e.g. C sharp)" />
-          <button type="button" class="glossary-btn" @click="onAddOverride">Add</button>
-        </div>
-        <div class="glossary-actions">
-          <button type="button" class="glossary-btn" @click="onExportGlossary">Export</button>
-          <button type="button" class="glossary-btn" @click="onImportClick">Import</button>
-          <input ref="glossaryFile" type="file" accept=".json" hidden @change="onImportGlossary" />
-        </div>
-      </details>
-
       <p v-if="isPiper && modelCached" class="listen-hint">Voice ready offline.</p>
-      <p v-else-if="isPiper" class="listen-hint">Downloading voice (~25MB once)…</p>
-      <p v-else class="listen-hint">Online engine uses your browser's neural voice when connected.</p>
+      <p v-else-if="isPiper" class="listen-hint">First play downloads voice (~25MB once).</p>
+      <p v-else-if="!cloudConfigured" class="listen-hint">Configure Cloud AI (⚙) to use online voices.</p>
       <p class="listen-hint">Reads handbook text only — skips quizzes, nav, and code blocks.</p>
     </section>
   </div>
@@ -347,6 +283,11 @@ function onImportGlossary(e) {
   justify-content: space-between;
   gap: 8px;
   margin-bottom: 8px;
+}
+
+.listen-header-actions {
+  display: flex;
+  gap: 4px;
 }
 
 .listen-title-wrap {
@@ -528,78 +469,6 @@ function onImportGlossary(e) {
 
 .listen-hint + .listen-hint {
   margin-top: 4px;
-}
-
-.listen-glossary {
-  margin-bottom: 8px;
-  font-size: 11px;
-}
-
-.listen-glossary-summary {
-  cursor: pointer;
-  font-weight: 600;
-  color: var(--vp-c-text-2);
-  margin-bottom: 6px;
-}
-
-.glossary-list {
-  margin: 6px 0;
-  padding: 0;
-  list-style: none;
-}
-
-.glossary-list li {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 6px;
-  margin-bottom: 4px;
-}
-
-.glossary-rule {
-  color: var(--vp-c-text-2);
-  font-family: var(--vp-font-family-mono);
-  font-size: 10px;
-}
-
-.glossary-remove {
-  border: none;
-  background: none;
-  color: var(--vp-c-text-3);
-  cursor: pointer;
-  font-size: 12px;
-}
-
-.glossary-add {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  margin-top: 6px;
-}
-
-.glossary-input {
-  padding: 4px 6px;
-  border-radius: 6px;
-  border: 1px solid var(--vp-c-divider);
-  background: var(--vp-c-bg);
-  color: var(--vp-c-text-1);
-  font-size: 11px;
-}
-
-.glossary-actions {
-  display: flex;
-  gap: 6px;
-  margin-top: 6px;
-}
-
-.glossary-btn {
-  padding: 4px 8px;
-  border-radius: 6px;
-  border: 1px solid var(--vp-c-divider);
-  background: var(--vp-c-bg);
-  color: var(--vp-c-text-2);
-  font-size: 10px;
-  cursor: pointer;
 }
 
 @media (max-width: 640px) {

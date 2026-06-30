@@ -3,7 +3,6 @@ import { useRoute, useData } from 'vitepress'
 import { assignBlockIds } from '../utils/assignBlockIds'
 import { extractReadingSegments, totalEstimatedMs } from '../utils/extractReadingSegments'
 import {
-  canUseOnlineTts,
   canUsePiperTts,
   loadStoredPiperVoice,
   loadStoredRate,
@@ -16,9 +15,10 @@ import {
 } from '../utils/ttsVoices'
 import { showToast } from './useToast'
 import { createPiperEngine } from '../tts/piperEngine'
-import { createWebSpeechEngine } from '../tts/webSpeechEngine'
-import { setWordHighlight, unwrapAllWordHighlights, wrapBlockWords } from '../tts/wordHighlight'
-import { elapsedMsForDisplayWord, prepareAllSegments } from '../tts/seekByWord'
+import { createApiTtsEngine } from '../tts/apiTtsEngine'
+import { clearLinePointer, setLinePointer } from '../tts/lineIndicator'
+import { unwrapAllWordHighlights, wrapBlockWords } from '../tts/wordHighlight'
+import { prepareAllSegments } from '../tts/seekByWord'
 import type { PreparedSegment } from '../tts/preparedSegment'
 import {
   DEFAULT_GLOSSARY,
@@ -26,6 +26,7 @@ import {
   saveGlossaryOverrides,
   type GlossaryRule,
 } from '../tts/glossary/glossaryStore'
+import { isCloudTtsConfigured } from '../tts/ttsSecretStore'
 import type { TtsEngine, TtsEngineCallbacks, TtsStatus } from '../tts/types'
 
 export type { TtsStatus, GlossaryRule }
@@ -43,15 +44,16 @@ const ttsEngine = ref<TtsEngineChoice>(loadStoredTtsEngine())
 const modelLoading = ref(false)
 const modelProgress = ref(0)
 const modelCached = ref(false)
+const cloudConfigured = ref(false)
 const glossaryOverrides = ref<GlossaryRule[]>(loadGlossaryOverrides())
 
 let activeEngine: TtsEngine | null = null
 let activeEngineKind: TtsEngineChoice | null = null
-let wordClickBound = false
 
 function clearHighlight(): void {
   document.querySelectorAll('.dsa-tts-active').forEach(el => {
     el.classList.remove('dsa-tts-active')
+    if (el instanceof HTMLElement) clearLinePointer(el)
   })
   unwrapAllWordHighlights()
 }
@@ -73,41 +75,6 @@ function highlightBlock(blockId: string, _segmentIndex: number): void {
   }
 }
 
-function handleWordClick(e: MouseEvent): void {
-  const target = e.target
-  if (!(target instanceof HTMLElement)) return
-  const wordEl = target.closest('.dsa-tts-word')
-  if (!(wordEl instanceof HTMLElement)) return
-
-  const blockEl = wordEl.closest('[data-dsa-block]')
-  if (!(blockEl instanceof HTMLElement)) return
-
-  const blockId = blockEl.dataset.dsaBlock
-  const wordIndex = Number(wordEl.dataset.ttsWord)
-  if (!blockId || Number.isNaN(wordIndex)) return
-
-  if (!segments.value.length && !loadSegments()) return
-  if (status.value === 'idle') {
-    panelOpen.value = true
-    return
-  }
-
-  const targetMs = elapsedMsForDisplayWord(segments.value, blockId, wordIndex, rate.value)
-  getEngine().seekTo(targetMs)
-}
-
-function bindWordClickDelegate(): void {
-  if (wordClickBound || typeof document === 'undefined') return
-  document.addEventListener('click', handleWordClick)
-  wordClickBound = true
-}
-
-function unbindWordClickDelegate(): void {
-  if (!wordClickBound || typeof document === 'undefined') return
-  document.removeEventListener('click', handleWordClick)
-  wordClickBound = false
-}
-
 function engineCallbacks(): TtsEngineCallbacks {
   return {
     onStatus(next) {
@@ -123,7 +90,7 @@ function engineCallbacks(): TtsEngineCallbacks {
     onWordHighlight(blockId, displayWordIndex) {
       const el = document.querySelector(`[data-dsa-block="${escapeAttr(blockId)}"]`)
       if (el instanceof HTMLElement) {
-        setWordHighlight(el, displayWordIndex)
+        setLinePointer(el, displayWordIndex)
       }
     },
     onClearHighlight: clearHighlight,
@@ -151,8 +118,8 @@ function getEngine(): TtsEngine {
   destroyEngine()
   activeEngineKind = kind
 
-  if (kind === 'online') {
-    activeEngine = createWebSpeechEngine(engineCallbacks(), rate.value)
+  if (kind === 'cloud') {
+    activeEngine = createApiTtsEngine(engineCallbacks(), rate.value)
   } else {
     activeEngine = createPiperEngine(engineCallbacks(), piperVoiceId.value, rate.value)
   }
@@ -241,15 +208,19 @@ async function refreshModelCached(): Promise<void> {
   modelCached.value = await getEngine().isVoiceCached()
 }
 
+async function refreshCloudConfigured(): Promise<void> {
+  cloudConfigured.value = await isCloudTtsConfigured()
+}
+
 async function ensureEngineReady(): Promise<boolean> {
   modelLoading.value = true
   modelProgress.value = 0
   try {
-    if (ttsEngine.value === 'online') {
-      if (!canUseOnlineTts()) {
-        showToast('Offline — using Piper instead')
-        setTtsEngine('piper')
-        return ensureEngineReady()
+    if (ttsEngine.value === 'cloud') {
+      await refreshCloudConfigured()
+      if (!cloudConfigured.value) {
+        showToast('Configure Cloud AI in Listen settings first')
+        return false
       }
       return await getEngine().ensureReady()
     }
@@ -279,13 +250,12 @@ async function play(pageTitle: string): Promise<void> {
 
   panelOpen.value = true
   bindMediaSessionHandlers(pageTitle)
-  bindWordClickDelegate()
 
   const ready = await ensureEngineReady()
   if (!ready) {
     showToast(
-      ttsEngine.value === 'online'
-        ? 'Online voice unavailable — try Piper or reload'
+      ttsEngine.value === 'cloud'
+        ? 'Cloud TTS not ready — open Configure and test your API key'
         : 'Natural voice failed to load — reload and try again',
     )
     return
@@ -341,8 +311,8 @@ function setPiperVoice(voiceId: string): void {
 }
 
 function setTtsEngine(engine: TtsEngineChoice): void {
-  if (engine === 'online' && !canUseOnlineTts()) {
-    showToast('Online voice requires a network connection')
+  if (engine === 'cloud' && !cloudConfigured.value) {
+    showToast('Configure Cloud AI first (gear icon)')
     return
   }
   const wasActive = status.value !== 'idle'
@@ -420,7 +390,6 @@ export function useHandbookTts() {
   const pageTitle = computed(() => page.value.title || 'Handbook')
   const progress = computed(() => (totalMs.value ? (elapsedMs.value / totalMs.value) * 100 : 0))
   const isSupported = computed(() => canUsePiperTts())
-  const onlineAvailable = computed(() => canUseOnlineTts())
   const piperVoices = computed(() => PIPER_VOICES_CURATED)
   const defaultGlossary = computed(() => DEFAULT_GLOSSARY)
 
@@ -437,7 +406,6 @@ export function useHandbookTts() {
   onUnmounted(() => {
     stop()
     destroyEngine()
-    unbindWordClickDelegate()
   })
 
   watch(
@@ -450,6 +418,7 @@ export function useHandbookTts() {
   )
 
   void refreshModelCached()
+  void refreshCloudConfigured()
 
   return {
     status,
@@ -460,7 +429,7 @@ export function useHandbookTts() {
     currentLabel,
     panelOpen,
     isSupported,
-    onlineAvailable,
+    cloudConfigured,
     piperVoices,
     piperVoiceId,
     ttsEngine,
@@ -481,6 +450,7 @@ export function useHandbookTts() {
     removeGlossaryOverride,
     exportGlossaryOverrides,
     importGlossaryOverrides,
+    refreshCloudConfigured,
     toggle: () => toggle(pageTitle.value),
     openPanel: () => {
       panelOpen.value = true
