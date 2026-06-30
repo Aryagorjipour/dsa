@@ -11,18 +11,17 @@ const {
   currentLabel,
   panelOpen,
   isSupported,
-  voicesLoading,
-  hasVoices,
-  voiceOptions,
-  selectedVoiceUri,
+  piperVoices,
+  piperVoiceId,
+  modelLoading,
+  modelProgress,
   play,
   pause,
   resume,
   stop,
   skip,
   setRate,
-  setVoiceUri,
-  toggle,
+  setPiperVoice,
   openPanel,
 } = useHandbookTts()
 
@@ -33,7 +32,10 @@ const expanded = computed({
   },
 })
 
-const ratePresets = [0.75, 1, 1.25, 1.5, 1.75, 2]
+const ratePresets = [0.85, 0.9, 0.95, 1, 1.1, 1.25]
+const isPlaying = computed(() => status.value === 'playing')
+const isPaused = computed(() => status.value === 'paused')
+const isActive = computed(() => isPlaying.value || isPaused.value)
 
 function formatTime(ms) {
   const sec = Math.max(0, Math.floor(ms / 1000))
@@ -42,9 +44,8 @@ function formatTime(ms) {
   return `${m}:${String(s).padStart(2, '0')}`
 }
 
-function onPlayPause() {
-  if (status.value === 'playing') pause()
-  else if (status.value === 'paused') resume()
+function onPlay() {
+  if (isPaused.value) resume()
   else play()
 }
 
@@ -55,19 +56,23 @@ function onClose() {
 </script>
 
 <template>
-  <div v-if="isSupported" class="listen-bar-root" :class="{ expanded, playing: status === 'playing' }">
+  <div
+    v-if="isSupported"
+    class="listen-bar-root"
+    :class="{ expanded, playing: isPlaying }"
+  >
     <button
       v-if="!expanded"
       type="button"
       class="listen-fab"
-      aria-label="Listen to this page"
+      aria-label="Open listen mode"
       title="Listen to handbook (Shift+R)"
-      @click="openPanel(); play()"
+      @click="openPanel()"
     >
       <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" fill="currentColor">
         <path d="M3 10v4h4l5 5V5L7 10H3zm13.5 2c0-1.77-1.02-3.29-2.5-4.03v8.06c1.48-.74 2.5-2.26 2.5-4.03zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/>
       </svg>
-      <span>Listen</span>
+      <span class="listen-fab-label">Listen</span>
     </button>
 
     <section
@@ -79,14 +84,29 @@ function onClose() {
       <header class="listen-header">
         <div class="listen-title-wrap">
           <span class="listen-title">Listen</span>
-          <span class="listen-status">{{ status === 'playing' ? 'Playing' : status === 'paused' ? 'Paused' : 'Ready' }}</span>
+          <span class="listen-status">
+            {{ modelLoading ? 'Downloading voice' : isPlaying ? 'Playing' : isPaused ? 'Paused' : 'Ready' }}
+          </span>
         </div>
         <button type="button" class="listen-icon-btn" aria-label="Close listen mode" @click="onClose">✕</button>
       </header>
 
-      <p v-if="currentLabel" class="listen-preview">{{ currentLabel }}</p>
+      <div
+        v-if="modelLoading"
+        class="listen-model-progress"
+        role="progressbar"
+        :aria-valuenow="modelProgress"
+        aria-valuemin="0"
+        aria-valuemax="100"
+      >
+        <div class="listen-model-progress-fill" :style="{ width: modelProgress + '%' }" />
+        <span class="listen-model-progress-label">Downloading natural voice… {{ modelProgress }}%</span>
+      </div>
+
+      <p v-if="currentLabel && isActive" class="listen-preview">{{ currentLabel }}</p>
 
       <div
+        v-if="isActive"
         class="listen-progress"
         role="progressbar"
         :aria-valuenow="Math.round(progress)"
@@ -95,17 +115,48 @@ function onClose() {
       >
         <div class="listen-progress-fill" :style="{ width: progress + '%' }" />
       </div>
-      <div class="listen-time">{{ formatTime(elapsedMs) }} / {{ formatTime(totalMs) }}</div>
+      <div v-if="isActive" class="listen-time">{{ formatTime(elapsedMs) }} / {{ formatTime(totalMs) }}</div>
 
       <div class="listen-controls">
-        <button type="button" class="listen-icon-btn" aria-label="Back 10 seconds" title="-10s" @click="skip(-10000)">
+        <button
+          type="button"
+          class="listen-icon-btn"
+          aria-label="Back 10 seconds"
+          title="-10s"
+          :disabled="!isActive"
+          @click="skip(-10000)"
+        >
           <span class="skip-label">−10s</span>
         </button>
-        <button type="button" class="listen-play-btn" :aria-label="status === 'playing' ? 'Pause' : 'Play'" @click="onPlayPause">
-          <span v-if="status === 'playing'" aria-hidden="true">❚❚</span>
-          <span v-else aria-hidden="true">▶</span>
+
+        <button
+          v-if="!isPlaying"
+          type="button"
+          class="listen-play-btn"
+          aria-label="Play"
+          :disabled="modelLoading"
+          @click="onPlay"
+        >
+          <span aria-hidden="true">▶</span>
         </button>
-        <button type="button" class="listen-icon-btn" aria-label="Forward 10 seconds" title="+10s" @click="skip(10000)">
+        <button
+          v-else
+          type="button"
+          class="listen-play-btn is-pause"
+          aria-label="Pause"
+          @click="pause"
+        >
+          <span aria-hidden="true">❚❚</span>
+        </button>
+
+        <button
+          type="button"
+          class="listen-icon-btn"
+          aria-label="Forward 10 seconds"
+          title="+10s"
+          :disabled="!isActive"
+          @click="skip(10000)"
+        >
           <span class="skip-label">+10s</span>
         </button>
       </div>
@@ -124,40 +175,23 @@ function onClose() {
             {{ preset }}×
           </button>
         </div>
-        <input
-          class="listen-rate-slider"
-          type="range"
-          min="0.5"
-          max="2"
-          step="0.05"
-          :value="rate"
-          aria-label="Playback speed"
-          @input="setRate(parseFloat($event.target.value))"
-        />
       </div>
 
       <label class="listen-voice">
         <span class="listen-voice-label">Voice</span>
         <select
           class="listen-voice-select"
-          :value="selectedVoiceUri ?? ''"
-          @change="setVoiceUri($event.target.value)"
+          :value="piperVoiceId"
+          @change="setPiperVoice($event.target.value)"
         >
-          <option value="">Browser default (English)</option>
-          <option v-for="v in voiceOptions" :key="v.voiceURI" :value="v.voiceURI">
-            {{ v.name }} ({{ v.lang }}){{ v.localService ? ' · offline' : '' }}
+          <option v-for="v in piperVoices" :key="v.id" :value="v.id">
+            {{ v.label }}
           </option>
         </select>
       </label>
 
-      <p v-if="voicesLoading" class="listen-hint">Loading voices…</p>
-      <p v-else-if="!hasVoices" class="listen-hint listen-hint-warn">
-        No voices detected. On Arch Linux run:
-        <code>sudo pacman -S speech-dispatcher espeak-ng</code>, then
-        <code>systemctl --user enable --now speech-dispatcher.socket</code>
-        (not the .service unit), and restart Firefox/Zen.
-      </p>
-      <p v-else class="listen-hint">Reads handbook text only — skips quizzes, nav cards, and code blocks.</p>
+      <p class="listen-hint">First use downloads ~25MB once, then works offline.</p>
+      <p class="listen-hint">Reads handbook text only — skips quizzes, nav, and code blocks.</p>
     </section>
   </div>
 </template>
@@ -167,8 +201,10 @@ function onClose() {
   position: fixed;
   bottom: calc(24px + var(--dsa-safe-bottom, 0px));
   right: 24px;
+  left: auto;
   z-index: 112;
-  max-width: min(360px, calc(100vw - 32px));
+  width: max-content;
+  max-width: min(360px, calc(100vw - 96px));
 }
 
 .listen-fab {
@@ -194,6 +230,7 @@ function onClose() {
 }
 
 .listen-panel {
+  width: min(360px, calc(100vw - 48px));
   padding: 12px 14px;
   border-radius: 14px;
   border: 1px solid var(--vp-c-divider);
@@ -229,6 +266,31 @@ function onClose() {
   letter-spacing: 0.04em;
 }
 
+.listen-model-progress {
+  position: relative;
+  height: 28px;
+  border-radius: 8px;
+  background: var(--vp-c-bg-soft);
+  overflow: hidden;
+  margin-bottom: 8px;
+}
+
+.listen-model-progress-fill {
+  height: 100%;
+  background: color-mix(in srgb, var(--vp-c-brand-1) 35%, var(--vp-c-bg));
+  transition: width 0.2s ease-out;
+}
+
+.listen-model-progress-label {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 10px;
+  color: var(--vp-c-text-2);
+}
+
 .listen-preview {
   margin: 0 0 8px;
   font-size: 12px;
@@ -261,7 +323,7 @@ function onClose() {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 12px;
+  gap: 10px;
   margin-bottom: 10px;
 }
 
@@ -279,6 +341,17 @@ function onClose() {
   justify-content: center;
 }
 
+.listen-play-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.listen-play-btn.is-pause {
+  background: color-mix(in srgb, var(--vp-c-brand-1) 82%, var(--vp-c-bg));
+  border: 1px solid var(--vp-c-brand-1);
+  color: var(--vp-c-brand-1);
+}
+
 .listen-icon-btn {
   min-width: 44px;
   min-height: 36px;
@@ -288,6 +361,11 @@ function onClose() {
   border-radius: 8px;
   cursor: pointer;
   font-size: 12px;
+}
+
+.listen-icon-btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
 }
 
 .skip-label {
@@ -309,7 +387,7 @@ function onClose() {
   display: flex;
   flex-wrap: wrap;
   gap: 6px;
-  margin-bottom: 6px;
+  margin-bottom: 10px;
 }
 
 .speed-chip {
@@ -328,11 +406,6 @@ function onClose() {
   background: color-mix(in srgb, var(--vp-c-brand-1) 12%, var(--vp-c-bg));
 }
 
-.listen-rate-slider {
-  width: 100%;
-  margin-bottom: 10px;
-}
-
 .listen-voice-select {
   width: 100%;
   margin-bottom: 8px;
@@ -347,29 +420,44 @@ function onClose() {
 .listen-hint {
   margin: 0;
   font-size: 10px;
-  line-height: 1.4;
+  line-height: 1.45;
   color: var(--vp-c-text-3);
 }
 
-.listen-hint-warn {
-  color: var(--vp-c-warning-1, #d97706);
-}
-
-.listen-hint code {
-  font-size: 9px;
-  word-break: break-all;
+.listen-hint + .listen-hint {
+  margin-top: 4px;
 }
 
 @media (max-width: 640px) {
-  .listen-bar-root {
+  .listen-bar-root:not(.expanded) {
     right: 16px;
+    left: auto;
     bottom: calc(16px + var(--dsa-safe-bottom, 0px));
+    width: max-content;
+    max-width: none;
+  }
+
+  .listen-bar-root.expanded {
+    right: 16px;
     left: 16px;
+    bottom: calc(16px + var(--dsa-safe-bottom, 0px));
+    width: auto;
     max-width: none;
   }
 
   .listen-panel {
-    padding: 10px 12px;
+    width: 100%;
+  }
+
+  .listen-fab-label {
+    display: none;
+  }
+
+  .listen-fab {
+    width: 44px;
+    height: 44px;
+    padding: 0;
+    justify-content: center;
   }
 }
 </style>

@@ -29,7 +29,8 @@ function scoreVoice(voice, preferredLang) {
   if (NOVELTY_VOICES.test(name)) score -= 200
   if (/espeak|eloquence|festival|mbrola/i.test(name)) score -= 12
   if (PREFER.test(name)) score += 40
-  if (voice.localService) score += 35
+  if (!voice.localService && langMatches(voice.lang, preferredLang)) score += 32
+  if (voice.localService) score += 20
   if (voice.default) score += 8
   if (langMatches(voice.lang, preferredLang)) score += 25
   if (name.includes('english')) score += 5

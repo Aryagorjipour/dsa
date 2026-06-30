@@ -1,6 +1,17 @@
 /** Handbook content is English — prefer en-* even when the OS locale differs. */
 export const HANDBOOK_TTS_LANG = 'en-US'
 
+export const PIPER_DEFAULT_VOICE = 'en_US-lessac-medium'
+
+export const PIPER_VOICES_CURATED: Array<{ id: string; label: string }> = [
+  { id: 'en_US-lessac-medium', label: 'Lessac (warm)' },
+  { id: 'en_US-ryan-medium', label: 'Ryan (clear)' },
+  { id: 'en_US-amy-medium', label: 'Amy' },
+  { id: 'en_US-hfc_female-medium', label: 'Female (natural)' },
+]
+
+export const TTS_PIPER_VOICE_KEY = 'dsa-tts-piper-voice'
+
 // macOS novelty voices only — do not block espeak (common on Linux).
 const NOVELTY_VOICES =
   /bells|bad news|bahh|bubbles|cellos|deranged|good news|jester|organ|superstar|trinoids|whisper|zarvox|flo|albert|fred|bruce|junior|kathy|princess|ralph|victoria/i
@@ -28,7 +39,8 @@ export function scoreVoice(voice: SpeechSynthesisVoice, preferredLang: string): 
   if (NOVELTY_VOICES.test(name)) score -= 200
   if (/espeak|eloquence|festival|mbrola/i.test(name)) score -= 12
   if (PREFER.test(name)) score += 40
-  if (voice.localService) score += 35
+  if (!voice.localService && langMatches(voice.lang, preferredLang)) score += 32
+  if (voice.localService) score += 20
   if (voice.default) score += 8
   if (langMatches(voice.lang, preferredLang)) score += 25
   if (name.includes('english')) score += 5
@@ -54,19 +66,41 @@ export function readSpeechVoices(synth: SpeechSynthesis): SpeechSynthesisVoice[]
   return synth.getVoices().filter(v => v.name.trim().length > 0 || v.lang.trim().length > 0)
 }
 
-/** Nudge Chromium/Firefox to populate getVoices() — often empty until first synthesis. */
+/** Light nudge — avoid speak+cancel loops that can stress Firefox on Linux. */
 export function primeSpeechSynthesis(synth: SpeechSynthesis): void {
-  try {
-    const prime = new SpeechSynthesisUtterance('\u200b')
-    prime.volume = 0.01
-    prime.rate = 10
-    prime.lang = HANDBOOK_TTS_LANG
-    synth.speak(prime)
-    if (synth.speaking) synth.cancel()
-  } catch {
-    /* ignore */
-  }
   synth.getVoices()
+}
+
+export function getTtsPlatformHint(): string {
+  if (typeof navigator === 'undefined') {
+    return 'Check system text-to-speech settings and restart the browser.'
+  }
+  const ua = navigator.userAgent
+  if (/iphone|ipad|ipod/i.test(ua)) {
+    return 'On iOS, use Safari and add a voice under Settings → Accessibility → Spoken Content.'
+  }
+  if (/android/i.test(ua)) {
+    return 'On Android, install Google Speech Services and choose a voice in system TTS settings.'
+  }
+  if (/macintosh|mac os x/i.test(ua)) {
+    return 'On macOS, pick Samantha or another enhanced voice in System Settings → Accessibility → Spoken Content.'
+  }
+  if (/windows/i.test(ua)) {
+    return 'On Windows, use Edge or Chrome for natural online voices, or install a voice in Settings → Speech.'
+  }
+  if (/linux/i.test(ua)) {
+    return 'On Linux, install speech-dispatcher plus espeak-ng or Piper; enable speech-dispatcher.socket, then restart the browser.'
+  }
+  return 'Check system text-to-speech settings and restart the browser.'
+}
+
+/** Native pause/resume is broken on Firefox/Linux (and flaky elsewhere). */
+export function supportsNativeSpeechPause(): boolean {
+  if (typeof navigator === 'undefined') return false
+  const ua = navigator.userAgent
+  if (/firefox/i.test(ua) && /linux/i.test(ua)) return false
+  if (/android/i.test(ua)) return false
+  return false
 }
 
 export async function waitForVoices(
@@ -160,4 +194,20 @@ export function findVoiceByUri(
 ): SpeechSynthesisVoice | null {
   if (!uri) return null
   return voices.find(v => v.voiceURI === uri || v.name === uri) ?? null
+}
+
+export function canUsePiperTts(): boolean {
+  return typeof Audio !== 'undefined' && typeof WebAssembly !== 'undefined'
+}
+
+export function loadStoredPiperVoice(): string {
+  if (typeof localStorage === 'undefined') return PIPER_DEFAULT_VOICE
+  const raw = localStorage.getItem(TTS_PIPER_VOICE_KEY)
+  if (raw && PIPER_VOICES_CURATED.some(v => v.id === raw)) return raw
+  return PIPER_DEFAULT_VOICE
+}
+
+export function saveStoredPiperVoice(voiceId: string): void {
+  if (typeof localStorage === 'undefined') return
+  localStorage.setItem(TTS_PIPER_VOICE_KEY, voiceId)
 }

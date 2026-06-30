@@ -16,6 +16,7 @@ import { sidebar } from './sidebar'
 
 const DIST = path.resolve('.vitepress/dist')
 
+
 export default defineConfig({
   title: SITE_NAME,
   description: SITE_TAGLINE,
@@ -40,6 +41,11 @@ export default defineConfig({
 
   vite: {
     publicDir: 'public',
+    assetsInclude: ['**/*.wasm', '**/*.data'],
+
+    optimizeDeps: {
+      exclude: ['@mintplex-labs/piper-tts-web', 'onnxruntime-web'],
+    },
     plugins: [
       VitePWA({
         registerType: 'prompt',
@@ -115,6 +121,9 @@ export default defineConfig({
             }
             if (id.includes('idb-keyval')) {
               return 'storage'
+            }
+            if (id.includes('@mintplex-labs/piper-tts-web')) {
+              return 'piper-tts'
             }
             if (id.includes('/quizzes/') || id.includes('QuizSection') || id.includes('QuizDashboard')) {
               return 'quiz'

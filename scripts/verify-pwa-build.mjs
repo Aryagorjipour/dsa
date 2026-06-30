@@ -117,6 +117,21 @@ for (const asset of requiredPublicAssets) {
   else pass(`dist asset present: ${asset}`)
 }
 
+function distHasWasmAsset() {
+  function walk(dir) {
+    for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
+      const full = path.join(dir, entry.name)
+      if (entry.isDirectory()) {
+        if (walk(full)) return true
+      } else if (/ort-wasm-simd-threaded\.jsep\.wasm$/i.test(entry.name)) {
+        return true
+      }
+    }
+    return false
+  }
+  return walk(DIST)
+}
+
 const sitemap = path.join(DIST, 'sitemap.xml')
 if (!fs.existsSync(sitemap)) {
   fail('sitemap.xml missing from dist')
@@ -124,12 +139,21 @@ if (!fs.existsSync(sitemap)) {
   pass('sitemap.xml present in dist')
 }
 
+if (!distHasWasmAsset()) {
+  fail('dist missing bundled ort-wasm-simd-threaded.jsep.wasm asset')
+} else {
+  pass('dist includes ONNX wasm asset (Vite ?url bundle)')
+}
+
 let totalBytes = 0
 function walk(dir) {
   for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
     const full = path.join(dir, entry.name)
     if (entry.isDirectory()) walk(full)
-    else totalBytes += fs.statSync(full).size
+    else if (!entry.name.endsWith('.wasm') && !entry.name.endsWith('.data')) {
+      // Piper/ONNX WASM + espeak data are lazy-loaded — not precached (5 MB SW limit).
+      totalBytes += fs.statSync(full).size
+    }
   }
 }
 walk(DIST)
