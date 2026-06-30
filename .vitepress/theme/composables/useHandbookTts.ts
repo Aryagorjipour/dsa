@@ -52,7 +52,7 @@ let activeEngineKind: TtsEngineChoice | null = null
 
 function clearHighlight(): void {
   document.querySelectorAll('.dsa-tts-active').forEach(el => {
-    el.classList.remove('dsa-tts-active')
+    el.classList.remove('dsa-tts-active', 'dsa-tts-has-pointer')
     if (el instanceof HTMLElement) clearLinePointer(el)
   })
   unwrapAllWordHighlights()
@@ -380,6 +380,10 @@ export function getListenStatus(): TtsStatus {
 
 export function skipListen(ms: number): void {
   skip(ms)
+}
+
+export function skipSegmentListen(delta: number): void {
+  skipSegment(delta)
 }
 
 export function toggleHandbookTts(): Promise<void> {

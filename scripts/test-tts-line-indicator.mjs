@@ -3,7 +3,7 @@
  * Unit tests for TTS line indicator clustering (mirrors lineIndicator.ts).
  */
 
-const LINE_TOLERANCE_PX = 4
+const LINE_TOLERANCE_PX = 6
 
 function clusterLineTops(tops, tolerance = LINE_TOLERANCE_PX) {
   const sorted = [...tops].sort((a, b) => a - b)
@@ -21,6 +21,17 @@ function lineIndexForWord(tops, wordIndex, tolerance = LINE_TOLERANCE_PX) {
   if (top === undefined) return 0
   const idx = lines.findIndex(l => Math.abs(l - top) <= tolerance)
   return idx >= 0 ? idx : 0
+}
+
+function lineBoundsForWord(tops, heights, wordIndex, tolerance = LINE_TOLERANCE_PX) {
+  const top = tops[wordIndex]
+  if (top === undefined) return null
+  const indices = tops
+    .map((t, i) => (Math.abs(t - top) <= tolerance ? i : -1))
+    .filter(i => i >= 0)
+  const lineTop = Math.min(...indices.map(i => tops[i]))
+  const lineBottom = Math.max(...indices.map(i => tops[i] + (heights[i] ?? 0)))
+  return { top: lineTop, height: Math.max(4, lineBottom - lineTop) }
 }
 
 function lineTopForWordIndex(wordTops, displayWordIndex) {
@@ -48,6 +59,11 @@ assert('word on second line', lineIndexForWord(tops, 4) === 1)
 assert('word on third line', lineIndexForWord(tops, 6) === 2)
 assert('line top for valid index', lineTopForWordIndex(tops, 4) === 22)
 assert('line top null for invalid', lineTopForWordIndex(tops, 99) === null)
+
+const heights = tops.map(() => 18)
+const bounds = lineBoundsForWord(tops, heights, 4)
+assert('line bounds span multiple words', bounds && bounds.height >= 18)
+assert('line bounds on second line', bounds && bounds.top === 22)
 
 if (failed) {
   console.error(`\n${failed} test(s) failed`)

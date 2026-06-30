@@ -74,10 +74,28 @@ export function sliceTextAtOffset(text: string, offsetMs: number, rate: number):
   return normalized.slice(charOffset).trim() || normalized
 }
 
+const SKIP_UI_SELECTORS =
+  '.dsa-heading-note-btn, .dsa-code-action, button, svg, [aria-hidden="true"]'
+
+/** Parent containers (blockquote, custom-block) duplicate child block text if both are extracted. */
+function hasSpeakableDescendant(el: Element): boolean {
+  for (const descendant of el.querySelectorAll(BLOCK_SELECTOR)) {
+    if (descendant !== el) return true
+  }
+  return false
+}
+
+export function speakableBlockText(el: Element): string {
+  const clone = el.cloneNode(true) as HTMLElement
+  clone.querySelectorAll(SKIP_UI_SELECTORS).forEach(node => node.remove())
+  return normalizeReadingText(clone.textContent || '')
+}
+
 function shouldSkipBlock(el: Element): boolean {
   if (el.closest(SKIP_ANCESTOR)) return true
   if (el.closest('pre, code')) return true
-  const text = normalizeReadingText(el.textContent || '')
+  if (hasSpeakableDescendant(el)) return true
+  const text = speakableBlockText(el)
   if (!text) return true
   if (text === '​') return true
   return false
@@ -103,7 +121,7 @@ export function extractReadingSegments(root?: ParentNode | null): ReadingSegment
 
     const blockId = el.getAttribute('data-dsa-block') || `block-${counter}`
     const tagName = el.tagName.toLowerCase()
-    const chunks = splitIntoChunks(el.textContent || '')
+    const chunks = splitIntoChunks(speakableBlockText(el))
 
     for (const text of chunks) {
       segments.push({

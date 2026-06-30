@@ -53,7 +53,9 @@ export function wrapBlockWords(blockEl: HTMLElement): void {
   const walker = document.createTreeWalker(blockEl, NodeFilter.SHOW_TEXT, {
     acceptNode(node) {
       const parent = node.parentElement
-      if (!parent || parent.closest('pre, code')) return NodeFilter.FILTER_REJECT
+      if (!parent || parent.closest('pre, code, button, .dsa-heading-note-btn')) {
+        return NodeFilter.FILTER_REJECT
+      }
       if (!node.textContent?.trim()) return NodeFilter.FILTER_REJECT
       return NodeFilter.FILTER_ACCEPT
     },

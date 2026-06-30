@@ -53,6 +53,7 @@ A no-hand-waving, deeply practical handbook written for developers who want to t
 - [x] **Keyboard shortcuts** — `Shift+?` cheat sheet; `Shift+H/P/M/Q/L` jump to main sections; `Shift+T` toggles theme
 - [x] **PWA offline support** — install the handbook, read anywhere without internet
 - [x] Offline-aware Playground — edit code locally; Wandbox compile when online
+- [x] **Listen mode** — offline Piper + Cloud AI TTS, active-line indicator, paragraph skip (`⇧↑`/`⇧↓`), pronunciation rules, skips UI chrome (e.g. heading **+**)
 
 ### Up next
 

@@ -1,7 +1,7 @@
 import { ref, onMounted, onUnmounted } from 'vue'
 import { useRouter, useRoute, useData } from 'vitepress'
 import { handbookLink } from '../utils/handbookLink'
-import { getListenStatus, skipListen, toggleHandbookTts } from './useHandbookTts'
+import { getListenStatus, skipListen, skipSegmentListen, toggleHandbookTts } from './useHandbookTts'
 import { normalizePagePath } from '../utils/normalizePagePath'
 
 export interface ShortcutEntry {
@@ -41,6 +41,8 @@ export const SHORTCUT_GROUPS: ShortcutGroup[] = [
       { keys: '⇧R', label: 'Play / pause listen mode' },
       { keys: '⇧←', label: 'Skip back 10 seconds' },
       { keys: '⇧→', label: 'Skip forward 10 seconds' },
+      { keys: '⇧↑', label: 'Previous paragraph' },
+      { keys: '⇧↓', label: 'Next paragraph' },
     ],
   },
   {
@@ -143,6 +145,15 @@ export function useKeyboardShortcuts() {
       if (listenStatus === 'playing' || listenStatus === 'paused') {
         e.preventDefault()
         skipListen(e.key === 'ArrowLeft' ? -10_000 : 10_000)
+      }
+      return
+    }
+
+    if (isShiftCombo(e) && (e.key === 'ArrowUp' || e.key === 'ArrowDown')) {
+      const listenStatus = getListenStatus()
+      if (listenStatus === 'playing' || listenStatus === 'paused') {
+        e.preventDefault()
+        skipSegmentListen(e.key === 'ArrowUp' ? -1 : 1)
       }
       return
     }
