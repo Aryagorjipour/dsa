@@ -74,8 +74,11 @@ export function sliceTextAtOffset(text: string, offsetMs: number, rate: number):
   return normalized.slice(charOffset).trim() || normalized
 }
 
-const SKIP_UI_SELECTORS =
-  '.dsa-heading-note-btn, .dsa-code-action, button, svg, [aria-hidden="true"]'
+/** Decorative / UI nodes excluded from spoken text and word-wrap indexing. */
+export const TTS_NON_SPEAKABLE_SELECTORS =
+  '.dsa-heading-note-btn, .dsa-code-action, .header-anchor, button, svg, [aria-hidden="true"]'
+
+const SKIP_UI_SELECTORS = TTS_NON_SPEAKABLE_SELECTORS
 
 /** Parent containers (blockquote, custom-block) duplicate child block text if both are extracted. */
 function hasSpeakableDescendant(el: Element): boolean {

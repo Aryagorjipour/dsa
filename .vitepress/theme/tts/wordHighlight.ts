@@ -1,5 +1,11 @@
-import { normalizeReadingText } from '../utils/extractReadingSegments'
+import {
+  normalizeReadingText,
+  speakableBlockText,
+  TTS_NON_SPEAKABLE_SELECTORS,
+} from '../utils/extractReadingSegments'
 import type { SpeechPrepResult } from './speechPrep'
+
+const WRAP_SKIP_ANCESTORS = `pre, ${TTS_NON_SPEAKABLE_SELECTORS}`
 
 export interface WordToken {
   text: string
@@ -28,7 +34,44 @@ export function wordIndexAtRatio(wordCount: number, ratio: number): number {
   return Math.min(wordCount - 1, Math.floor(clamped * wordCount))
 }
 
-/** Map a segment-local display word index to a block-global wrapped word index. */
+/**
+ * Align speakable tokens to DOM `.dsa-tts-word` spans — skips DOM-only decorative words.
+ * Returns speakableIndex → domIndex (-1 when no DOM match).
+ */
+export function alignSpeakableToDomIndices(speakable: string[], dom: string[]): number[] {
+  const result = new Array<number>(speakable.length).fill(-1)
+  let domIdx = 0
+  for (let speakIdx = 0; speakIdx < speakable.length; speakIdx++) {
+    const target = speakable[speakIdx]!
+    let searchFrom = domIdx
+    while (searchFrom < dom.length && dom[searchFrom] !== target) searchFrom++
+    if (searchFrom < dom.length) {
+      result[speakIdx] = searchFrom
+      domIdx = searchFrom + 1
+    }
+  }
+  return result
+}
+
+/** Resolve a speakable word index to its DOM span inside a wrapped block. */
+export function domWordForSpeakableIndex(
+  blockEl: HTMLElement,
+  speakableWordIndex: number,
+): HTMLElement | null {
+  const speakableWords = tokenizeWords(speakableBlockText(blockEl))
+  if (speakableWordIndex < 0 || speakableWordIndex >= speakableWords.length) return null
+
+  const domWords = [...blockEl.querySelectorAll('.dsa-tts-word')] as HTMLElement[]
+  const domTexts = domWords.map(w => w.textContent ?? '')
+  const map = alignSpeakableToDomIndices(
+    speakableWords.map(w => w.text),
+    domTexts,
+  )
+  const domIdx = map[speakableWordIndex]
+  return domIdx !== undefined && domIdx >= 0 ? (domWords[domIdx] ?? null) : null
+}
+
+/** Map a segment-local display word index to a block-global speakable word index. */
 export function blockWordIndexForSegment(
   segments: Array<{ blockId: string; text: string; speech?: SpeechPrepResult }>,
   segmentIndex: number,
@@ -37,12 +80,11 @@ export function blockWordIndexForSegment(
   const seg = segments[segmentIndex]
   if (!seg) return segmentDisplayWordIndex
 
-  let offset = 0
-  for (let i = 0; i < segmentIndex; i++) {
-    if (segments[i].blockId === seg.blockId) {
-      offset += segments[i].speech?.displayWordCount ?? tokenizeWords(segments[i].text).length
-    }
-  }
+  const blockSegs = segments.filter(s => s.blockId === seg.blockId)
+  const blockText = normalizeReadingText(blockSegs.map(s => s.text).join(''))
+  const segIdxInBlock = blockSegs.indexOf(seg)
+  const priorTexts = blockSegs.slice(0, segIdxInBlock).map(s => s.text)
+  const offset = findSegmentWordOffset(blockText, seg.text, priorTexts)
   return offset + segmentDisplayWordIndex
 }
 
@@ -72,7 +114,7 @@ export function wrapBlockWords(blockEl: HTMLElement): void {
   const walker = document.createTreeWalker(blockEl, NodeFilter.SHOW_TEXT, {
     acceptNode(node) {
       const parent = node.parentElement
-      if (!parent || parent.closest('pre, button, .dsa-heading-note-btn')) {
+      if (!parent || parent.closest(WRAP_SKIP_ANCESTORS)) {
         return NodeFilter.FILTER_REJECT
       }
       if (!node.textContent?.trim()) return NodeFilter.FILTER_REJECT

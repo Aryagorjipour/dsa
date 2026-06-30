@@ -22,16 +22,43 @@ function tokenizeWords(text) {
   return words
 }
 
+function findSegmentWordOffset(blockText, segmentText, priorSegmentTexts) {
+  const norm = normalizeReadingText(blockText)
+  let searchFrom = 0
+  for (const prior of priorSegmentTexts) {
+    const piece = normalizeReadingText(prior)
+    const idx = norm.indexOf(piece, searchFrom)
+    if (idx >= 0) searchFrom = idx + piece.length
+  }
+  const seg = normalizeReadingText(segmentText)
+  const idx = norm.indexOf(seg, searchFrom)
+  const charOffset = idx >= 0 ? idx : searchFrom
+  return tokenizeWords(norm.slice(0, charOffset)).length
+}
+
 function blockWordIndexForSegment(segments, segmentIndex, segmentDisplayWordIndex) {
   const seg = segments[segmentIndex]
   if (!seg) return segmentDisplayWordIndex
-  let offset = 0
-  for (let i = 0; i < segmentIndex; i++) {
-    if (segments[i].blockId === seg.blockId) {
-      offset += tokenizeWords(segments[i].text).length
+  const blockSegs = segments.filter(s => s.blockId === seg.blockId)
+  const blockText = normalizeReadingText(blockSegs.map(s => s.text).join(''))
+  const segIdxInBlock = blockSegs.indexOf(seg)
+  const priorTexts = blockSegs.slice(0, segIdxInBlock).map(s => s.text)
+  return findSegmentWordOffset(blockText, seg.text, priorTexts) + segmentDisplayWordIndex
+}
+
+function alignSpeakableToDomIndices(speakable, dom) {
+  const result = new Array(speakable.length).fill(-1)
+  let domIdx = 0
+  for (let speakIdx = 0; speakIdx < speakable.length; speakIdx++) {
+    const target = speakable[speakIdx]
+    let searchFrom = domIdx
+    while (searchFrom < dom.length && dom[searchFrom] !== target) searchFrom++
+    if (searchFrom < dom.length) {
+      result[speakIdx] = searchFrom
+      domIdx = searchFrom + 1
     }
   }
-  return offset + segmentDisplayWordIndex
+  return result
 }
 
 function wordIndexAtRatio(wordCount, ratio) {
@@ -66,6 +93,19 @@ const segments = [
 assert('second chunk offsets by five', blockWordIndexForSegment(segments, 1, 0) === 5)
 assert('second chunk local index maps globally', blockWordIndexForSegment(segments, 1, 2) === 7)
 assert('other block has no offset', blockWordIndexForSegment(segments, 2, 1) === 1)
+
+const anchorDom = ['#', 'Section', 'title', 'here']
+const anchorSpeak = ['Section', 'title', 'here']
+const anchorMap = alignSpeakableToDomIndices(anchorSpeak, anchorDom)
+assert('skips header anchor in dom', anchorMap[0] === 1)
+assert('maps third speakable word', anchorMap[2] === 3)
+
+const codeDom = ['The', 'algorithm', 'runs', 'fast']
+const codeSpeak = ['The', 'O(n)', 'algorithm', 'runs', 'fast']
+const codeMap = alignSpeakableToDomIndices(codeSpeak, codeDom)
+assert('speakable-only token unmapped', codeMap[1] === -1)
+assert('resyncs after skipped token', codeMap[2] === 1)
+assert('last token maps correctly', codeMap[4] === 3)
 
 if (failed) {
   console.error(`\n${failed} test(s) failed`)

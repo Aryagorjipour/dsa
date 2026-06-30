@@ -1,3 +1,5 @@
+import { domWordForSpeakableIndex } from './wordHighlight'
+
 const LINE_TOLERANCE_PX = 6
 
 /** Lines this short stay fully visible in focus mode. */
@@ -77,9 +79,9 @@ export function clearLinePointer(blockEl: HTMLElement): void {
   })
 }
 
-export function setLinePointer(blockEl: HTMLElement, displayWordIndex: number): void {
+export function setLinePointer(blockEl: HTMLElement, speakableWordIndex: number): void {
   const words = [...blockEl.querySelectorAll('.dsa-tts-word')] as HTMLElement[]
-  const wordEl = words.find(w => w.dataset.ttsWord === String(displayWordIndex)) ?? null
+  const wordEl = domWordForSpeakableIndex(blockEl, speakableWordIndex)
 
   if (!wordEl) {
     clearLinePointer(blockEl)
