@@ -30,7 +30,7 @@ function spokenWordAtOffset(offsetMs, durationMs, phonemeWeights) {
   let acc = 0
   for (let i = 0; i < phonemeWeights.length; i++) {
     acc += phonemeWeights[i]
-    if (target < acc) return i
+    if (target <= acc) return i
   }
   return phonemeWeights.length - 1
 }

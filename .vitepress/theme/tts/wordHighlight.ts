@@ -1,4 +1,5 @@
 import { normalizeReadingText } from '../utils/extractReadingSegments'
+import type { SpeechPrepResult } from './speechPrep'
 
 export interface WordToken {
   text: string
@@ -27,6 +28,24 @@ export function wordIndexAtRatio(wordCount: number, ratio: number): number {
   return Math.min(wordCount - 1, Math.floor(clamped * wordCount))
 }
 
+/** Map a segment-local display word index to a block-global wrapped word index. */
+export function blockWordIndexForSegment(
+  segments: Array<{ blockId: string; text: string; speech?: SpeechPrepResult }>,
+  segmentIndex: number,
+  segmentDisplayWordIndex: number,
+): number {
+  const seg = segments[segmentIndex]
+  if (!seg) return segmentDisplayWordIndex
+
+  let offset = 0
+  for (let i = 0; i < segmentIndex; i++) {
+    if (segments[i].blockId === seg.blockId) {
+      offset += segments[i].speech?.displayWordCount ?? tokenizeWords(segments[i].text).length
+    }
+  }
+  return offset + segmentDisplayWordIndex
+}
+
 export function findSegmentWordOffset(
   blockText: string,
   segmentText: string,
@@ -53,7 +72,7 @@ export function wrapBlockWords(blockEl: HTMLElement): void {
   const walker = document.createTreeWalker(blockEl, NodeFilter.SHOW_TEXT, {
     acceptNode(node) {
       const parent = node.parentElement
-      if (!parent || parent.closest('pre, code, button, .dsa-heading-note-btn')) {
+      if (!parent || parent.closest('pre, button, .dsa-heading-note-btn')) {
         return NodeFilter.FILTER_REJECT
       }
       if (!node.textContent?.trim()) return NodeFilter.FILTER_REJECT

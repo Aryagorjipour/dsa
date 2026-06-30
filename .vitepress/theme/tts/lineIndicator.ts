@@ -35,7 +35,12 @@ export function shouldMuteLineInFocus(
   return true
 }
 
-function groupWordsByLine(words: HTMLElement[], tolerance = LINE_TOLERANCE_PX): HTMLElement[][] {
+interface WordLineGroup {
+  top: number
+  words: HTMLElement[]
+}
+
+function groupWordsByLine(words: HTMLElement[], tolerance = LINE_TOLERANCE_PX): WordLineGroup[] {
   const sorted = [...words].sort((a, b) => {
     const ra = a.getBoundingClientRect()
     const rb = b.getBoundingClientRect()
@@ -43,18 +48,25 @@ function groupWordsByLine(words: HTMLElement[], tolerance = LINE_TOLERANCE_PX): 
     if (Math.abs(dy) > tolerance) return dy
     return ra.left - rb.left
   })
-  const lines: HTMLElement[][] = []
+  const lines: WordLineGroup[] = []
   for (const w of sorted) {
     const top = w.getBoundingClientRect().top
-    let line = lines.find(l => Math.abs(l[0]!.getBoundingClientRect().top - top) <= tolerance)
+    let line = lines.find(l => Math.abs(l.top - top) <= tolerance)
     if (!line) {
-      line = []
+      line = { top, words: [] }
       lines.push(line)
+    } else {
+      line.top = Math.min(line.top, top)
     }
-    line.push(w)
+    line.words.push(w)
   }
-  lines.sort((a, b) => a[0]!.getBoundingClientRect().top - b[0]!.getBoundingClientRect().top)
+  lines.sort((a, b) => a.top - b.top)
   return lines
+}
+
+function wordsOnSameLine(anchor: HTMLElement, words: HTMLElement[], tolerance = LINE_TOLERANCE_PX): HTMLElement[] {
+  const lineTopPx = anchor.getBoundingClientRect().top
+  return words.filter(w => Math.abs(w.getBoundingClientRect().top - lineTopPx) <= tolerance)
 }
 
 export function clearLinePointer(blockEl: HTMLElement): void {
@@ -75,23 +87,28 @@ export function setLinePointer(blockEl: HTMLElement, displayWordIndex: number): 
   }
 
   const blockRect = blockEl.getBoundingClientRect()
+  const lineWords = wordsOnSameLine(wordEl, words)
+  if (!lineWords.length) {
+    clearLinePointer(blockEl)
+    return
+  }
+
   const lineGroups = groupWordsByLine(words)
-  const activeLineIdx = lineGroups.findIndex(group => group.includes(wordEl))
+  const activeLineIdx = lineGroups.findIndex(group => group.words.includes(wordEl))
   if (activeLineIdx < 0) {
     clearLinePointer(blockEl)
     return
   }
 
-  const lineWords = lineGroups[activeLineIdx]!
   const dimInactive = shouldDimInactiveLines()
   const lineIndexByWord = new Map<HTMLElement, number>()
   lineGroups.forEach((group, lineIdx) => {
-    for (const w of group) lineIndexByWord.set(w, lineIdx)
+    for (const w of group.words) lineIndexByWord.set(w, lineIdx)
   })
 
   for (const w of words) {
     const lineIdx = lineIndexByWord.get(w) ?? 0
-    const lineWordCount = lineGroups[lineIdx]?.length ?? 0
+    const lineWordCount = lineGroups[lineIdx]?.words.length ?? 0
     const onActiveLine = lineIdx === activeLineIdx
     const mute =
       dimInactive && shouldMuteLineInFocus(lineIdx, lineWordCount, activeLineIdx)

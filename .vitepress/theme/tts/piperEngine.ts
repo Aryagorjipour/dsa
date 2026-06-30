@@ -12,6 +12,7 @@ import {
 import { prepareSpeechText, displayWordFromSpoken } from './speechPrep'
 import { getGlossaryVersion } from './glossary/glossaryStore'
 import { charWeightsForText, spokenWordAtOffset } from './wordTiming'
+import { blockWordIndexForSegment } from './wordHighlight'
 import { targetSegmentForBlockSkip } from './blockNavigation'
 import type { TtsEngine, TtsEngineCallbacks } from './types'
 
@@ -142,7 +143,10 @@ export function createPiperEngine(
         const weights = seg.phonemeWeights ?? charWeightsForText(seg.speech.spokenText)
         const spokenIdx = spokenWordAtOffset(offsetInSeg, segDuration, weights)
         const displayIdx = displayWordFromSpoken(seg.speech.alignment, spokenIdx)
-        callbacks.onWordHighlight(seg.blockId, displayIdx)
+        callbacks.onWordHighlight(
+          seg.blockId,
+          blockWordIndexForSegment(segments, currentIndex, displayIdx),
+        )
       }
     }
   }

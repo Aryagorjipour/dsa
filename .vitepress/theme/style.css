@@ -205,15 +205,12 @@ html.dark mark.dsa-hl:hover {
 /* Listen mode — highlight block being read aloud */
 .vp-doc .dsa-tts-active {
   position: relative;
+  padding-left: 10px;
   outline: 1px solid color-mix(in srgb, var(--vp-c-brand-1) 50%, transparent);
   outline-offset: 2px;
   border-radius: 4px;
   background: color-mix(in srgb, var(--vp-c-brand-1) 6%, transparent);
   transition: background 0.2s ease, outline-color 0.2s ease;
-}
-
-.vp-doc .dsa-tts-active.dsa-tts-has-pointer {
-  padding-left: 10px;
 }
 
 html.dark .vp-doc .dsa-tts-active {
