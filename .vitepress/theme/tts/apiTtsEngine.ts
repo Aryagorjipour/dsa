@@ -75,6 +75,11 @@ export function createApiTtsEngine(
   let actualDurations: Array<number | undefined> = []
   let playingSession = 0
   let chunkCache = new Map<number, Promise<ChunkAudio>>()
+  const chunkReady = new Set<number>()
+
+  const SYNTH_UI_DELAY_MS = 200
+  const PREFETCH_AHEAD = 2
+  const PREFETCH_WHEN_REMAINING_S = 12
 
   function effectiveDurations(): number[] {
     return mergeDurations(estimatedDurations, actualDurations).map(d => d / rate)
@@ -153,6 +158,7 @@ export function createApiTtsEngine(
         }
       }
       reportProgress()
+      maybePrefetchDuringPlayback(sessionId)
     }
   }
 
@@ -175,6 +181,47 @@ export function createApiTtsEngine(
 
   function clearChunkCache(): void {
     chunkCache = new Map()
+    chunkReady.clear()
+  }
+
+  function prefetchChunks(sessionId: number, fromIdx: number, count = PREFETCH_AHEAD): void {
+    for (let i = 0; i < count; i++) {
+      const idx = fromIdx + i
+      if (idx >= chunks.length) break
+      ensureChunkCached(idx, sessionId).catch(() => {
+        /* surfaced when playback reaches chunk */
+      })
+    }
+  }
+
+  function maybePrefetchDuringPlayback(sessionId: number): void {
+    if (!audio || audio.paused || !Number.isFinite(audio.duration)) return
+    const remaining = audio.duration - audio.currentTime
+    if (remaining > PREFETCH_WHEN_REMAINING_S) return
+    prefetchChunks(sessionId, currentChunkIdx + 1, PREFETCH_AHEAD + 1)
+  }
+
+  async function awaitChunkWithOptionalSynthUi(
+    chunkIdx: number,
+    sessionId: number,
+    showSynthUi: boolean,
+  ): Promise<ChunkAudio> {
+    if (chunkReady.has(chunkIdx)) {
+      return ensureChunkCached(chunkIdx, sessionId)
+    }
+
+    let synthTimer: ReturnType<typeof setTimeout> | null = null
+    if (showSynthUi) {
+      synthTimer = setTimeout(() => {
+        if (sessionId === playingSession) callbacks.onStatus('synthesizing')
+      }, SYNTH_UI_DELAY_MS)
+    }
+
+    try {
+      return await ensureChunkCached(chunkIdx, sessionId)
+    } finally {
+      if (synthTimer) clearTimeout(synthTimer)
+    }
   }
 
   async function synthesizeChunk(chunkIdx: number, sessionId: number): Promise<ChunkAudio> {
@@ -232,20 +279,18 @@ export function createApiTtsEngine(
     const cached = chunkCache.get(chunkIdx)
     if (cached) return cached
 
-    const pending = synthesizeChunk(chunkIdx, sessionId).catch(err => {
-      chunkCache.delete(chunkIdx)
-      throw err
-    })
+    const pending = synthesizeChunk(chunkIdx, sessionId)
+      .then(result => {
+        chunkReady.add(chunkIdx)
+        return result
+      })
+      .catch(err => {
+        chunkCache.delete(chunkIdx)
+        chunkReady.delete(chunkIdx)
+        throw err
+      })
     chunkCache.set(chunkIdx, pending)
     return pending
-  }
-
-  function prefetchRemainingChunks(sessionId: number): void {
-    for (let i = currentChunkIdx + 1; i < chunks.length; i++) {
-      ensureChunkCached(i, sessionId).catch(() => {
-        /* surfaced when playback reaches chunk */
-      })
-    }
   }
 
   async function playChunk(sessionId: number): Promise<void> {
@@ -260,9 +305,15 @@ export function createApiTtsEngine(
     const seg = segments[currentIndex]
     if (seg) callbacks.onHighlight(seg.blockId, currentIndex)
 
+    prefetchChunks(sessionId, currentChunkIdx + 1, PREFETCH_AHEAD)
+
     try {
-      callbacks.onStatus('synthesizing')
-      const { blob, segmentDurations } = await ensureChunkCached(currentChunkIdx, sessionId)
+      const showSynthUi = !chunkReady.has(currentChunkIdx)
+      const { blob, segmentDurations } = await awaitChunkWithOptionalSynthUi(
+        currentChunkIdx,
+        sessionId,
+        showSynthUi,
+      )
       if (sessionId !== playingSession) return
 
       chunkSegmentDurations = segmentDurations
@@ -312,7 +363,7 @@ export function createApiTtsEngine(
 
       callbacks.onStatus('playing')
       reportProgress()
-      prefetchRemainingChunks(sessionId)
+      prefetchChunks(sessionId, currentChunkIdx + 1, PREFETCH_AHEAD + 1)
     } catch (err) {
       if (sessionId !== playingSession) return
       const message = err instanceof Error ? err.message : 'Cloud synthesis failed'
@@ -350,7 +401,7 @@ export function createApiTtsEngine(
       const sessionId = playingSession
       clearChunkCache()
       cleanupAudio()
-      callbacks.onStatus('playing')
+      prefetchChunks(sessionId, 0, PREFETCH_AHEAD + 1)
       await playChunk(sessionId)
     },
 

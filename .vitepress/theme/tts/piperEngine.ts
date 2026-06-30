@@ -262,8 +262,16 @@ export function createPiperEngine(
             }
           : seg
 
-      callbacks.onStatus('synthesizing')
-      const { blob, durationMs } = await synthesize(playSeg)
+      prefetchNext(sessionId)
+      const needsCustomSynth = spoken !== spokenTextFor(seg)
+      let synthTimer: ReturnType<typeof setTimeout> | null = setTimeout(() => {
+        if (sessionId === playingSession) callbacks.onStatus('synthesizing')
+      }, 200)
+      const { blob, durationMs } = needsCustomSynth
+        ? await synthesize(playSeg)
+        : await getSegmentAudio(currentIndex)
+      if (synthTimer) clearTimeout(synthTimer)
+      synthTimer = null
       if (sessionId !== playingSession) return
 
       actualDurations[currentIndex] = durationMs

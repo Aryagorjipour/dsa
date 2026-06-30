@@ -24,7 +24,7 @@ export function useCloudTtsSync(onUpdated?: () => void): void {
   }
 
   onMounted(() => {
-    void runSync(true)
+    void runSync(false)
     intervalId = setInterval(() => void runSync(false), CLOUD_TTS_SYNC_INTERVAL_MS)
     document.addEventListener('visibilitychange', onVisibilityChange)
   })

@@ -4,7 +4,7 @@ import type { PreparedSegment } from './preparedSegment'
 export const PRIORITY_CHAR_RATIO = 0.12
 
 /** Max spoken characters per batched API call after the priority chunk. */
-export const BATCH_MAX_CHARS = 2800
+export const BATCH_MAX_CHARS = 900
 
 export interface PlaybackChunk {
   segmentIndices: number[]

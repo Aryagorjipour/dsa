@@ -4,7 +4,7 @@
  */
 
 const PRIORITY_CHAR_RATIO = 0.12
-const BATCH_MAX_CHARS = 2800
+const BATCH_MAX_CHARS = 900
 
 function buildPlaybackChunks(segments, spokenTextFor) {
   if (!segments.length) return []

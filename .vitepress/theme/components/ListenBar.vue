@@ -46,8 +46,9 @@ const isPiper = computed(() => ttsEngine.value === 'piper')
 const isCloud = computed(() => ttsEngine.value === 'cloud')
 
 const statusLabel = computed(() => {
-  if (modelLoading.value) return 'Downloading voice'
-  if (isSynthesizing.value) return 'Fetching audio…'
+  if (modelLoading.value && isPiper.value) return 'Downloading voice'
+  if (isSynthesizing.value && isCloud.value) return 'Buffering audio…'
+  if (isSynthesizing.value) return 'Preparing speech…'
   if (isPlaying.value) return 'Playing'
   if (isPaused.value) return 'Paused'
   return 'Ready'
@@ -108,7 +109,7 @@ function onClose() {
         type="button"
         class="listen-mini-play"
         aria-label="Play"
-        :disabled="modelLoading || isSynthesizing"
+        :disabled="(isPiper && modelLoading) || (isSynthesizing && !isPaused)"
         @click="onPlay"
       >
         <span aria-hidden="true">▶</span>
@@ -208,7 +209,7 @@ function onClose() {
           <span class="skip-label">−10s</span>
         </button>
 
-        <button v-if="!isPlaying" type="button" class="listen-play-btn" aria-label="Play" :disabled="modelLoading || isSynthesizing" @click="onPlay">
+        <button v-if="!isPlaying" type="button" class="listen-play-btn" aria-label="Play" :disabled="(isPiper && modelLoading) || (isSynthesizing && !isPaused)" @click="onPlay">
           <span aria-hidden="true">▶</span>
         </button>
         <button v-else type="button" class="listen-play-btn is-pause" aria-label="Pause" @click="pause">

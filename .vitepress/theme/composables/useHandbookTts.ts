@@ -225,22 +225,22 @@ export async function refreshCloudConfigured(): Promise<void> {
 }
 
 async function ensureEngineReady(): Promise<boolean> {
+  if (ttsEngine.value === 'cloud') {
+    const cloudConfig = await loadCloudTtsConfig()
+    if (isCloudSyncDue(cloudConfig)) {
+      void syncCloudTtsConnection(false).then(() => refreshCloudConfigured())
+    }
+    await refreshCloudConfigured()
+    if (!cloudConfigured.value) {
+      showToast('Configure Cloud AI in Listen settings first')
+      return false
+    }
+    return await getEngine().ensureReady()
+  }
+
   modelLoading.value = true
   modelProgress.value = 0
   try {
-    if (ttsEngine.value === 'cloud') {
-      const cloudConfig = await loadCloudTtsConfig()
-      if (isCloudSyncDue(cloudConfig)) {
-        await syncCloudTtsConnection(false)
-      }
-      await refreshCloudConfigured()
-      if (!cloudConfigured.value) {
-        showToast('Configure Cloud AI in Listen settings first')
-        return false
-      }
-      return await getEngine().ensureReady()
-    }
-
     const cached = await getEngine().isVoiceCached()
     modelCached.value = cached
     return await getEngine().ensureReady(p => {
