@@ -105,7 +105,13 @@ function engineCallbacks(): TtsEngineCallbacks {
     },
     onError(message) {
       showToast(message)
-      stop()
+      if (
+        status.value === 'playing' ||
+        status.value === 'paused' ||
+        status.value === 'synthesizing'
+      ) {
+        activeEngine?.pause()
+      }
     },
   }
 }

@@ -14,7 +14,13 @@ import {
   saveCloudApiKey,
   saveCloudTtsConfig,
 } from '../tts/ttsSecretStore'
-import { GEMINI_VOICES, OPENAI_VOICES, isLikelyCorsError, testProviderConnection } from '../tts/providers'
+import {
+  GEMINI_VOICES,
+  OPENAI_VOICES,
+  isLikelyCorsError,
+  testProviderConnection,
+} from '../tts/providers'
+import { GROK_FALLBACK_VOICES } from '../tts/providers/grok'
 
 const { visible, closeTtsConfigModal } = useTtsConfigModal()
 const {
@@ -65,6 +71,22 @@ async function loadConfig() {
     const key = await getCloudApiKey()
     maskedKey.value = key ? maskApiKey(key) : ''
   }
+  if (provider.value === 'grok') {
+    models.value = ['xai-tts']
+    model.value = 'xai-tts'
+    if (hasKey.value) {
+      try {
+        const key = await getCloudApiKey()
+        if (key) {
+          const result = await testProviderConnection('grok', baseUrl.value, key)
+          if (result.voices?.length) voices.value = result.voices
+        }
+      } catch {
+        /* fallback voices below */
+      }
+    }
+  }
+  refreshVoiceOptions()
 }
 
 watch(visible, open => {
@@ -74,10 +96,11 @@ watch(visible, open => {
 watch(provider, p => {
   if (p !== 'custom') baseUrl.value = PROVIDER_DEFAULTS[p]
   const defaults = defaultCloudConfig(p)
+  model.value = defaults.model
   if (!models.value.length) {
-    model.value = defaults.model
     voiceId.value = defaults.voiceId
   }
+  if (p === 'grok') models.value = ['xai-tts']
   refreshVoiceOptions()
 })
 
@@ -88,6 +111,9 @@ function refreshVoiceOptions() {
   } else if (provider.value === 'gemini') {
     voices.value = GEMINI_VOICES
     if (!GEMINI_VOICES.some(v => v.id === voiceId.value)) voiceId.value = 'Kore'
+  } else if (provider.value === 'grok') {
+    if (!voices.value.length) voices.value = GROK_FALLBACK_VOICES
+    if (!voices.value.some(v => v.id === voiceId.value)) voiceId.value = 'eve'
   } else {
     voices.value = []
   }
@@ -156,7 +182,7 @@ async function onSave() {
   await saveCloudTtsConfig({
     provider: provider.value,
     baseUrl: baseUrl.value.trim(),
-    model: model.value.trim(),
+    model: provider.value === 'grok' ? 'xai-tts' : model.value.trim(),
     voiceId: voiceId.value,
     configured: testOk.value && hasKey.value,
   })
@@ -176,7 +202,7 @@ async function onSave() {
   closeTtsConfigModal()
 }
 
-function onVoiceChange() {
+async function applyVoiceIfListening() {
   if (
     ttsEngine.value !== 'cloud' ||
     status.value === 'idle' ||
@@ -184,18 +210,21 @@ function onVoiceChange() {
   ) {
     return
   }
-  void (async () => {
-    await saveCloudTtsConfig({
-      provider: provider.value,
-      baseUrl: baseUrl.value.trim(),
-      model: model.value,
-      voiceId: voiceId.value,
-      configured: testOk.value && hasKey.value,
-    })
-    savedVoiceId.value = voiceId.value
-    reloadCloudVoice()
-    showToast('Voice updated — continuing from here')
-  })()
+  const config = await loadCloudTtsConfig()
+  await saveCloudTtsConfig({
+    provider: provider.value,
+    baseUrl: baseUrl.value.trim(),
+    model: provider.value === 'grok' ? 'xai-tts' : model.value,
+    voiceId: voiceId.value,
+    configured: config.configured || (testOk.value && hasKey.value),
+  })
+  savedVoiceId.value = voiceId.value
+  reloadCloudVoice()
+  showToast('Voice updated — continuing from here')
+}
+
+function onVoiceChange() {
+  void applyVoiceIfListening()
 }
 
 async function onClearCredentials() {
@@ -332,8 +361,14 @@ if (typeof window !== 'undefined') refreshVoiceOptions()
               />
             </label>
 
+            <p v-if="provider === 'grok'" class="tts-hint">
+              xAI Grok TTS uses <code>/v1/tts</code> directly — no model name is sent. Use provider
+              <strong>Grok</strong> with <code>https://api.x.ai</code>, not Custom/proxy with
+              <code>grok-tts</code>.
+            </p>
+
             <div class="tts-row">
-              <label class="tts-field tts-field-grow">
+              <label v-if="provider !== 'grok'" class="tts-field tts-field-grow">
                 <span class="tts-label">Model</span>
                 <select v-if="models.length" v-model="model" class="tts-input">
                   <option v-for="m in models" :key="m" :value="m">{{ m }}</option>

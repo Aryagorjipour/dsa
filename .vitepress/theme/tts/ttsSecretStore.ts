@@ -80,15 +80,49 @@ export function defaultCloudConfig(provider: CloudTtsProvider = 'openai'): Cloud
   return {
     provider,
     baseUrl: PROVIDER_DEFAULTS[provider],
-    model: provider === 'openai' ? 'tts-1' : provider === 'gemini' ? 'gemini-2.5-flash-preview-tts' : 'grok-tts',
+    model:
+      provider === 'openai'
+        ? 'tts-1'
+        : provider === 'gemini'
+          ? 'gemini-2.5-flash-preview-tts'
+          : provider === 'grok'
+            ? 'xai-tts'
+            : 'tts-1',
     voiceId: provider === 'grok' ? 'eve' : provider === 'openai' ? 'coral' : 'Kore',
     configured: false,
   }
 }
 
+function configsEqual(a: CloudTtsConfig, b: CloudTtsConfig): boolean {
+  return (
+    a.provider === b.provider &&
+    a.baseUrl === b.baseUrl &&
+    a.model === b.model &&
+    a.voiceId === b.voiceId &&
+    a.configured === b.configured
+  )
+}
+
+function normalizeCloudConfig(config: CloudTtsConfig): CloudTtsConfig {
+  let next = config
+  if (config.provider === 'grok' && (!config.model || config.model === 'grok-tts')) {
+    next = { ...next, model: 'xai-tts' }
+  }
+  // Custom + grok-tts hits chat-model proxies (e.g. gapgpt), not OpenAI /v1/audio/speech.
+  if (config.provider === 'custom' && config.model === 'grok-tts') {
+    next = { ...next, model: 'tts-1' }
+  }
+  return next
+}
+
 export async function loadCloudTtsConfig(): Promise<CloudTtsConfig> {
   if (!idbAvailable()) return defaultCloudConfig()
-  return (await get<CloudTtsConfig>(CONFIG_KEY)) ?? defaultCloudConfig()
+  const stored = (await get<CloudTtsConfig>(CONFIG_KEY)) ?? defaultCloudConfig()
+  const normalized = normalizeCloudConfig(stored)
+  if (!configsEqual(stored, normalized)) {
+    await set(CONFIG_KEY, normalized)
+  }
+  return normalized
 }
 
 export async function saveCloudTtsConfig(config: CloudTtsConfig): Promise<void> {

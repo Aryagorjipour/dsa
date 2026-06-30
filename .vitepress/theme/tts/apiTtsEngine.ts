@@ -202,6 +202,12 @@ export function createApiTtsEngine(
       if (isLikelyCorsError(err)) {
         throw new Error('Browser blocked API call — use Custom with a CORS-enabled proxy URL')
       }
+      const msg = err instanceof Error ? err.message : String(err)
+      if (/grok-tts/i.test(msg) && config.provider !== 'grok') {
+        throw new Error(
+          'Model grok-tts only works with provider Grok + https://api.x.ai — not Custom/OpenAI speech',
+        )
+      }
       throw err
     }
 
@@ -219,11 +225,14 @@ export function createApiTtsEngine(
   }
 
   function ensureChunkCached(chunkIdx: number, sessionId: number): Promise<ChunkAudio> {
-    let pending = chunkCache.get(chunkIdx)
-    if (!pending) {
-      pending = synthesizeChunk(chunkIdx, sessionId)
-      chunkCache.set(chunkIdx, pending)
-    }
+    const cached = chunkCache.get(chunkIdx)
+    if (cached) return cached
+
+    const pending = synthesizeChunk(chunkIdx, sessionId).catch(err => {
+      chunkCache.delete(chunkIdx)
+      throw err
+    })
+    chunkCache.set(chunkIdx, pending)
     return pending
   }
 
@@ -304,6 +313,7 @@ export function createApiTtsEngine(
       if (sessionId !== playingSession) return
       const message = err instanceof Error ? err.message : 'Cloud synthesis failed'
       console.error('[cloud-tts]', err)
+      callbacks.onStatus('paused')
       callbacks.onError(message)
     }
   }
@@ -316,7 +326,8 @@ export function createApiTtsEngine(
     async ensureReady() {
       const config = await loadCloudTtsConfig()
       const apiKey = await getCloudApiKey()
-      return config.configured && !!apiKey && !!config.model && !!config.voiceId
+      const modelOk = config.provider === 'grok' || !!config.model
+      return config.configured && !!apiKey && modelOk && !!config.voiceId
     },
 
     async play(nextSegments) {
