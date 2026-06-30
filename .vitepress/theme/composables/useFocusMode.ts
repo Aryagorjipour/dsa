@@ -1,7 +1,7 @@
 import { ref, onMounted, onUnmounted } from 'vue'
 
 const FOCUS_KEY = 'dsa-focus-mode'
-const isFocusMode = ref(false)
+export const isFocusMode = ref(false)
 let listenerCount = 0
 
 function applyFocusMode(active: boolean) {

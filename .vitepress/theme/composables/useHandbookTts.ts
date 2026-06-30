@@ -1,4 +1,5 @@
 import { ref, computed, watch, onUnmounted } from 'vue'
+import { isFocusMode } from './useFocusMode'
 import { useRoute, useData } from 'vitepress'
 import { assignBlockIds } from '../utils/assignBlockIds'
 import { extractReadingSegments, totalEstimatedMs } from '../utils/extractReadingSegments'
@@ -50,8 +51,10 @@ const glossaryOverrides = ref<GlossaryRule[]>(loadGlossaryOverrides())
 
 let activeEngine: TtsEngine | null = null
 let activeEngineKind: TtsEngineChoice | null = null
+let lastWordHighlight: { blockId: string; displayWordIndex: number } | null = null
 
 function clearHighlight(): void {
+  lastWordHighlight = null
   document.querySelectorAll('.dsa-tts-active').forEach(el => {
     el.classList.remove('dsa-tts-active', 'dsa-tts-has-pointer')
     if (el instanceof HTMLElement) clearLinePointer(el)
@@ -89,6 +92,7 @@ function engineCallbacks(): TtsEngineCallbacks {
     },
     onHighlight: highlightBlock,
     onWordHighlight(blockId, displayWordIndex) {
+      lastWordHighlight = { blockId, displayWordIndex }
       const el = document.querySelector(`[data-dsa-block="${escapeAttr(blockId)}"]`)
       if (el instanceof HTMLElement) {
         setLinePointer(el, displayWordIndex)
@@ -451,6 +455,16 @@ export function useHandbookTts() {
       segments.value = []
     },
   )
+
+  watch(isFocusMode, () => {
+    if (!lastWordHighlight) return
+    const el = document.querySelector(
+      `[data-dsa-block="${escapeAttr(lastWordHighlight.blockId)}"]`,
+    )
+    if (el instanceof HTMLElement) {
+      setLinePointer(el, lastWordHighlight.displayWordIndex)
+    }
+  })
 
   void refreshModelCached()
   void refreshCloudConfigured()

@@ -231,12 +231,12 @@ html.dark .vp-doc .dsa-tts-active {
   transition: top 0.15s ease-out, height 0.15s ease-out;
 }
 
-.vp-doc .dsa-tts-active .dsa-tts-word-muted {
+html.focus-mode .vp-doc .dsa-tts-active .dsa-tts-word-muted {
   opacity: 0.32;
   transition: opacity 0.18s ease;
 }
 
-.vp-doc .dsa-tts-active .dsa-tts-word-on-active-line {
+html.focus-mode .vp-doc .dsa-tts-active .dsa-tts-word-on-active-line {
   opacity: 1;
 }
 

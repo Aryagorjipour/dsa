@@ -1,5 +1,9 @@
 const LINE_TOLERANCE_PX = 6
 
+function shouldDimInactiveLines(): boolean {
+  return typeof document !== 'undefined' && document.documentElement.classList.contains('focus-mode')
+}
+
 export function clearLinePointer(blockEl: HTMLElement): void {
   blockEl.querySelector('.dsa-tts-line-pointer')?.remove()
   blockEl.classList.remove('dsa-tts-has-pointer')
@@ -28,10 +32,11 @@ export function setLinePointer(blockEl: HTMLElement, displayWordIndex: number): 
     return
   }
 
+  const dimInactive = shouldDimInactiveLines()
   const activeSet = new Set(lineWords)
   for (const w of words) {
-    w.classList.toggle('dsa-tts-word-on-active-line', activeSet.has(w))
-    w.classList.toggle('dsa-tts-word-muted', !activeSet.has(w))
+    w.classList.toggle('dsa-tts-word-on-active-line', dimInactive && activeSet.has(w))
+    w.classList.toggle('dsa-tts-word-muted', dimInactive && !activeSet.has(w))
   }
 
   const tops = lineWords.map(w => w.getBoundingClientRect().top - blockRect.top)
