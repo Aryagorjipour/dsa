@@ -3,42 +3,50 @@ import { useRoute, useData } from 'vitepress'
 import { assignBlockIds } from '../utils/assignBlockIds'
 import { extractReadingSegments, totalEstimatedMs } from '../utils/extractReadingSegments'
 import {
+  canUseOnlineTts,
   canUsePiperTts,
   loadStoredPiperVoice,
   loadStoredRate,
+  loadStoredTtsEngine,
   PIPER_VOICES_CURATED,
   saveStoredPiperVoice,
   saveStoredRate,
+  saveStoredTtsEngine,
+  type TtsEngineChoice,
 } from '../utils/ttsVoices'
 import { showToast } from './useToast'
 import { createPiperEngine } from '../tts/piperEngine'
+import { createWebSpeechEngine } from '../tts/webSpeechEngine'
+import { setWordHighlight, unwrapAllWordHighlights, wrapBlockWords } from '../tts/wordHighlight'
+import { elapsedMsForDisplayWord, prepareAllSegments } from '../tts/seekByWord'
+import type { PreparedSegment } from '../tts/preparedSegment'
 import {
-  findSegmentWordOffset,
-  setWordHighlight,
-  tokenizeWords,
-  unwrapAllWordHighlights,
-  wrapBlockWords,
-} from '../tts/wordHighlight'
-import { buildEstimatedDurations, mergeDurations } from '../tts/segmentTiming'
+  DEFAULT_GLOSSARY,
+  loadGlossaryOverrides,
+  saveGlossaryOverrides,
+  type GlossaryRule,
+} from '../tts/glossary/glossaryStore'
 import type { TtsEngine, TtsEngineCallbacks, TtsStatus } from '../tts/types'
 
-export type { TtsStatus }
+export type { TtsStatus, GlossaryRule }
 
 const SKIP_MS = 10_000
 
 const status = ref<TtsStatus>('idle')
 const rate = ref(loadStoredRate())
-const segments = ref<ReturnType<typeof extractReadingSegments>>([])
+const segments = ref<PreparedSegment[]>([])
 const elapsedMs = ref(0)
 const totalMs = ref(0)
 const panelOpen = ref(false)
 const piperVoiceId = ref(loadStoredPiperVoice())
+const ttsEngine = ref<TtsEngineChoice>(loadStoredTtsEngine())
 const modelLoading = ref(false)
 const modelProgress = ref(0)
 const modelCached = ref(false)
-const activeSegmentIndex = ref(0)
+const glossaryOverrides = ref<GlossaryRule[]>(loadGlossaryOverrides())
 
-let piperEngine: TtsEngine | null = null
+let activeEngine: TtsEngine | null = null
+let activeEngineKind: TtsEngineChoice | null = null
 let wordClickBound = false
 
 function clearHighlight(): void {
@@ -55,7 +63,7 @@ function escapeAttr(value: string): string {
   return value.replace(/\\/g, '\\\\').replace(/"/g, '\\"')
 }
 
-function highlightBlock(blockId: string, segmentIndex: number): void {
+function highlightBlock(blockId: string, _segmentIndex: number): void {
   clearHighlight()
   const el = document.querySelector(`[data-dsa-block="${escapeAttr(blockId)}"]`)
   if (el instanceof HTMLElement) {
@@ -63,21 +71,6 @@ function highlightBlock(blockId: string, segmentIndex: number): void {
     wrapBlockWords(el)
     el.scrollIntoView({ block: 'nearest', behavior: 'smooth' })
   }
-  activeSegmentIndex.value = segmentIndex
-}
-
-function blockWordIndex(blockId: string, segmentIndex: number, segmentWordIdx: number): number {
-  const el = document.querySelector(`[data-dsa-block="${escapeAttr(blockId)}"]`)
-  const blockText = el?.textContent || ''
-  const seg = segments.value[segmentIndex]
-  if (!seg) return segmentWordIdx
-
-  const priorTexts = segments.value
-    .slice(0, segmentIndex)
-    .filter(s => s.blockId === blockId)
-    .map(s => s.text)
-
-  return findSegmentWordOffset(blockText, seg.text, priorTexts) + segmentWordIdx
 }
 
 function handleWordClick(e: MouseEvent): void {
@@ -99,40 +92,8 @@ function handleWordClick(e: MouseEvent): void {
     return
   }
 
-  const blockText = blockEl.textContent || ''
-  const estimated = buildEstimatedDurations(segments.value, rate.value)
-  const durations = mergeDurations(estimated, []).map(d => d / rate.value)
-
-  let targetMs = 0
-  let found = false
-
-  for (let i = 0; i < segments.value.length; i++) {
-    const s = segments.value[i]
-    if (s.blockId !== blockId) {
-      targetMs += durations[i] ?? 0
-      continue
-    }
-
-    const priorTexts = segments.value
-      .slice(0, i)
-      .filter(seg => seg.blockId === blockId)
-      .map(seg => seg.text)
-    const segWordOffset = findSegmentWordOffset(blockText, s.text, priorTexts)
-    const segWordCount = tokenizeWords(s.text).length
-
-    if (wordIndex >= segWordOffset && wordIndex < segWordOffset + segWordCount) {
-      const localWordIdx = wordIndex - segWordOffset
-      const ratio = segWordCount > 0 ? localWordIdx / segWordCount : 0
-      targetMs += ratio * (durations[i] ?? 0)
-      found = true
-      break
-    }
-
-    targetMs += durations[i] ?? 0
-  }
-
-  if (!found) return
-  getPiperEngine().seekTo(targetMs)
+  const targetMs = elapsedMsForDisplayWord(segments.value, blockId, wordIndex, rate.value)
+  getEngine().seekTo(targetMs)
 }
 
 function bindWordClickDelegate(): void {
@@ -159,11 +120,10 @@ function engineCallbacks(): TtsEngineCallbacks {
       updateMediaSessionPosition()
     },
     onHighlight: highlightBlock,
-    onWordHighlight(blockId, segmentWordIdx) {
+    onWordHighlight(blockId, displayWordIndex) {
       const el = document.querySelector(`[data-dsa-block="${escapeAttr(blockId)}"]`)
       if (el instanceof HTMLElement) {
-        const idx = blockWordIndex(blockId, activeSegmentIndex.value, segmentWordIdx)
-        setWordHighlight(el, idx)
+        setWordHighlight(el, displayWordIndex)
       }
     },
     onClearHighlight: clearHighlight,
@@ -178,17 +138,31 @@ function engineCallbacks(): TtsEngineCallbacks {
   }
 }
 
-function getPiperEngine(): TtsEngine {
-  if (!piperEngine) {
-    piperEngine = createPiperEngine(engineCallbacks(), piperVoiceId.value, rate.value)
+function destroyEngine(): void {
+  activeEngine?.destroy()
+  activeEngine = null
+  activeEngineKind = null
+}
+
+function getEngine(): TtsEngine {
+  const kind = ttsEngine.value
+  if (activeEngine && activeEngineKind === kind) return activeEngine
+
+  destroyEngine()
+  activeEngineKind = kind
+
+  if (kind === 'online') {
+    activeEngine = createWebSpeechEngine(engineCallbacks(), rate.value)
+  } else {
+    activeEngine = createPiperEngine(engineCallbacks(), piperVoiceId.value, rate.value)
   }
-  return piperEngine
+  return activeEngine
 }
 
 function loadSegments(): boolean {
   assignBlockIds()
   const next = extractReadingSegments()
-  segments.value = next
+  segments.value = prepareAllSegments(next)
   return next.length > 0
 }
 
@@ -260,16 +234,29 @@ function clearMediaSession(): void {
 }
 
 async function refreshModelCached(): Promise<void> {
-  modelCached.value = await getPiperEngine().isVoiceCached()
+  if (ttsEngine.value !== 'piper') {
+    modelCached.value = false
+    return
+  }
+  modelCached.value = await getEngine().isVoiceCached()
 }
 
 async function ensureEngineReady(): Promise<boolean> {
   modelLoading.value = true
   modelProgress.value = 0
   try {
-    const cached = await getPiperEngine().isVoiceCached()
+    if (ttsEngine.value === 'online') {
+      if (!canUseOnlineTts()) {
+        showToast('Offline — using Piper instead')
+        setTtsEngine('piper')
+        return ensureEngineReady()
+      }
+      return await getEngine().ensureReady()
+    }
+
+    const cached = await getEngine().isVoiceCached()
     modelCached.value = cached
-    return await getPiperEngine().ensureReady(p => {
+    return await getEngine().ensureReady(p => {
       modelProgress.value = p
     })
   } finally {
@@ -280,7 +267,7 @@ async function ensureEngineReady(): Promise<boolean> {
 }
 
 async function play(pageTitle: string): Promise<void> {
-  if (!canUsePiperTts()) {
+  if (!canUsePiperTts() && ttsEngine.value === 'piper') {
     showToast('Listen requires WebAssembly and audio support')
     return
   }
@@ -296,21 +283,25 @@ async function play(pageTitle: string): Promise<void> {
 
   const ready = await ensureEngineReady()
   if (!ready) {
-    showToast('Natural voice failed to load — reload and try again')
+    showToast(
+      ttsEngine.value === 'online'
+        ? 'Online voice unavailable — try Piper or reload'
+        : 'Natural voice failed to load — reload and try again',
+    )
     return
   }
 
-  await getPiperEngine().play(segments.value)
+  await getEngine().play(segments.value)
 }
 
 function pause(): void {
   if (status.value !== 'playing') return
-  getPiperEngine().pause()
+  getEngine().pause()
 }
 
 async function resume(): Promise<void> {
   if (status.value === 'paused') {
-    await getPiperEngine().resume()
+    await getEngine().resume()
     return
   }
   if (status.value === 'idle') {
@@ -319,7 +310,7 @@ async function resume(): Promise<void> {
 }
 
 function stop(): void {
-  piperEngine?.stop()
+  activeEngine?.stop()
   clearMediaSession()
 }
 
@@ -329,21 +320,67 @@ function skip(deltaMs: number): void {
     panelOpen.value = true
     return
   }
-  getPiperEngine().skip(deltaMs)
+  getEngine().skip(deltaMs)
 }
 
 function setRate(next: number): void {
   const clamped = Math.max(0.5, Math.min(2, next))
   rate.value = clamped
   saveStoredRate(clamped)
-  getPiperEngine().setRate(clamped)
+  getEngine().setRate(clamped)
 }
 
 function setPiperVoice(voiceId: string): void {
   piperVoiceId.value = voiceId
   saveStoredPiperVoice(voiceId)
-  getPiperEngine().setVoice(voiceId)
+  if (ttsEngine.value === 'piper') {
+    destroyEngine()
+    getEngine().setVoice(voiceId)
+  }
   void refreshModelCached()
+}
+
+function setTtsEngine(engine: TtsEngineChoice): void {
+  if (engine === 'online' && !canUseOnlineTts()) {
+    showToast('Online voice requires a network connection')
+    return
+  }
+  const wasActive = status.value !== 'idle'
+  if (wasActive) stop()
+  ttsEngine.value = engine
+  saveStoredTtsEngine(engine)
+  destroyEngine()
+  if (wasActive) showToast('Engine changed — press play to restart')
+}
+
+function addGlossaryOverride(rule: GlossaryRule): void {
+  glossaryOverrides.value = [...glossaryOverrides.value, rule]
+  saveGlossaryOverrides(glossaryOverrides.value)
+  if (status.value !== 'idle') showToast('Glossary updated — replay page to apply')
+}
+
+function removeGlossaryOverride(index: number): void {
+  glossaryOverrides.value = glossaryOverrides.value.filter((_, i) => i !== index)
+  saveGlossaryOverrides(glossaryOverrides.value)
+}
+
+function exportGlossaryOverrides(): string {
+  return JSON.stringify(glossaryOverrides.value, null, 2)
+}
+
+function importGlossaryOverrides(json: string): boolean {
+  try {
+    const parsed = JSON.parse(json)
+    if (!Array.isArray(parsed)) return false
+    glossaryOverrides.value = parsed.filter(
+      (r): r is GlossaryRule =>
+        r && typeof r.match === 'string' && typeof r.spoken === 'string',
+    )
+    saveGlossaryOverrides(glossaryOverrides.value)
+    return true
+  } catch {
+    return false
+  }
 }
 
 async function toggle(pageTitle: string): Promise<void> {
@@ -383,7 +420,9 @@ export function useHandbookTts() {
   const pageTitle = computed(() => page.value.title || 'Handbook')
   const progress = computed(() => (totalMs.value ? (elapsedMs.value / totalMs.value) * 100 : 0))
   const isSupported = computed(() => canUsePiperTts())
+  const onlineAvailable = computed(() => canUseOnlineTts())
   const piperVoices = computed(() => PIPER_VOICES_CURATED)
+  const defaultGlossary = computed(() => DEFAULT_GLOSSARY)
 
   const currentLabel = computed(() => {
     if (!segments.value.length) return ''
@@ -397,7 +436,7 @@ export function useHandbookTts() {
 
   onUnmounted(() => {
     stop()
-    piperEngine?.destroy()
+    destroyEngine()
     unbindWordClickDelegate()
   })
 
@@ -421,11 +460,15 @@ export function useHandbookTts() {
     currentLabel,
     panelOpen,
     isSupported,
+    onlineAvailable,
     piperVoices,
     piperVoiceId,
+    ttsEngine,
     modelLoading,
     modelProgress,
     modelCached,
+    glossaryOverrides,
+    defaultGlossary,
     play: () => play(pageTitle.value),
     pause,
     resume,
@@ -433,6 +476,11 @@ export function useHandbookTts() {
     skip,
     setRate,
     setPiperVoice,
+    setTtsEngine,
+    addGlossaryOverride,
+    removeGlossaryOverride,
+    exportGlossaryOverrides,
+    importGlossaryOverrides,
     toggle: () => toggle(pageTitle.value),
     openPanel: () => {
       panelOpen.value = true

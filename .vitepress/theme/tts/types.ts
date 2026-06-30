@@ -6,7 +6,8 @@ export interface TtsEngineCallbacks {
   onStatus: (status: TtsStatus) => void
   onProgress: (elapsedMs: number, totalMs: number) => void
   onHighlight: (blockId: string, segmentIndex: number) => void
-  onWordHighlight?: (blockId: string, wordIndex: number) => void
+  /** wordIndex is display-word index within the active block */
+  onWordHighlight?: (blockId: string, displayWordIndex: number) => void
   onClearHighlight: () => void
   onFinish: () => void
   onError: (message: string) => void

@@ -1,6 +1,7 @@
 import { get, set } from 'idb-keyval'
 import { sliceTextAtOffset } from '../utils/extractReadingSegments'
 import type { ReadingSegment } from '../utils/extractReadingSegments'
+import type { PreparedSegment } from './preparedSegment'
 import { ensureOrtWasmConfigured, getPiperWasmPaths } from './piperWasmPaths'
 import {
   buildEstimatedDurations,
@@ -8,7 +9,9 @@ import {
   resolveSegmentAtDurations,
   totalDurationMs,
 } from './segmentTiming'
-import { tokenizeWords, wordIndexAtRatio } from './wordHighlight'
+import { prepareSpeechText, displayWordFromSpoken } from './speechPrep'
+import { getGlossaryVersion } from './glossary/glossaryStore'
+import { charWeightsForText, spokenWordAtOffset } from './wordTiming'
 import type { TtsEngine, TtsEngineCallbacks } from './types'
 
 type PiperModule = typeof import('@mintplex-labs/piper-tts-web')
@@ -40,8 +43,8 @@ function hashText(text: string): string {
   return (h >>> 0).toString(36)
 }
 
-function cacheKey(voiceId: string, text: string): string {
-  return `piper-audio:${voiceId}:${hashText(text)}`
+function cacheKey(voiceId: string, spokenText: string): string {
+  return `piper-audio:${getGlossaryVersion()}:${voiceId}:${hashText(spokenText)}`
 }
 
 async function blobDurationMs(blob: Blob): Promise<number> {
@@ -60,6 +63,21 @@ async function blobDurationMs(blob: Blob): Promise<number> {
   }
 }
 
+function prepareSegments(raw: ReadingSegment[]): PreparedSegment[] {
+  return raw.map(seg => {
+    const speech = prepareSpeechText(seg.text)
+    return {
+      ...seg,
+      speech,
+      phonemeWeights: charWeightsForText(speech.spokenText),
+    }
+  })
+}
+
+function spokenTextFor(seg: PreparedSegment): string {
+  return seg.speech?.spokenText ?? seg.text
+}
+
 export function createPiperEngine(
   callbacks: TtsEngineCallbacks,
   initialVoiceId: string,
@@ -70,13 +88,12 @@ export function createPiperEngine(
   let session: TtsSession | null = null
   let audio: HTMLAudioElement | null = null
   let objectUrl: string | null = null
-  let segments: ReadingSegment[] = []
+  let segments: PreparedSegment[] = []
   let currentIndex = 0
   let contentOffsetMs = 0
   let estimatedDurations: number[] = []
   let actualDurations: Array<number | undefined> = []
   let playingSession = 0
-  let tickTimer = 0
   let prefetchIndex = -1
   let prefetchPromise: Promise<{ blob: Blob; durationMs: number }> | null = null
 
@@ -84,11 +101,11 @@ export function createPiperEngine(
     return mergeDurations(estimatedDurations, actualDurations).map(d => d / rate)
   }
 
-  function stopTick(): void {
-    if (tickTimer) {
-      window.clearInterval(tickTimer)
-      tickTimer = 0
-    }
+  function detachAudioListeners(): void {
+    if (!audio) return
+    audio.ontimeupdate = null
+    audio.onended = null
+    audio.onerror = null
   }
 
   function currentElapsedMs(): number {
@@ -113,7 +130,7 @@ export function createPiperEngine(
 
     if (callbacks.onWordHighlight) {
       const seg = segments[currentIndex]
-      if (seg) {
+      if (seg?.speech) {
         const segDuration = durations[currentIndex] ?? 0
         let offsetInSeg = 0
         if (audio) {
@@ -121,17 +138,20 @@ export function createPiperEngine(
         } else {
           offsetInSeg = contentOffsetMs
         }
-        const ratio = segDuration > 0 ? offsetInSeg / segDuration : 0
-        const words = tokenizeWords(seg.text)
-        const wordIdx = wordIndexAtRatio(words.length, ratio)
-        callbacks.onWordHighlight(seg.blockId, wordIdx)
+        const weights = seg.phonemeWeights ?? charWeightsForText(seg.speech.spokenText)
+        const spokenIdx = spokenWordAtOffset(offsetInSeg, segDuration, weights)
+        const displayIdx = displayWordFromSpoken(seg.speech.alignment, spokenIdx)
+        callbacks.onWordHighlight(seg.blockId, displayIdx)
       }
     }
   }
 
-  function startTick(): void {
-    stopTick()
-    tickTimer = window.setInterval(reportProgress, 250)
+  function bindAudioProgress(sessionId: number): void {
+    if (!audio) return
+    audio.ontimeupdate = () => {
+      if (sessionId !== playingSession) return
+      reportProgress()
+    }
   }
 
   function revokeObjectUrl(): void {
@@ -143,9 +163,8 @@ export function createPiperEngine(
 
   function cleanupAudio(): void {
     if (audio) {
+      detachAudioListeners()
       audio.pause()
-      audio.onended = null
-      audio.onerror = null
       audio.src = ''
       audio = null
     }
@@ -164,19 +183,24 @@ export function createPiperEngine(
     return session
   }
 
-  async function synthesize(text: string): Promise<{ blob: Blob; durationMs: number }> {
-    const key = cacheKey(voiceId, text)
+  async function synthesize(seg: PreparedSegment): Promise<{ blob: Blob; durationMs: number }> {
+    const spoken = spokenTextFor(seg)
+    const key = cacheKey(voiceId, spoken)
     const cached = await get<Blob>(key)
     if (cached) {
       const durationMs = (await get<number>(`${key}:dur`)) ?? (await blobDurationMs(cached))
+      const weights = (await get<number[]>(`${key}:weights`)) ?? seg.phonemeWeights
+      if (weights) seg.phonemeWeights = weights
       return { blob: cached, durationMs }
     }
 
     const active = await ensureSession()
-    const blob = await active.predict(text)
+    const blob = await active.predict(spoken)
     const durationMs = await blobDurationMs(blob)
+    const weights = seg.phonemeWeights ?? charWeightsForText(spoken)
     await set(key, blob)
     await set(`${key}:dur`, durationMs)
+    await set(`${key}:weights`, weights)
     return { blob, durationMs }
   }
 
@@ -186,7 +210,7 @@ export function createPiperEngine(
     const seg = segments[nextIndex]
     if (!seg) return
     prefetchIndex = nextIndex
-    prefetchPromise = synthesize(seg.text)
+    prefetchPromise = synthesize(seg)
   }
 
   async function getSegmentAudio(index: number): Promise<{ blob: Blob; durationMs: number }> {
@@ -198,7 +222,7 @@ export function createPiperEngine(
     }
     const seg = segments[index]
     if (!seg) throw new Error('Missing segment')
-    return synthesize(seg.text)
+    return synthesize(seg)
   }
 
   async function playSegment(sessionId: number): Promise<void> {
@@ -212,10 +236,10 @@ export function createPiperEngine(
 
     callbacks.onHighlight(seg.blockId, currentIndex)
 
-    let text = seg.text
+    let spoken = spokenTextFor(seg)
     if (contentOffsetMs > 0) {
-      text = sliceTextAtOffset(seg.text, contentOffsetMs * rate, rate)
-      if (!text) {
+      spoken = sliceTextAtOffset(spoken, contentOffsetMs * rate, rate)
+      if (!spoken) {
         currentIndex += 1
         contentOffsetMs = 0
         await playSegment(sessionId)
@@ -224,7 +248,16 @@ export function createPiperEngine(
     }
 
     try {
-      const { blob, durationMs } = await getSegmentAudio(currentIndex)
+      const playSeg: PreparedSegment =
+        spoken !== spokenTextFor(seg)
+          ? {
+              ...seg,
+              speech: prepareSpeechText(spoken),
+              phonemeWeights: charWeightsForText(prepareSpeechText(spoken).spokenText),
+            }
+          : seg
+
+      const { blob, durationMs } = await synthesize(playSeg)
       if (sessionId !== playingSession) return
 
       actualDurations[currentIndex] = durationMs
@@ -259,11 +292,12 @@ export function createPiperEngine(
         callbacks.onError('Playback failed')
       }
 
+      bindAudioProgress(sessionId)
+
       await audio.play()
       if (sessionId !== playingSession) return
 
       callbacks.onStatus('playing')
-      startTick()
       reportProgress()
       prefetchNext(sessionId)
     } catch (err) {
@@ -311,10 +345,13 @@ export function createPiperEngine(
     },
 
     async play(nextSegments) {
-      segments = nextSegments
+      segments = prepareSegments(nextSegments)
       currentIndex = 0
       contentOffsetMs = 0
-      estimatedDurations = buildEstimatedDurations(segments, rate)
+      estimatedDurations = buildEstimatedDurations(
+        segments.map(s => ({ ...s, text: spokenTextFor(s) })),
+        rate,
+      )
       actualDurations = new Array(segments.length)
       playingSession += 1
       const sessionId = playingSession
@@ -327,7 +364,6 @@ export function createPiperEngine(
       if (!audio || audio.paused) return
       contentOffsetMs = (audio.currentTime * 1000) / rate
       audio.pause()
-      stopTick()
       reportProgress()
       callbacks.onStatus('paused')
     },
@@ -338,7 +374,6 @@ export function createPiperEngine(
       if (audio && audio.paused && audio.src) {
         await audio.play()
         callbacks.onStatus('playing')
-        startTick()
         return
       }
 
@@ -352,7 +387,6 @@ export function createPiperEngine(
     stop() {
       playingSession += 1
       cleanupAudio()
-      stopTick()
       segments = []
       currentIndex = 0
       contentOffsetMs = 0
