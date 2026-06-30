@@ -215,6 +215,18 @@ html.dark .vp-doc .dsa-tts-active {
   background: color-mix(in srgb, var(--vp-c-brand-1) 14%, transparent);
 }
 
+.vp-doc .dsa-tts-active .dsa-tts-word-current {
+  text-decoration: underline;
+  text-decoration-color: var(--vp-c-brand-1);
+  text-decoration-thickness: 2px;
+  text-underline-offset: 3px;
+}
+
+.vp-doc .dsa-tts-active .dsa-tts-word-next {
+  opacity: 0.55;
+  transition: opacity 0.15s ease;
+}
+
 /* Playground full-page layout */
 .VPPage .playground-page {
   width: 100%;

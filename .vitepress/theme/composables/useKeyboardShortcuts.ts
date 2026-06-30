@@ -1,7 +1,7 @@
 import { ref, onMounted, onUnmounted } from 'vue'
 import { useRouter, useRoute, useData } from 'vitepress'
 import { handbookLink } from '../utils/handbookLink'
-import { toggleHandbookTts } from './useHandbookTts'
+import { getListenStatus, skipListen, toggleHandbookTts } from './useHandbookTts'
 import { normalizePagePath } from '../utils/normalizePagePath'
 
 export interface ShortcutEntry {
@@ -32,8 +32,15 @@ export const SHORTCUT_GROUPS: ShortcutGroup[] = [
     items: [
       { keys: '⇧F', label: 'Focus mode' },
       { keys: '⇧N', label: 'Page notes overlay' },
-      { keys: '⇧R', label: 'Listen to page (text-to-speech)' },
       { keys: 'Esc', label: 'Close overlay or exit focus' },
+    ],
+  },
+  {
+    title: 'Listen',
+    items: [
+      { keys: '⇧R', label: 'Play / pause listen mode' },
+      { keys: '⇧←', label: 'Skip back 10 seconds' },
+      { keys: '⇧→', label: 'Skip forward 10 seconds' },
     ],
   },
   {
@@ -127,6 +134,15 @@ export function useKeyboardShortcuts() {
       if (page.value.frontmatter.layout !== 'home' && isHandbookReadingPage(route.path)) {
         e.preventDefault()
         void toggleHandbookTts()
+      }
+      return
+    }
+
+    if (isShiftCombo(e) && (e.key === 'ArrowLeft' || e.key === 'ArrowRight')) {
+      const listenStatus = getListenStatus()
+      if (listenStatus === 'playing' || listenStatus === 'paused') {
+        e.preventDefault()
+        skipListen(e.key === 'ArrowLeft' ? -10_000 : 10_000)
       }
       return
     }

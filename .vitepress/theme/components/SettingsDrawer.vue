@@ -6,9 +6,11 @@ import { loadAnnotations } from '../composables/useAnnotations'
 import { scheduleAnnotationRestore } from '../utils/annotationLifecycle'
 import InstallAppPrompt from './InstallAppPrompt.vue'
 import { useServiceWorker } from '../composables/useServiceWorker'
+import { useCoarsePointer } from '../composables/useCoarsePointer'
 
 const open = ref(false)
 const { offlineReady } = useServiceWorker()
+const { isCoarsePointer } = useCoarsePointer()
 const fileInput = ref(null)
 
 async function handleExport() {
@@ -100,7 +102,7 @@ async function handleClear() {
       <InstallAppPrompt />
       <button class="panel-btn" @click="checkForUpdates">Check for updates</button>
 
-      <p class="shortcut-hint">Press <kbd>Shift+?</kbd> for keyboard shortcuts</p>
+      <p v-if="!isCoarsePointer" class="shortcut-hint">Press <kbd>Shift+?</kbd> for keyboard shortcuts</p>
     </div>
   </div>
 </template>

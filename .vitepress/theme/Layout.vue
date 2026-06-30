@@ -27,6 +27,7 @@ import { useChromeOffset } from './composables/useChromeOffset'
 import { useHandbookPage } from './composables/useHandbookPage'
 
 import { openShortcuts, useKeyboardShortcuts } from './composables/useKeyboardShortcuts'
+import { useCoarsePointer } from './composables/useCoarsePointer'
 import { isMarginNotesMobile } from './utils/noteLayout'
 import DSALogo from './components/DSALogo.vue'
 
@@ -37,6 +38,7 @@ const { Layout } = DefaultTheme
 const { isFocusMode, toggleFocusMode } = useFocusMode()
 useKeyboardShortcuts()
 useChromeOffset()
+const { isCoarsePointer } = useCoarsePointer()
 
 const { isHomePage, showDocPage } = useHandbookPage()
 
@@ -92,7 +94,7 @@ const showFallbackFocus = computed(() => {
   <KeyboardShortcutsSheet />
 
   <button
-    v-if="isHomePage && !isFocusMode"
+    v-if="isHomePage && !isFocusMode && !isCoarsePointer"
     type="button"
     class="floating-shortcuts"
     aria-label="Keyboard shortcuts (Shift+?)"

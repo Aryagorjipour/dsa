@@ -6,6 +6,7 @@ import { openShortcuts } from '../composables/useKeyboardShortcuts'
 import { getExplorerTree } from '../../sidebar'
 import { handbookLink } from '../utils/handbookLink'
 import { usePageActions } from '../composables/usePageActions'
+import { useCoarsePointer } from '../composables/useCoarsePointer'
 
 const collapsed = ref(true)
 const { page } = useData()
@@ -13,6 +14,7 @@ const { isFocusMode, toggleFocusMode } = useFocusMode()
 const { pageNote, editPageNote } = usePageActions()
 const tree = computed(() => getExplorerTree())
 const isHomePage = computed(() => page.value.frontmatter.layout === 'home')
+const { isCoarsePointer } = useCoarsePointer()
 </script>
 
 <template>
@@ -44,7 +46,7 @@ const isHomePage = computed(() => page.value.frontmatter.layout === 'home')
 
     <div class="explorer-footer">
       <button
-        v-if="isHomePage"
+        v-if="isHomePage && !isCoarsePointer"
         type="button"
         class="shortcuts-btn"
         title="Keyboard shortcuts (Shift+?)"

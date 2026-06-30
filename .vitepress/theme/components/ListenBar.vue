@@ -1,6 +1,9 @@
 <script setup>
 import { computed } from 'vue'
 import { useHandbookTts } from '../composables/useHandbookTts'
+import { useCoarsePointer } from '../composables/useCoarsePointer'
+
+const { isCoarsePointer } = useCoarsePointer()
 
 const {
   status,
@@ -15,6 +18,7 @@ const {
   piperVoiceId,
   modelLoading,
   modelProgress,
+  modelCached,
   play,
   pause,
   resume,
@@ -66,7 +70,7 @@ function onClose() {
       type="button"
       class="listen-fab"
       aria-label="Open listen mode"
-      title="Listen to handbook (Shift+R)"
+      :title="isCoarsePointer ? 'Listen to handbook' : 'Listen to handbook (Shift+R)'"
       @click="openPanel()"
     >
       <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" fill="currentColor">
@@ -190,7 +194,8 @@ function onClose() {
         </select>
       </label>
 
-      <p class="listen-hint">First use downloads ~25MB once, then works offline.</p>
+      <p v-if="modelCached" class="listen-hint">Voice ready offline.</p>
+      <p v-else class="listen-hint">Downloading voice (~25MB once)…</p>
       <p class="listen-hint">Reads handbook text only — skips quizzes, nav, and code blocks.</p>
     </section>
   </div>

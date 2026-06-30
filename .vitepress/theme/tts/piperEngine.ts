@@ -8,6 +8,7 @@ import {
   resolveSegmentAtDurations,
   totalDurationMs,
 } from './segmentTiming'
+import { tokenizeWords, wordIndexAtRatio } from './wordHighlight'
 import type { TtsEngine, TtsEngineCallbacks } from './types'
 
 type PiperModule = typeof import('@mintplex-labs/piper-tts-web')
@@ -90,9 +91,8 @@ export function createPiperEngine(
     }
   }
 
-  function reportProgress(): void {
+  function currentElapsedMs(): number {
     const durations = effectiveDurations()
-    const total = totalDurationMs(durations)
     let elapsed = 0
     for (let i = 0; i < currentIndex; i++) {
       elapsed += durations[i] ?? 0
@@ -102,7 +102,31 @@ export function createPiperEngine(
     } else {
       elapsed += contentOffsetMs
     }
-    callbacks.onProgress(Math.min(elapsed, total), total)
+    return elapsed
+  }
+
+  function reportProgress(): void {
+    const durations = effectiveDurations()
+    const total = totalDurationMs(durations)
+    const elapsed = Math.min(currentElapsedMs(), total)
+    callbacks.onProgress(elapsed, total)
+
+    if (callbacks.onWordHighlight) {
+      const seg = segments[currentIndex]
+      if (seg) {
+        const segDuration = durations[currentIndex] ?? 0
+        let offsetInSeg = 0
+        if (audio) {
+          offsetInSeg = (audio.currentTime * 1000) / rate
+        } else {
+          offsetInSeg = contentOffsetMs
+        }
+        const ratio = segDuration > 0 ? offsetInSeg / segDuration : 0
+        const words = tokenizeWords(seg.text)
+        const wordIdx = wordIndexAtRatio(words.length, ratio)
+        callbacks.onWordHighlight(seg.blockId, wordIdx)
+      }
+    }
   }
 
   function startTick(): void {
@@ -186,7 +210,7 @@ export function createPiperEngine(
       return
     }
 
-    callbacks.onHighlight(seg.blockId)
+    callbacks.onHighlight(seg.blockId, currentIndex)
 
     let text = seg.text
     if (contentOffsetMs > 0) {
@@ -250,16 +274,29 @@ export function createPiperEngine(
   }
 
   return {
+    async isVoiceCached() {
+      try {
+        const piper = await loadPiper()
+        const stored = await piper.stored()
+        return stored.includes(voiceId)
+      } catch {
+        return false
+      }
+    },
+
     async ensureReady(onModelProgress) {
       try {
         await ensureOrtWasmConfigured()
         const piper = await loadPiper()
 
-        await piper.download(voiceId, progress => {
-          if (onModelProgress && progress.total > 0) {
-            onModelProgress(Math.round((progress.loaded / progress.total) * 100))
-          }
-        })
+        const stored = await piper.stored()
+        if (!stored.includes(voiceId)) {
+          await piper.download(voiceId, progress => {
+            if (onModelProgress && progress.total > 0) {
+              onModelProgress(Math.round((progress.loaded / progress.total) * 100))
+            }
+          })
+        }
 
         session = null
         resetPiperSessionSingleton()
@@ -328,17 +365,18 @@ export function createPiperEngine(
 
     skip(deltaMs) {
       if (!segments.length) return
+      const durations = effectiveDurations()
+      const total = totalDurationMs(durations)
+      const target = Math.max(0, Math.min(total - 1, currentElapsedMs() + deltaMs))
+      this.seekTo(target)
+    },
+
+    seekTo(targetMs) {
+      if (!segments.length) return
 
       const durations = effectiveDurations()
       const total = totalDurationMs(durations)
-      let target = 0
-      for (let i = 0; i < currentIndex; i++) target += durations[i] ?? 0
-      if (audio) {
-        target += (audio.currentTime * 1000) / rate
-      } else {
-        target += contentOffsetMs
-      }
-      target = Math.max(0, Math.min(total - 1, target + deltaMs))
+      const target = Math.max(0, Math.min(total - 1, targetMs))
 
       const resolved = resolveSegmentAtDurations(durations, target)
       currentIndex = resolved.index

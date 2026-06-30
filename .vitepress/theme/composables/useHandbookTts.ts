@@ -12,6 +12,14 @@ import {
 } from '../utils/ttsVoices'
 import { showToast } from './useToast'
 import { createPiperEngine } from '../tts/piperEngine'
+import {
+  findSegmentWordOffset,
+  setWordHighlight,
+  tokenizeWords,
+  unwrapAllWordHighlights,
+  wrapBlockWords,
+} from '../tts/wordHighlight'
+import { buildEstimatedDurations, mergeDurations } from '../tts/segmentTiming'
 import type { TtsEngine, TtsEngineCallbacks, TtsStatus } from '../tts/types'
 
 export type { TtsStatus }
@@ -27,13 +35,17 @@ const panelOpen = ref(false)
 const piperVoiceId = ref(loadStoredPiperVoice())
 const modelLoading = ref(false)
 const modelProgress = ref(0)
+const modelCached = ref(false)
+const activeSegmentIndex = ref(0)
 
 let piperEngine: TtsEngine | null = null
+let wordClickBound = false
 
 function clearHighlight(): void {
   document.querySelectorAll('.dsa-tts-active').forEach(el => {
     el.classList.remove('dsa-tts-active')
   })
+  unwrapAllWordHighlights()
 }
 
 function escapeAttr(value: string): string {
@@ -43,13 +55,96 @@ function escapeAttr(value: string): string {
   return value.replace(/\\/g, '\\\\').replace(/"/g, '\\"')
 }
 
-function highlightBlock(blockId: string): void {
+function highlightBlock(blockId: string, segmentIndex: number): void {
   clearHighlight()
   const el = document.querySelector(`[data-dsa-block="${escapeAttr(blockId)}"]`)
   if (el instanceof HTMLElement) {
     el.classList.add('dsa-tts-active')
+    wrapBlockWords(el)
     el.scrollIntoView({ block: 'nearest', behavior: 'smooth' })
   }
+  activeSegmentIndex.value = segmentIndex
+}
+
+function blockWordIndex(blockId: string, segmentIndex: number, segmentWordIdx: number): number {
+  const el = document.querySelector(`[data-dsa-block="${escapeAttr(blockId)}"]`)
+  const blockText = el?.textContent || ''
+  const seg = segments.value[segmentIndex]
+  if (!seg) return segmentWordIdx
+
+  const priorTexts = segments.value
+    .slice(0, segmentIndex)
+    .filter(s => s.blockId === blockId)
+    .map(s => s.text)
+
+  return findSegmentWordOffset(blockText, seg.text, priorTexts) + segmentWordIdx
+}
+
+function handleWordClick(e: MouseEvent): void {
+  const target = e.target
+  if (!(target instanceof HTMLElement)) return
+  const wordEl = target.closest('.dsa-tts-word')
+  if (!(wordEl instanceof HTMLElement)) return
+
+  const blockEl = wordEl.closest('[data-dsa-block]')
+  if (!(blockEl instanceof HTMLElement)) return
+
+  const blockId = blockEl.dataset.dsaBlock
+  const wordIndex = Number(wordEl.dataset.ttsWord)
+  if (!blockId || Number.isNaN(wordIndex)) return
+
+  if (!segments.value.length && !loadSegments()) return
+  if (status.value === 'idle') {
+    panelOpen.value = true
+    return
+  }
+
+  const blockText = blockEl.textContent || ''
+  const estimated = buildEstimatedDurations(segments.value, rate.value)
+  const durations = mergeDurations(estimated, []).map(d => d / rate.value)
+
+  let targetMs = 0
+  let found = false
+
+  for (let i = 0; i < segments.value.length; i++) {
+    const s = segments.value[i]
+    if (s.blockId !== blockId) {
+      targetMs += durations[i] ?? 0
+      continue
+    }
+
+    const priorTexts = segments.value
+      .slice(0, i)
+      .filter(seg => seg.blockId === blockId)
+      .map(seg => seg.text)
+    const segWordOffset = findSegmentWordOffset(blockText, s.text, priorTexts)
+    const segWordCount = tokenizeWords(s.text).length
+
+    if (wordIndex >= segWordOffset && wordIndex < segWordOffset + segWordCount) {
+      const localWordIdx = wordIndex - segWordOffset
+      const ratio = segWordCount > 0 ? localWordIdx / segWordCount : 0
+      targetMs += ratio * (durations[i] ?? 0)
+      found = true
+      break
+    }
+
+    targetMs += durations[i] ?? 0
+  }
+
+  if (!found) return
+  getPiperEngine().seekTo(targetMs)
+}
+
+function bindWordClickDelegate(): void {
+  if (wordClickBound || typeof document === 'undefined') return
+  document.addEventListener('click', handleWordClick)
+  wordClickBound = true
+}
+
+function unbindWordClickDelegate(): void {
+  if (!wordClickBound || typeof document === 'undefined') return
+  document.removeEventListener('click', handleWordClick)
+  wordClickBound = false
 }
 
 function engineCallbacks(): TtsEngineCallbacks {
@@ -64,6 +159,13 @@ function engineCallbacks(): TtsEngineCallbacks {
       updateMediaSessionPosition()
     },
     onHighlight: highlightBlock,
+    onWordHighlight(blockId, segmentWordIdx) {
+      const el = document.querySelector(`[data-dsa-block="${escapeAttr(blockId)}"]`)
+      if (el instanceof HTMLElement) {
+        const idx = blockWordIndex(blockId, activeSegmentIndex.value, segmentWordIdx)
+        setWordHighlight(el, idx)
+      }
+    },
     onClearHighlight: clearHighlight,
     onFinish() {
       showToast('Finished reading this page')
@@ -157,16 +259,23 @@ function clearMediaSession(): void {
   })
 }
 
+async function refreshModelCached(): Promise<void> {
+  modelCached.value = await getPiperEngine().isVoiceCached()
+}
+
 async function ensureEngineReady(): Promise<boolean> {
   modelLoading.value = true
   modelProgress.value = 0
   try {
+    const cached = await getPiperEngine().isVoiceCached()
+    modelCached.value = cached
     return await getPiperEngine().ensureReady(p => {
       modelProgress.value = p
     })
   } finally {
     modelLoading.value = false
     modelProgress.value = 0
+    await refreshModelCached()
   }
 }
 
@@ -183,6 +292,7 @@ async function play(pageTitle: string): Promise<void> {
 
   panelOpen.value = true
   bindMediaSessionHandlers(pageTitle)
+  bindWordClickDelegate()
 
   const ready = await ensureEngineReady()
   if (!ready) {
@@ -233,6 +343,7 @@ function setPiperVoice(voiceId: string): void {
   piperVoiceId.value = voiceId
   saveStoredPiperVoice(voiceId)
   getPiperEngine().setVoice(voiceId)
+  void refreshModelCached()
 }
 
 async function toggle(pageTitle: string): Promise<void> {
@@ -245,6 +356,14 @@ async function toggle(pageTitle: string): Promise<void> {
     return
   }
   await play(pageTitle)
+}
+
+export function getListenStatus(): TtsStatus {
+  return status.value
+}
+
+export function skipListen(ms: number): void {
+  skip(ms)
 }
 
 export function toggleHandbookTts(): Promise<void> {
@@ -279,6 +398,7 @@ export function useHandbookTts() {
   onUnmounted(() => {
     stop()
     piperEngine?.destroy()
+    unbindWordClickDelegate()
   })
 
   watch(
@@ -289,6 +409,8 @@ export function useHandbookTts() {
       segments.value = []
     },
   )
+
+  void refreshModelCached()
 
   return {
     status,
@@ -303,6 +425,7 @@ export function useHandbookTts() {
     piperVoiceId,
     modelLoading,
     modelProgress,
+    modelCached,
     play: () => play(pageTitle.value),
     pause,
     resume,

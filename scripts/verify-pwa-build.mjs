@@ -123,7 +123,7 @@ function distHasWasmAsset() {
       const full = path.join(dir, entry.name)
       if (entry.isDirectory()) {
         if (walk(full)) return true
-      } else if (/ort-wasm-simd-threaded\.jsep\.wasm$/i.test(entry.name)) {
+      } else if (/ort-wasm-simd-threaded\.jsep.*\.wasm$/i.test(entry.name)) {
         return true
       }
     }

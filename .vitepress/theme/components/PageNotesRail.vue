@@ -14,10 +14,12 @@ import { handbookLink } from '../utils/handbookLink'
 import { showToast } from '../composables/useToast'
 import { openNoteDetailModal } from '../composables/useNoteDetailModal'
 import MarginNoteCard from './MarginNoteCard.vue'
+import { useCoarsePointer } from '../composables/useCoarsePointer'
 
 const route = useRoute()
 const { page } = useData()
 const { isFocusMode, toggleFocusMode } = useFocusMode()
+const { isCoarsePointer } = useCoarsePointer()
 const {
   isOpen,
   activeNoteId,
@@ -338,8 +340,8 @@ watch(placements, () => nextTick(setupResizeObserver))
           <button
             type="button"
             class="dock-focus-btn is-exit"
-            aria-label="Exit focus mode (Shift+F or Esc)"
-            title="Exit Focus Mode (Shift+F or Esc)"
+            :aria-label="isCoarsePointer ? 'Exit focus mode' : 'Exit focus mode (Shift+F or Esc)'"
+            :title="isCoarsePointer ? 'Exit Focus Mode' : 'Exit Focus Mode (Shift+F or Esc)'"
             @click="toggleFocusMode"
           >
             <span class="focus-icon" aria-hidden="true">◑</span>
@@ -353,7 +355,7 @@ watch(placements, () => nextTick(setupResizeObserver))
             :class="{ open: isOpen }"
             :aria-expanded="isOpen"
             aria-label="Toggle page notes on this page"
-            title="Show notes beside their passages (Shift+N)"
+            :title="isCoarsePointer ? 'Show notes beside their passages' : 'Show notes beside their passages (Shift+N)'"
             @click="onToggle"
           >
             <span class="toggle-icon" aria-hidden="true">📝</span>
@@ -361,13 +363,13 @@ watch(placements, () => nextTick(setupResizeObserver))
               {{ isOpen ? 'Hide notes' : 'Page notes' }}
               <span v-if="pageNotes.length" class="toggle-count">{{ pageNotes.length }}</span>
             </span>
-            <kbd class="toggle-kbd">⇧N</kbd>
+            <kbd v-if="!isCoarsePointer" class="toggle-kbd">⇧N</kbd>
           </button>
           <button
             type="button"
             class="dock-focus-btn"
-            aria-label="Enter focus mode (Shift+F)"
-            title="Focus Mode — fullscreen reading, hides nav and sidebars (Shift+F)"
+            :aria-label="isCoarsePointer ? 'Enter focus mode' : 'Enter focus mode (Shift+F)'"
+            :title="isCoarsePointer ? 'Focus Mode — fullscreen reading, hides nav and sidebars' : 'Focus Mode — fullscreen reading, hides nav and sidebars (Shift+F)'"
             @click="toggleFocusMode"
           >
             <span class="focus-icon" aria-hidden="true">◐</span>
