@@ -1,6 +1,6 @@
 import type { ReadingSegment } from '../utils/extractReadingSegments'
 
-export type TtsStatus = 'idle' | 'playing' | 'paused'
+export type TtsStatus = 'idle' | 'playing' | 'paused' | 'synthesizing'
 
 export interface TtsEngineCallbacks {
   onStatus: (status: TtsStatus) => void
@@ -25,5 +25,7 @@ export interface TtsEngine {
   seekTo: (elapsedMs: number) => void
   setRate: (rate: number) => void
   setVoice: (voiceId: string) => void
+  /** Re-synthesize from current position (e.g. after cloud voice/model change). */
+  reloadVoice: () => void
   destroy: () => void
 }

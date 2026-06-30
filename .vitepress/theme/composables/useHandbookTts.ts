@@ -39,6 +39,7 @@ const segments = ref<PreparedSegment[]>([])
 const elapsedMs = ref(0)
 const totalMs = ref(0)
 const panelOpen = ref(false)
+const panelMinimized = ref(false)
 const piperVoiceId = ref(loadStoredPiperVoice())
 const ttsEngine = ref<TtsEngineChoice>(loadStoredTtsEngine())
 const modelLoading = ref(false)
@@ -249,6 +250,7 @@ async function play(pageTitle: string): Promise<void> {
   }
 
   panelOpen.value = true
+  panelMinimized.value = false
   bindMediaSessionHandlers(pageTitle)
 
   const ready = await ensureEngineReady()
@@ -313,10 +315,29 @@ function setPiperVoice(voiceId: string): void {
   piperVoiceId.value = voiceId
   saveStoredPiperVoice(voiceId)
   if (ttsEngine.value === 'piper') {
-    destroyEngine()
-    getEngine().setVoice(voiceId)
+    if (activeEngine && activeEngineKind === 'piper') {
+      getEngine().setVoice(voiceId)
+    } else {
+      destroyEngine()
+      getEngine().setVoice(voiceId)
+    }
   }
   void refreshModelCached()
+}
+
+function reloadCloudVoice(): void {
+  if (ttsEngine.value !== 'cloud' || status.value === 'idle') return
+  getEngine().reloadVoice()
+}
+
+function minimizePanel(): void {
+  if (!panelOpen.value) return
+  panelMinimized.value = true
+}
+
+function expandPanel(): void {
+  panelOpen.value = true
+  panelMinimized.value = false
 }
 
 function setTtsEngine(engine: TtsEngineChoice): void {
@@ -426,6 +447,7 @@ export function useHandbookTts() {
     () => {
       stop()
       panelOpen.value = false
+      panelMinimized.value = false
       segments.value = []
     },
   )
@@ -441,6 +463,7 @@ export function useHandbookTts() {
     totalMs,
     currentLabel,
     panelOpen,
+    panelMinimized,
     isSupported,
     cloudConfigured,
     piperVoices,
@@ -465,9 +488,13 @@ export function useHandbookTts() {
     exportGlossaryOverrides,
     importGlossaryOverrides,
     refreshCloudConfigured,
+    reloadCloudVoice,
+    minimizePanel,
+    expandPanel,
     toggle: () => toggle(pageTitle.value),
     openPanel: () => {
       panelOpen.value = true
+      panelMinimized.value = false
     },
   }
 }

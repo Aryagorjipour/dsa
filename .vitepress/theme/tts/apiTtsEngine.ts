@@ -16,6 +16,7 @@ import {
 } from './segmentTiming'
 import { prepareSpeechText, displayWordFromSpoken } from './speechPrep'
 import { charWeightsForText, spokenWordAtOffset } from './wordTiming'
+import { targetSegmentForBlockSkip } from './blockNavigation'
 import { getCloudApiKey, loadCloudTtsConfig } from './ttsSecretStore'
 import type { TtsEngine, TtsEngineCallbacks } from './types'
 
@@ -247,6 +248,7 @@ export function createApiTtsEngine(
     if (seg) callbacks.onHighlight(seg.blockId, currentIndex)
 
     try {
+      callbacks.onStatus('synthesizing')
       const { blob, segmentDurations } = await ensureChunkCached(currentChunkIdx, sessionId)
       if (sessionId !== playingSession) return
 
@@ -392,14 +394,19 @@ export function createApiTtsEngine(
       this.seekTo(target)
     },
 
-    skipSegment(deltaSegments) {
+    skipSegment(deltaBlocks) {
       if (!segments.length) return
-      const target = currentIndex + deltaSegments
-      if (target < 0 || target >= segments.length) return
+      const durations = effectiveDurations()
+      const targetSeg = targetSegmentForBlockSkip(
+        segments,
+        durations,
+        currentElapsedMs(),
+        deltaBlocks,
+      )
+      if (targetSeg === null) return
 
       let elapsed = 0
-      const durations = effectiveDurations()
-      for (let i = 0; i < target; i++) elapsed += durations[i] ?? 0
+      for (let i = 0; i < targetSeg; i++) elapsed += durations[i] ?? 0
       this.seekTo(elapsed)
     },
 
@@ -449,6 +456,29 @@ export function createApiTtsEngine(
 
     setVoice() {
       /* cloud voice from config store */
+    },
+
+    reloadVoice() {
+      if (!segments.length) return
+      const wasPlaying = !!(audio && !audio.paused)
+      const elapsed = currentElapsedMs()
+      clearChunkCache()
+      playingSession += 1
+      cleanupAudio()
+      const durations = effectiveDurations()
+      const resolved = resolveSegmentAtDurations(durations, elapsed)
+      currentIndex = resolved.index
+      contentOffsetMs = resolved.offsetMs
+      currentChunkIdx = chunks.findIndex(c => c.segmentIndices.includes(currentIndex))
+      if (currentChunkIdx < 0) currentChunkIdx = 0
+      reportProgress()
+      const seg = segments[currentIndex]
+      if (seg) callbacks.onHighlight(seg.blockId, currentIndex)
+      if (wasPlaying) {
+        const sessionId = playingSession
+        callbacks.onStatus('playing')
+        void playChunk(sessionId)
+      }
     },
 
     destroy() {

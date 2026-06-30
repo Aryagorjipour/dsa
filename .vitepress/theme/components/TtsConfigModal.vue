@@ -25,6 +25,9 @@ const {
   exportGlossaryOverrides,
   importGlossaryOverrides,
   refreshCloudConfigured,
+  reloadCloudVoice,
+  ttsEngine,
+  status,
 } = useHandbookTts()
 
 const activeTab = ref('cloud')
@@ -40,6 +43,7 @@ const voices = ref([])
 const testing = ref(false)
 const testError = ref('')
 const testOk = ref(false)
+const savedVoiceId = ref('coral')
 
 const newMatch = ref('')
 const newSpoken = ref('')
@@ -54,6 +58,7 @@ async function loadConfig() {
   baseUrl.value = config.baseUrl || PROVIDER_DEFAULTS[config.provider]
   model.value = config.model
   voiceId.value = config.voiceId
+  savedVoiceId.value = config.voiceId
   testOk.value = config.configured
   hasKey.value = await hasStoredApiKey()
   if (hasKey.value) {
@@ -147,6 +152,7 @@ async function onTestConnection() {
 }
 
 async function onSave() {
+  const voiceChanged = voiceId.value !== savedVoiceId.value
   await saveCloudTtsConfig({
     provider: provider.value,
     baseUrl: baseUrl.value.trim(),
@@ -156,8 +162,40 @@ async function onSave() {
   })
   if (apiKeyInput.value.trim()) await saveCloudApiKey(apiKeyInput.value.trim())
   await refreshCloudConfigured()
-  showToast('Settings saved')
+  savedVoiceId.value = voiceId.value
+  if (
+    voiceChanged &&
+    ttsEngine.value === 'cloud' &&
+    (status.value === 'playing' || status.value === 'paused' || status.value === 'synthesizing')
+  ) {
+    reloadCloudVoice()
+    showToast('Voice updated — continuing from here')
+  } else {
+    showToast('Settings saved')
+  }
   closeTtsConfigModal()
+}
+
+function onVoiceChange() {
+  if (
+    ttsEngine.value !== 'cloud' ||
+    status.value === 'idle' ||
+    voiceId.value === savedVoiceId.value
+  ) {
+    return
+  }
+  void (async () => {
+    await saveCloudTtsConfig({
+      provider: provider.value,
+      baseUrl: baseUrl.value.trim(),
+      model: model.value,
+      voiceId: voiceId.value,
+      configured: testOk.value && hasKey.value,
+    })
+    savedVoiceId.value = voiceId.value
+    reloadCloudVoice()
+    showToast('Voice updated — continuing from here')
+  })()
 }
 
 async function onClearCredentials() {
@@ -305,10 +343,10 @@ if (typeof window !== 'undefined') refreshVoiceOptions()
 
               <label class="tts-field tts-field-grow">
                 <span class="tts-label">Voice</span>
-                <select v-if="voices.length" v-model="voiceId" class="tts-input">
+                <select v-if="voices.length" v-model="voiceId" class="tts-input" @change="onVoiceChange">
                   <option v-for="v in voices" :key="v.id" :value="v.id">{{ v.label }}</option>
                 </select>
-                <input v-else v-model="voiceId" class="tts-input" placeholder="coral" />
+                <input v-else v-model="voiceId" class="tts-input" placeholder="coral" @change="onVoiceChange" />
               </label>
             </div>
 

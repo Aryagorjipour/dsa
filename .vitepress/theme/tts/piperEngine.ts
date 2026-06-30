@@ -12,6 +12,7 @@ import {
 import { prepareSpeechText, displayWordFromSpoken } from './speechPrep'
 import { getGlossaryVersion } from './glossary/glossaryStore'
 import { charWeightsForText, spokenWordAtOffset } from './wordTiming'
+import { targetSegmentForBlockSkip } from './blockNavigation'
 import type { TtsEngine, TtsEngineCallbacks } from './types'
 
 type PiperModule = typeof import('@mintplex-labs/piper-tts-web')
@@ -257,6 +258,7 @@ export function createPiperEngine(
             }
           : seg
 
+      callbacks.onStatus('synthesizing')
       const { blob, durationMs } = await synthesize(playSeg)
       if (sessionId !== playingSession) return
 
@@ -405,13 +407,18 @@ export function createPiperEngine(
       this.seekTo(target)
     },
 
-    skipSegment(deltaSegments) {
+    skipSegment(deltaBlocks) {
       if (!segments.length) return
-      const target = currentIndex + deltaSegments
-      if (target < 0 || target >= segments.length) return
       const durations = effectiveDurations()
+      const targetSeg = targetSegmentForBlockSkip(
+        segments,
+        durations,
+        currentElapsedMs(),
+        deltaBlocks,
+      )
+      if (targetSeg === null) return
       let elapsed = 0
-      for (let i = 0; i < target; i++) elapsed += durations[i] ?? 0
+      for (let i = 0; i < targetSeg; i++) elapsed += durations[i] ?? 0
       this.seekTo(elapsed)
     },
 
@@ -456,10 +463,17 @@ export function createPiperEngine(
       voiceId = nextVoiceId
       session = null
       resetPiperSessionSingleton()
-      if (audio && !audio.paused) {
-        playingSession += 1
+      this.reloadVoice()
+    },
+
+    reloadVoice() {
+      if (!segments.length) return
+      const wasPlaying = !!(audio && !audio.paused)
+      playingSession += 1
+      cleanupAudio()
+      if (wasPlaying) {
         const sessionId = playingSession
-        cleanupAudio()
+        callbacks.onStatus('playing')
         void playSegment(sessionId)
       }
     },

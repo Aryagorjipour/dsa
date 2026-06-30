@@ -3,6 +3,9 @@ const LINE_TOLERANCE_PX = 6
 export function clearLinePointer(blockEl: HTMLElement): void {
   blockEl.querySelector('.dsa-tts-line-pointer')?.remove()
   blockEl.classList.remove('dsa-tts-has-pointer')
+  blockEl.querySelectorAll('.dsa-tts-word').forEach(el => {
+    el.classList.remove('dsa-tts-word-on-active-line', 'dsa-tts-word-muted')
+  })
 }
 
 export function setLinePointer(blockEl: HTMLElement, displayWordIndex: number): void {
@@ -23,6 +26,12 @@ export function setLinePointer(blockEl: HTMLElement, displayWordIndex: number): 
   if (!lineWords.length) {
     clearLinePointer(blockEl)
     return
+  }
+
+  const activeSet = new Set(lineWords)
+  for (const w of words) {
+    w.classList.toggle('dsa-tts-word-on-active-line', activeSet.has(w))
+    w.classList.toggle('dsa-tts-word-muted', !activeSet.has(w))
   }
 
   const tops = lineWords.map(w => w.getBoundingClientRect().top - blockRect.top)
@@ -81,7 +90,6 @@ export function lineBoundsForWord(
 ): { top: number; height: number } | null {
   const top = tops[wordIndex]
   if (top === undefined) return null
-  const lineTops = tops.filter((t, i) => Math.abs(t - top) <= tolerance)
   const indices = tops
     .map((t, i) => (Math.abs(t - top) <= tolerance ? i : -1))
     .filter(i => i >= 0)
