@@ -5,7 +5,7 @@ import { grokAdapter } from './grok'
 import { openaiAdapter } from './openai'
 import type { TtsProviderAdapter } from './types'
 
-export { filterTtsModels, normalizeBaseUrl } from './types'
+export { filterTtsModels, joinApiPath, normalizeBaseUrl } from './types'
 export type { SynthesizeRequest, TtsProviderAdapter, VoiceOption } from './types'
 export { OPENAI_VOICES } from './openai'
 export { GEMINI_VOICES } from './gemini'

@@ -12,6 +12,18 @@ function normalizeBaseUrl(url) {
   return url.replace(/\/+$/, '')
 }
 
+function joinApiPath(baseUrl, path) {
+  const base = normalizeBaseUrl(baseUrl)
+  const normalized = path.startsWith('/') ? path : `/${path}`
+  if (/\/v1$/i.test(base) && normalized.startsWith('/v1/')) {
+    return `${base}${normalized.slice(3)}`
+  }
+  if (/\/v1$/i.test(base) && normalized === '/v1') {
+    return base
+  }
+  return `${base}${normalized}`
+}
+
 let failed = 0
 
 function assert(name, condition) {
@@ -33,6 +45,8 @@ assert('sorted alphabetically', filtered[0] === 'gemini-2.5-flash-preview-tts')
 
 assert('strips trailing slash', normalizeBaseUrl('https://api.openai.com/') === 'https://api.openai.com')
 assert('strips multiple slashes', normalizeBaseUrl('https://proxy.example/v1///') === 'https://proxy.example/v1')
+assert('join avoids duplicate v1', joinApiPath('https://api.gapgpt.app/v1', '/v1/models') === 'https://api.gapgpt.app/v1/models')
+assert('join keeps path when base has no v1', joinApiPath('https://api.openai.com', '/v1/models') === 'https://api.openai.com/v1/models')
 
 if (failed) {
   console.error(`\n${failed} test(s) failed`)

@@ -27,6 +27,7 @@ const {
   resume,
   stop,
   skip,
+  skipSegment,
   setRate,
   setPiperVoice,
   setTtsEngine,
@@ -40,7 +41,7 @@ const expanded = computed({
   },
 })
 
-const ratePresets = [0.85, 0.9, 0.95, 1, 1.1, 1.25]
+const ratePresets = [0.85, 0.9, 0.95, 1, 1.1, 1.25, 1.5, 2]
 const isPlaying = computed(() => status.value === 'playing')
 const isPaused = computed(() => status.value === 'paused')
 const isActive = computed(() => isPlaying.value || isPaused.value)
@@ -102,7 +103,11 @@ function onConfigure() {
           </span>
         </div>
         <div class="listen-header-actions">
-          <button type="button" class="listen-icon-btn" aria-label="Configure listen settings" title="Configure" @click="onConfigure">⚙</button>
+          <button type="button" class="listen-icon-btn listen-config-btn" aria-label="Configure listen settings" title="Settings" @click="onConfigure">
+            <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" aria-hidden="true">
+              <path d="M4 7h16M4 12h10M4 17h13"/>
+            </svg>
+          </button>
           <button type="button" class="listen-icon-btn" aria-label="Close listen mode" @click="onClose">✕</button>
         </div>
       </header>
@@ -132,6 +137,29 @@ function onConfigure() {
         <div class="listen-progress-fill" :style="{ width: progress + '%' }" />
       </div>
       <div v-if="isActive" class="listen-time">{{ formatTime(elapsedMs) }} / {{ formatTime(totalMs) }}</div>
+
+      <div class="listen-paragraph-controls">
+        <button
+          type="button"
+          class="listen-icon-btn listen-para-btn"
+          aria-label="Previous paragraph"
+          title="Previous paragraph"
+          :disabled="!isActive"
+          @click="skipSegment(-1)"
+        >
+          <span class="skip-label">¶−</span>
+        </button>
+        <button
+          type="button"
+          class="listen-icon-btn listen-para-btn"
+          aria-label="Next paragraph"
+          title="Next paragraph"
+          :disabled="!isActive"
+          @click="skipSegment(1)"
+        >
+          <span class="skip-label">¶+</span>
+        </button>
+      </div>
 
       <div class="listen-controls">
         <button
@@ -360,6 +388,34 @@ function onConfigure() {
   font-size: 11px;
   color: var(--vp-c-text-3);
   text-align: right;
+}
+
+.listen-paragraph-controls {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.listen-para-btn {
+  min-width: 52px;
+}
+
+.listen-config-btn {
+  min-width: 36px;
+  padding: 0 8px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.listen-config-btn svg {
+  opacity: 0.72;
+}
+
+.listen-config-btn:hover svg {
+  opacity: 1;
+  color: var(--vp-c-brand-1);
 }
 
 .listen-controls {

@@ -1,4 +1,4 @@
-import { filterTtsModels, normalizeBaseUrl, type SynthesizeRequest, type TtsProviderAdapter } from './types'
+import { filterTtsModels, joinApiPath, type SynthesizeRequest, type TtsProviderAdapter } from './types'
 import { readApiError } from './fetchError'
 
 const FALLBACK_MODELS = ['tts-1', 'tts-1-hd', 'gpt-4o-mini-tts']
@@ -21,7 +21,7 @@ export const openaiAdapter: TtsProviderAdapter = {
   id: 'openai',
 
   async listModels(baseUrl, apiKey) {
-    const res = await fetch(`${normalizeBaseUrl(baseUrl)}/v1/models`, {
+    const res = await fetch(joinApiPath(baseUrl, '/v1/models'), {
       headers: { Authorization: `Bearer ${apiKey}` },
     })
     if (!res.ok) throw new Error(await readApiError(res))
@@ -32,7 +32,7 @@ export const openaiAdapter: TtsProviderAdapter = {
   },
 
   async synthesize(req: SynthesizeRequest) {
-    const res = await fetch(`${normalizeBaseUrl(req.baseUrl)}/v1/audio/speech`, {
+    const res = await fetch(joinApiPath(req.baseUrl, '/v1/audio/speech'), {
       method: 'POST',
       headers: {
         Authorization: `Bearer ${req.apiKey}`,

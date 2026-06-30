@@ -293,6 +293,15 @@ function skip(deltaMs: number): void {
   getEngine().skip(deltaMs)
 }
 
+function skipSegment(delta: number): void {
+  if (!segments.value.length && !loadSegments()) return
+  if (status.value === 'idle') {
+    panelOpen.value = true
+    return
+  }
+  getEngine().skipSegment(delta)
+}
+
 function setRate(next: number): void {
   const clamped = Math.max(0.5, Math.min(2, next))
   rate.value = clamped
@@ -312,7 +321,7 @@ function setPiperVoice(voiceId: string): void {
 
 function setTtsEngine(engine: TtsEngineChoice): void {
   if (engine === 'cloud' && !cloudConfigured.value) {
-    showToast('Configure Cloud AI first (gear icon)')
+    showToast('Configure Cloud AI first (settings)')
     return
   }
   const wasActive = status.value !== 'idle'
@@ -443,6 +452,7 @@ export function useHandbookTts() {
     resume,
     stop,
     skip,
+    skipSegment,
     setRate,
     setPiperVoice,
     setTtsEngine,

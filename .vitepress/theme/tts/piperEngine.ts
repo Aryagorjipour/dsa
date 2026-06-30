@@ -405,6 +405,16 @@ export function createPiperEngine(
       this.seekTo(target)
     },
 
+    skipSegment(deltaSegments) {
+      if (!segments.length) return
+      const target = currentIndex + deltaSegments
+      if (target < 0 || target >= segments.length) return
+      const durations = effectiveDurations()
+      let elapsed = 0
+      for (let i = 0; i < target; i++) elapsed += durations[i] ?? 0
+      this.seekTo(elapsed)
+    },
+
     seekTo(targetMs) {
       if (!segments.length) return
 

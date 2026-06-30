@@ -1,4 +1,4 @@
-import { normalizeBaseUrl, type SynthesizeRequest, type TtsProviderAdapter, type VoiceOption } from './types'
+import { joinApiPath, type SynthesizeRequest, type TtsProviderAdapter, type VoiceOption } from './types'
 import { readApiError } from './fetchError'
 
 const FALLBACK_VOICES: VoiceOption[] = [
@@ -17,7 +17,7 @@ export const grokAdapter: TtsProviderAdapter = {
   },
 
   async listVoices(baseUrl, apiKey) {
-    const res = await fetch(`${normalizeBaseUrl(baseUrl)}/v1/tts/voices`, {
+    const res = await fetch(joinApiPath(baseUrl, '/v1/tts/voices'), {
       headers: { Authorization: `Bearer ${apiKey}` },
     })
     if (!res.ok) throw new Error(await readApiError(res))
@@ -27,7 +27,7 @@ export const grokAdapter: TtsProviderAdapter = {
   },
 
   async synthesize(req: SynthesizeRequest) {
-    const res = await fetch(`${normalizeBaseUrl(req.baseUrl)}/v1/tts`, {
+    const res = await fetch(joinApiPath(req.baseUrl, '/v1/tts'), {
       method: 'POST',
       headers: {
         Authorization: `Bearer ${req.apiKey}`,

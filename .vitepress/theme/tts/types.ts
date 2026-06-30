@@ -21,6 +21,7 @@ export interface TtsEngine {
   resume: () => Promise<void>
   stop: () => void
   skip: (deltaMs: number) => void
+  skipSegment: (deltaSegments: number) => void
   seekTo: (elapsedMs: number) => void
   setRate: (rate: number) => void
   setVoice: (voiceId: string) => void

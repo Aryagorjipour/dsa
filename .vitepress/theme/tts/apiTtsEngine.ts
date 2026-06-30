@@ -1,6 +1,12 @@
 import { sliceTextAtOffset } from '../utils/extractReadingSegments'
 import type { ReadingSegment } from '../utils/extractReadingSegments'
 import type { PreparedSegment } from './preparedSegment'
+import {
+  buildPlaybackChunks,
+  segmentIndexAtOffsetInChunk,
+  splitDurationByWeights,
+  type PlaybackChunk,
+} from './cloudChunkPlan'
 import { getProviderAdapter, isLikelyCorsError } from './providers'
 import {
   buildEstimatedDurations,
@@ -12,6 +18,12 @@ import { prepareSpeechText, displayWordFromSpoken } from './speechPrep'
 import { charWeightsForText, spokenWordAtOffset } from './wordTiming'
 import { getCloudApiKey, loadCloudTtsConfig } from './ttsSecretStore'
 import type { TtsEngine, TtsEngineCallbacks } from './types'
+
+interface ChunkAudio {
+  blob: Blob
+  durationMs: number
+  segmentDurations: number[]
+}
 
 function prepareSegments(raw: ReadingSegment[]): PreparedSegment[] {
   return raw.map(seg => {
@@ -52,11 +64,15 @@ export function createApiTtsEngine(
   let audio: HTMLAudioElement | null = null
   let objectUrl: string | null = null
   let segments: PreparedSegment[] = []
+  let chunks: PlaybackChunk[] = []
+  let currentChunkIdx = 0
   let currentIndex = 0
   let contentOffsetMs = 0
+  let chunkSegmentDurations: number[] = []
   let estimatedDurations: number[] = []
   let actualDurations: Array<number | undefined> = []
   let playingSession = 0
+  let chunkCache = new Map<number, Promise<ChunkAudio>>()
 
   function effectiveDurations(): number[] {
     return mergeDurations(estimatedDurations, actualDurations).map(d => d / rate)
@@ -91,9 +107,23 @@ export function createApiTtsEngine(
       const seg = segments[currentIndex]
       if (seg?.speech) {
         const segDuration = durations[currentIndex] ?? 0
-        const offsetInSeg = audio
-          ? (audio.currentTime * 1000) / rate
-          : contentOffsetMs
+        let offsetInSeg = 0
+        if (audio && chunkSegmentDurations.length) {
+          const audioMs = (audio.currentTime * 1000) / rate
+          const chunk = chunks[currentChunkIdx]
+          const local = segmentIndexAtOffsetInChunk(audioMs, chunkSegmentDurations)
+          const globalIdx = chunk?.segmentIndices[local.index] ?? currentIndex
+          if (globalIdx !== currentIndex) {
+            currentIndex = globalIdx
+            const active = segments[currentIndex]
+            if (active) callbacks.onHighlight(active.blockId, currentIndex)
+          }
+          offsetInSeg = local.offsetMs
+        } else if (audio) {
+          offsetInSeg = (audio.currentTime * 1000) / rate
+        } else {
+          offsetInSeg = contentOffsetMs
+        }
         const weights = seg.phonemeWeights ?? charWeightsForText(seg.speech.spokenText)
         const spokenIdx = spokenWordAtOffset(offsetInSeg, segDuration, weights)
         const displayIdx = displayWordFromSpoken(seg.speech.alignment, spokenIdx)
@@ -106,6 +136,17 @@ export function createApiTtsEngine(
     if (!audio) return
     audio.ontimeupdate = () => {
       if (sessionId !== playingSession) return
+      const chunk = chunks[currentChunkIdx]
+      if (chunk && chunkSegmentDurations.length > 1) {
+        const audioMs = (audio!.currentTime * 1000) / rate
+        const local = segmentIndexAtOffsetInChunk(audioMs, chunkSegmentDurations)
+        const globalIdx = chunk.segmentIndices[local.index] ?? currentIndex
+        if (globalIdx !== currentIndex) {
+          currentIndex = globalIdx
+          const seg = segments[currentIndex]
+          if (seg) callbacks.onHighlight(seg.blockId, currentIndex)
+        }
+      }
       reportProgress()
     }
   }
@@ -127,15 +168,25 @@ export function createApiTtsEngine(
     revokeObjectUrl()
   }
 
-  async function synthesize(seg: PreparedSegment): Promise<{ blob: Blob; durationMs: number }> {
+  function clearChunkCache(): void {
+    chunkCache = new Map()
+  }
+
+  async function synthesizeChunk(chunkIdx: number, sessionId: number): Promise<ChunkAudio> {
+    const chunk = chunks[chunkIdx]
+    if (!chunk) throw new Error('Missing chunk')
+
     const config = await loadCloudTtsConfig()
     const apiKey = await getCloudApiKey()
     if (!apiKey || !config.configured) {
       throw new Error('Cloud TTS not configured — open Configure in Listen panel')
     }
 
+    const segs = chunk.segmentIndices.map(i => segments[i]).filter(Boolean) as PreparedSegment[]
+    const weights = segs.map(s => spokenTextFor(s).length)
+    const text = segs.map(s => spokenTextFor(s)).join(' ')
+
     const adapter = getProviderAdapter(config.provider)
-    const spoken = spokenTextFor(seg)
     let blob: Blob
     try {
       blob = await adapter.synthesize({
@@ -143,7 +194,7 @@ export function createApiTtsEngine(
         apiKey,
         model: config.model,
         voiceId: config.voiceId,
-        text: spoken,
+        text,
         rate,
       })
     } catch (err) {
@@ -153,64 +204,86 @@ export function createApiTtsEngine(
       throw err
     }
 
+    if (sessionId !== playingSession) throw new Error('Session cancelled')
+
     const durationMs = await blobDurationMs(blob)
-    return { blob, durationMs }
+    const segmentDurations = splitDurationByWeights(durationMs, weights)
+
+    for (let j = 0; j < segs.length; j++) {
+      const segIdx = chunk.segmentIndices[j]
+      if (segIdx !== undefined) actualDurations[segIdx] = segmentDurations[j]
+    }
+
+    return { blob, durationMs, segmentDurations }
   }
 
-  async function playSegment(sessionId: number): Promise<void> {
+  function ensureChunkCached(chunkIdx: number, sessionId: number): Promise<ChunkAudio> {
+    let pending = chunkCache.get(chunkIdx)
+    if (!pending) {
+      pending = synthesizeChunk(chunkIdx, sessionId)
+      chunkCache.set(chunkIdx, pending)
+    }
+    return pending
+  }
+
+  function prefetchRemainingChunks(sessionId: number): void {
+    for (let i = currentChunkIdx + 1; i < chunks.length; i++) {
+      ensureChunkCached(i, sessionId).catch(() => {
+        /* surfaced when playback reaches chunk */
+      })
+    }
+  }
+
+  async function playChunk(sessionId: number): Promise<void> {
     if (sessionId !== playingSession) return
 
-    const seg = segments[currentIndex]
-    if (!seg) {
+    const chunk = chunks[currentChunkIdx]
+    if (!chunk) {
       callbacks.onFinish()
       return
     }
 
-    callbacks.onHighlight(seg.blockId, currentIndex)
-
-    let spoken = spokenTextFor(seg)
-    if (contentOffsetMs > 0) {
-      spoken = sliceTextAtOffset(spoken, contentOffsetMs * rate, rate)
-      if (!spoken) {
-        currentIndex += 1
-        contentOffsetMs = 0
-        await playSegment(sessionId)
-        return
-      }
-    }
+    const seg = segments[currentIndex]
+    if (seg) callbacks.onHighlight(seg.blockId, currentIndex)
 
     try {
-      const playSeg: PreparedSegment =
-        spoken !== spokenTextFor(seg)
-          ? {
-              ...seg,
-              speech: prepareSpeechText(spoken),
-              phonemeWeights: charWeightsForText(prepareSpeechText(spoken).spokenText),
-            }
-          : seg
-
-      const { blob, durationMs } = await synthesize(playSeg)
+      const { blob, segmentDurations } = await ensureChunkCached(currentChunkIdx, sessionId)
       if (sessionId !== playingSession) return
 
-      actualDurations[currentIndex] = durationMs
+      chunkSegmentDurations = segmentDurations
       cleanupAudio()
+
+      let startOffsetMs = 0
+      if (contentOffsetMs > 0 && chunk.segmentIndices.includes(currentIndex)) {
+        const localIdx = chunk.segmentIndices.indexOf(currentIndex)
+        for (let i = 0; i < localIdx; i++) startOffsetMs += segmentDurations[i] ?? 0
+        startOffsetMs += contentOffsetMs
+      }
 
       objectUrl = URL.createObjectURL(blob)
       audio = new Audio(objectUrl)
       audio.playbackRate = rate
-      if (contentOffsetMs > 0) {
-        audio.currentTime = (contentOffsetMs * rate) / 1000
+      if (startOffsetMs > 0) {
+        audio.currentTime = (startOffsetMs * rate) / 1000
       }
 
       audio.onended = () => {
         if (sessionId !== playingSession) return
-        currentIndex += 1
+        const lastInChunk = chunk.segmentIndices[chunk.segmentIndices.length - 1]
+        if (lastInChunk !== undefined) {
+          currentIndex = lastInChunk + 1
+        }
+        currentChunkIdx += 1
         contentOffsetMs = 0
-        if (currentIndex >= segments.length) {
+        chunkSegmentDurations = []
+        if (currentChunkIdx >= chunks.length) {
           callbacks.onFinish()
           return
         }
-        void playSegment(sessionId)
+        const nextChunk = chunks[currentChunkIdx]
+        const nextSegIdx = nextChunk?.segmentIndices[0]
+        if (nextSegIdx !== undefined) currentIndex = nextSegIdx
+        void playChunk(sessionId)
       }
 
       audio.onerror = () => {
@@ -224,6 +297,7 @@ export function createApiTtsEngine(
 
       callbacks.onStatus('playing')
       reportProgress()
+      prefetchRemainingChunks(sessionId)
     } catch (err) {
       if (sessionId !== playingSession) return
       const message = err instanceof Error ? err.message : 'Cloud synthesis failed'
@@ -245,8 +319,11 @@ export function createApiTtsEngine(
 
     async play(nextSegments) {
       segments = prepareSegments(nextSegments)
+      chunks = buildPlaybackChunks(segments, spokenTextFor)
+      currentChunkIdx = 0
       currentIndex = 0
       contentOffsetMs = 0
+      chunkSegmentDurations = []
       estimatedDurations = buildEstimatedDurations(
         segments.map(s => ({ ...s, text: spokenTextFor(s) })),
         rate,
@@ -254,14 +331,23 @@ export function createApiTtsEngine(
       actualDurations = new Array(segments.length)
       playingSession += 1
       const sessionId = playingSession
+      clearChunkCache()
       cleanupAudio()
       callbacks.onStatus('playing')
-      await playSegment(sessionId)
+      await playChunk(sessionId)
     },
 
     pause() {
       if (!audio || audio.paused) return
-      contentOffsetMs = (audio.currentTime * 1000) / rate
+      if (chunkSegmentDurations.length && chunks[currentChunkIdx]) {
+        const audioMs = (audio.currentTime * 1000) / rate
+        const local = segmentIndexAtOffsetInChunk(audioMs, chunkSegmentDurations)
+        const globalIdx = chunks[currentChunkIdx].segmentIndices[local.index] ?? currentIndex
+        currentIndex = globalIdx
+        contentOffsetMs = local.offsetMs
+      } else {
+        contentOffsetMs = (audio.currentTime * 1000) / rate
+      }
       audio.pause()
       reportProgress()
       callbacks.onStatus('paused')
@@ -278,15 +364,19 @@ export function createApiTtsEngine(
       const sessionId = playingSession
       cleanupAudio()
       callbacks.onStatus('playing')
-      await playSegment(sessionId)
+      await playChunk(sessionId)
     },
 
     stop() {
       playingSession += 1
       cleanupAudio()
+      clearChunkCache()
       segments = []
+      chunks = []
+      currentChunkIdx = 0
       currentIndex = 0
       contentOffsetMs = 0
+      chunkSegmentDurations = []
       estimatedDurations = []
       actualDurations = []
       callbacks.onClearHighlight()
@@ -302,6 +392,17 @@ export function createApiTtsEngine(
       this.seekTo(target)
     },
 
+    skipSegment(deltaSegments) {
+      if (!segments.length) return
+      const target = currentIndex + deltaSegments
+      if (target < 0 || target >= segments.length) return
+
+      let elapsed = 0
+      const durations = effectiveDurations()
+      for (let i = 0; i < target; i++) elapsed += durations[i] ?? 0
+      this.seekTo(elapsed)
+    },
+
     seekTo(targetMs) {
       if (!segments.length) return
       const durations = effectiveDurations()
@@ -311,15 +412,20 @@ export function createApiTtsEngine(
       currentIndex = resolved.index
       contentOffsetMs = resolved.offsetMs
 
+      currentChunkIdx = chunks.findIndex(c => c.segmentIndices.includes(currentIndex))
+      if (currentChunkIdx < 0) currentChunkIdx = 0
+
       if (!audio || audio.paused) {
         reportProgress()
+        const seg = segments[currentIndex]
+        if (seg) callbacks.onHighlight(seg.blockId, currentIndex)
         return
       }
 
       playingSession += 1
       const sessionId = playingSession
       cleanupAudio()
-      void playSegment(sessionId)
+      void playChunk(sessionId)
     },
 
     setRate(next) {
@@ -329,7 +435,14 @@ export function createApiTtsEngine(
         const contentPos = (audio.currentTime * 1000) / prevRate
         audio.playbackRate = rate
         audio.currentTime = (contentPos * rate) / 1000
-        contentOffsetMs = contentPos
+        if (chunkSegmentDurations.length && chunks[currentChunkIdx]) {
+          const local = segmentIndexAtOffsetInChunk(contentPos, chunkSegmentDurations)
+          const globalIdx = chunks[currentChunkIdx].segmentIndices[local.index] ?? currentIndex
+          currentIndex = globalIdx
+          contentOffsetMs = local.offsetMs
+        } else {
+          contentOffsetMs = contentPos
+        }
       }
       if (audio && !audio.paused) reportProgress()
     },

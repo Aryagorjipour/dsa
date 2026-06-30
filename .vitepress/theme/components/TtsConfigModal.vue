@@ -280,7 +280,7 @@ if (typeof window !== 'undefined') refreshVoiceOptions()
 
             <label v-if="showBaseUrl" class="tts-field">
               <span class="tts-label">Base URL</span>
-              <input v-model="baseUrl" class="tts-input" type="url" placeholder="https://your-proxy.example/v1" />
+              <input v-model="baseUrl" class="tts-input" type="url" placeholder="https://api.gapgpt.app/v1" />
             </label>
 
             <label class="tts-field">

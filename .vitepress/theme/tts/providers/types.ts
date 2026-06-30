@@ -29,3 +29,16 @@ export function filterTtsModels(ids: string[]): string[] {
 export function normalizeBaseUrl(url: string): string {
   return url.replace(/\/+$/, '')
 }
+
+/** Join base URL with an API path; avoids `/v1/v1/...` when base already ends with `/v1`. */
+export function joinApiPath(baseUrl: string, path: string): string {
+  const base = normalizeBaseUrl(baseUrl)
+  const normalized = path.startsWith('/') ? path : `/${path}`
+  if (/\/v1$/i.test(base) && normalized.startsWith('/v1/')) {
+    return `${base}${normalized.slice(3)}`
+  }
+  if (/\/v1$/i.test(base) && normalized === '/v1') {
+    return base
+  }
+  return `${base}${normalized}`
+}
