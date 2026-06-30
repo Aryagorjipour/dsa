@@ -4,6 +4,30 @@
  */
 
 const LINE_TOLERANCE_PX = 6
+const SHORT_LINE_MAX_WORDS = 4
+
+function groupIndicesByLine(tops, tolerance = LINE_TOLERANCE_PX) {
+  const order = tops.map((_, i) => i).sort((a, b) => tops[a] - tops[b] || a - b)
+  const lines = []
+  for (const idx of order) {
+    const top = tops[idx]
+    let line = lines.find(l => Math.abs(tops[l[0]] - top) <= tolerance)
+    if (!line) {
+      line = []
+      lines.push(line)
+    }
+    line.push(idx)
+  }
+  lines.sort((a, b) => tops[a[0]] - tops[b[0]])
+  return lines
+}
+
+function shouldMuteLineInFocus(lineIdx, lineWordCount, activeLineIdx) {
+  if (lineIdx === activeLineIdx) return false
+  if (lineWordCount <= SHORT_LINE_MAX_WORDS) return false
+  if (lineIdx === activeLineIdx + 1) return false
+  return true
+}
 
 function clusterLineTops(tops, tolerance = LINE_TOLERANCE_PX) {
   const sorted = [...tops].sort((a, b) => a - b)
@@ -64,6 +88,17 @@ const heights = tops.map(() => 18)
 const bounds = lineBoundsForWord(tops, heights, 4)
 assert('line bounds span multiple words', bounds && bounds.height >= 18)
 assert('line bounds on second line', bounds && bounds.top === 22)
+
+const groups = groupIndicesByLine(tops)
+assert('group indices three lines', groups.length === 3)
+assert('first line three words', groups[0].length === 3)
+assert('second line two words', groups[1].length === 2)
+
+assert('active line never muted', !shouldMuteLineInFocus(0, 3, 0))
+assert('short line never muted', !shouldMuteLineInFocus(1, 2, 0))
+assert('next long line not muted', !shouldMuteLineInFocus(1, 5, 0))
+assert('short third line not muted', !shouldMuteLineInFocus(2, 3, 0))
+assert('distant long line muted', shouldMuteLineInFocus(2, 6, 0))
 
 if (failed) {
   console.error(`\n${failed} test(s) failed`)

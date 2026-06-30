@@ -1,7 +1,60 @@
 const LINE_TOLERANCE_PX = 6
 
+/** Lines this short stay fully visible in focus mode. */
+export const SHORT_LINE_MAX_WORDS = 4
+
 function shouldDimInactiveLines(): boolean {
   return typeof document !== 'undefined' && document.documentElement.classList.contains('focus-mode')
+}
+
+/** Group word indices into visual lines (for unit tests). */
+export function groupIndicesByLine(tops: number[], tolerance = LINE_TOLERANCE_PX): number[][] {
+  const order = tops.map((_, i) => i).sort((a, b) => tops[a] - tops[b] || a - b)
+  const lines: number[][] = []
+  for (const idx of order) {
+    const top = tops[idx]
+    let line = lines.find(l => Math.abs(tops[l[0]!] - top) <= tolerance)
+    if (!line) {
+      line = []
+      lines.push(line)
+    }
+    line.push(idx)
+  }
+  lines.sort((a, b) => tops[a[0]!]! - tops[b[0]!]!)
+  return lines
+}
+
+export function shouldMuteLineInFocus(
+  lineIdx: number,
+  lineWordCount: number,
+  activeLineIdx: number,
+): boolean {
+  if (lineIdx === activeLineIdx) return false
+  if (lineWordCount <= SHORT_LINE_MAX_WORDS) return false
+  if (lineIdx === activeLineIdx + 1) return false
+  return true
+}
+
+function groupWordsByLine(words: HTMLElement[], tolerance = LINE_TOLERANCE_PX): HTMLElement[][] {
+  const sorted = [...words].sort((a, b) => {
+    const ra = a.getBoundingClientRect()
+    const rb = b.getBoundingClientRect()
+    const dy = ra.top - rb.top
+    if (Math.abs(dy) > tolerance) return dy
+    return ra.left - rb.left
+  })
+  const lines: HTMLElement[][] = []
+  for (const w of sorted) {
+    const top = w.getBoundingClientRect().top
+    let line = lines.find(l => Math.abs(l[0]!.getBoundingClientRect().top - top) <= tolerance)
+    if (!line) {
+      line = []
+      lines.push(line)
+    }
+    line.push(w)
+  }
+  lines.sort((a, b) => a[0]!.getBoundingClientRect().top - b[0]!.getBoundingClientRect().top)
+  return lines
 }
 
 export function clearLinePointer(blockEl: HTMLElement): void {
@@ -22,21 +75,28 @@ export function setLinePointer(blockEl: HTMLElement, displayWordIndex: number): 
   }
 
   const blockRect = blockEl.getBoundingClientRect()
-  const lineTopPx = wordEl.getBoundingClientRect().top
-
-  const lineWords = words.filter(
-    w => Math.abs(w.getBoundingClientRect().top - lineTopPx) <= LINE_TOLERANCE_PX,
-  )
-  if (!lineWords.length) {
+  const lineGroups = groupWordsByLine(words)
+  const activeLineIdx = lineGroups.findIndex(group => group.includes(wordEl))
+  if (activeLineIdx < 0) {
     clearLinePointer(blockEl)
     return
   }
 
+  const lineWords = lineGroups[activeLineIdx]!
   const dimInactive = shouldDimInactiveLines()
-  const activeSet = new Set(lineWords)
+  const lineIndexByWord = new Map<HTMLElement, number>()
+  lineGroups.forEach((group, lineIdx) => {
+    for (const w of group) lineIndexByWord.set(w, lineIdx)
+  })
+
   for (const w of words) {
-    w.classList.toggle('dsa-tts-word-on-active-line', dimInactive && activeSet.has(w))
-    w.classList.toggle('dsa-tts-word-muted', dimInactive && !activeSet.has(w))
+    const lineIdx = lineIndexByWord.get(w) ?? 0
+    const lineWordCount = lineGroups[lineIdx]?.length ?? 0
+    const onActiveLine = lineIdx === activeLineIdx
+    const mute =
+      dimInactive && shouldMuteLineInFocus(lineIdx, lineWordCount, activeLineIdx)
+    w.classList.toggle('dsa-tts-word-on-active-line', dimInactive && onActiveLine)
+    w.classList.toggle('dsa-tts-word-muted', mute)
   }
 
   const tops = lineWords.map(w => w.getBoundingClientRect().top - blockRect.top)
