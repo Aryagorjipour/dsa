@@ -117,19 +117,25 @@ for (const asset of requiredPublicAssets) {
   else pass(`dist asset present: ${asset}`)
 }
 
-function distHasWasmAsset() {
+function listWasmAssets() {
+  const found = []
   function walk(dir) {
     for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
       const full = path.join(dir, entry.name)
-      if (entry.isDirectory()) {
-        if (walk(full)) return true
-      } else if (/ort-wasm-simd-threaded\.jsep.*\.wasm$/i.test(entry.name)) {
-        return true
-      }
+      if (entry.isDirectory()) walk(full)
+      else if (entry.name.endsWith('.wasm')) found.push(path.relative(DIST, full))
     }
-    return false
   }
-  return walk(DIST)
+  walk(DIST)
+  return found
+}
+
+function isOnnxWasmAsset(name) {
+  return /ort-wasm-simd-threaded/i.test(name) && name.endsWith('.wasm')
+}
+
+function distHasWasmAsset() {
+  return listWasmAssets().some(isOnnxWasmAsset)
 }
 
 const sitemap = path.join(DIST, 'sitemap.xml')
@@ -139,8 +145,10 @@ if (!fs.existsSync(sitemap)) {
   pass('sitemap.xml present in dist')
 }
 
-if (!distHasWasmAsset()) {
-  fail('dist missing bundled ort-wasm-simd-threaded.jsep.wasm asset')
+const wasmAssets = listWasmAssets()
+if (!wasmAssets.some(isOnnxWasmAsset)) {
+  const hint = wasmAssets.length ? `found: ${wasmAssets.join(', ')}` : 'no .wasm files in dist'
+  fail(`dist missing bundled ONNX wasm asset (${hint})`)
 } else {
   pass('dist includes ONNX wasm asset (Vite ?url bundle)')
 }
