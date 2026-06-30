@@ -91,6 +91,7 @@ html.focus-mode .VPDoc .aside,
 html.focus-mode .VPDocAside,
 html.focus-mode .dsa-explorer,
 html.focus-mode .notes-panel,
+html.focus-mode .listen-bar-root,
 html.focus-mode .reading-progress,
 html.focus-mode .dsa-breadcrumbs,
 html.focus-mode .page-notes-toggle,
@@ -199,6 +200,19 @@ html.dark mark.dsa-hl-pink { background: rgba(244, 114, 182, 0.25); }
 
 html.dark mark.dsa-hl:hover {
   filter: brightness(1.08);
+}
+
+/* Listen mode — highlight block being read aloud */
+.vp-doc .dsa-tts-active {
+  outline: 2px solid color-mix(in srgb, var(--vp-c-brand-1) 70%, transparent);
+  outline-offset: 4px;
+  border-radius: 6px;
+  background: color-mix(in srgb, var(--vp-c-brand-1) 8%, transparent);
+  transition: background 0.2s ease, outline-color 0.2s ease;
+}
+
+html.dark .vp-doc .dsa-tts-active {
+  background: color-mix(in srgb, var(--vp-c-brand-1) 14%, transparent);
 }
 
 /* Playground full-page layout */

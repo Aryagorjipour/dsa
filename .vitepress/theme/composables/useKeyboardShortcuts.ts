@@ -1,6 +1,8 @@
 import { ref, onMounted, onUnmounted } from 'vue'
-import { useRouter, useData } from 'vitepress'
+import { useRouter, useRoute, useData } from 'vitepress'
 import { handbookLink } from '../utils/handbookLink'
+import { toggleHandbookTts } from './useHandbookTts'
+import { normalizePagePath } from '../utils/normalizePagePath'
 
 export interface ShortcutEntry {
   keys: string
@@ -30,6 +32,7 @@ export const SHORTCUT_GROUPS: ShortcutGroup[] = [
     items: [
       { keys: '⇧F', label: 'Focus mode' },
       { keys: '⇧N', label: 'Page notes overlay' },
+      { keys: '⇧R', label: 'Listen to page (text-to-speech)' },
       { keys: 'Esc', label: 'Close overlay or exit focus' },
     ],
   },
@@ -86,9 +89,17 @@ export function toggleShortcuts() {
   shortcutsOpen.value = !shortcutsOpen.value
 }
 
+function isHandbookReadingPage(path: string): boolean {
+  const normalized = normalizePagePath(path)
+  return !['/my-notes', '/playground', '/quizzes', '/', '/index'].some(
+    p => normalized === p || normalized.startsWith(`${p}/`),
+  )
+}
+
 export function useKeyboardShortcuts() {
   const router = useRouter()
-  const { isDark } = useData()
+  const route = useRoute()
+  const { isDark, page } = useData()
 
   function handleKey(e: KeyboardEvent) {
     if (isTypingTarget(e)) return
@@ -109,6 +120,14 @@ export function useKeyboardShortcuts() {
     if (isShiftLetter(e, 't')) {
       e.preventDefault()
       isDark.value = !isDark.value
+      return
+    }
+
+    if (isShiftLetter(e, 'r')) {
+      if (page.value.frontmatter.layout !== 'home' && isHandbookReadingPage(route.path)) {
+        e.preventDefault()
+        void toggleHandbookTts()
+      }
       return
     }
 

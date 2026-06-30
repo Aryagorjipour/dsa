@@ -1,6 +1,6 @@
 <script setup>
 import { computed, defineAsyncComponent } from 'vue'
-import { useRoute, useData } from 'vitepress'
+import { useData } from 'vitepress'
 import DefaultTheme from 'vitepress/theme'
 import DSAExplorer from './components/DSAExplorer.vue'
 import PageTools from './components/PageTools.vue'
@@ -8,6 +8,7 @@ import NotesPanel from './components/NotesPanel.vue'
 import Breadcrumbs from './components/Breadcrumbs.vue'
 import ChapterNav from './components/ChapterNav.vue'
 import ReadingProgress from './components/ReadingProgress.vue'
+import ListenBar from './components/ListenBar.vue'
 import Toast from './components/Toast.vue'
 import AnnotationToolbar from './components/AnnotationToolbar.vue'
 import AnnotationRestorer from './components/AnnotationRestorer.vue'
@@ -23,30 +24,21 @@ import PwaUpdatePrompt from './components/PwaUpdatePrompt.vue'
 import OfflineUncachedNotice from './components/OfflineUncachedNotice.vue'
 import { useFocusMode } from './composables/useFocusMode'
 import { useChromeOffset } from './composables/useChromeOffset'
+import { useHandbookPage } from './composables/useHandbookPage'
 
 import { openShortcuts, useKeyboardShortcuts } from './composables/useKeyboardShortcuts'
-import { normalizePagePath } from './utils/normalizePagePath'
 import { isMarginNotesMobile } from './utils/noteLayout'
 import DSALogo from './components/DSALogo.vue'
 
 const QuizSection = defineAsyncComponent(() => import('./components/QuizSection.vue'))
 
-const route = useRoute()
 const { page } = useData()
 const { Layout } = DefaultTheme
 const { isFocusMode, toggleFocusMode } = useFocusMode()
 useKeyboardShortcuts()
 useChromeOffset()
 
-const isHomePage = computed(() => page.value.frontmatter.layout === 'home')
-
-const showDocPage = computed(() => {
-  if (isHomePage.value) return false
-  const path = normalizePagePath(route.path)
-  return !['/my-notes', '/playground', '/quizzes'].some(
-    p => path === p || path.startsWith(p + '/'),
-  )
-})
+const { isHomePage, showDocPage } = useHandbookPage()
 
 const showFallbackFocus = computed(() => {
   if (isHomePage.value) return false
@@ -88,6 +80,7 @@ const showFallbackFocus = computed(() => {
   </Layout>
 
   <ReadingProgress />
+  <ListenBar v-if="showDocPage" />
   <Toast />
   <AnnotationToolbar />
   <NoteDialog />

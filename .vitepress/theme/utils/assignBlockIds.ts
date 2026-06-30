@@ -1,4 +1,4 @@
-const BLOCK_SELECTOR =
+export const BLOCK_SELECTOR =
   '.vp-doc p, .vp-doc li, .vp-doc td, .vp-doc th, .vp-doc blockquote, .vp-doc h1, .vp-doc h2, .vp-doc h3, .vp-doc h4, .vp-doc h5, .vp-doc h6, .vp-doc .custom-block'
 
 export const CONTENT_BLOCK_TAGS = new Set([
