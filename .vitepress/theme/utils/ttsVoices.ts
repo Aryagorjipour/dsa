@@ -1,5 +1,9 @@
-const BLOCKLIST =
-  /espeak|eloquence|compact|bells|bad news|bahh|bubbles|cellos|deranged|good news|jester|organ|superstar|trinoids|whisper|zarvox|flo|albert|fred|bruce|junior|kathy|princess|ralph|victoria|whisper/i
+/** Handbook content is English — prefer en-* even when the OS locale differs. */
+export const HANDBOOK_TTS_LANG = 'en-US'
+
+// macOS novelty voices only — do not block espeak (common on Linux).
+const NOVELTY_VOICES =
+  /bells|bad news|bahh|bubbles|cellos|deranged|good news|jester|organ|superstar|trinoids|whisper|zarvox|flo|albert|fred|bruce|junior|kathy|princess|ralph|victoria/i
 
 const PREFER =
   /premium|natural|enhanced|neural|neural2|samantha|karen|daniel|moira|tessa|zira|aria|jenny|guy|google (us|uk) english|microsoft .* natural|google.*wavenet/i
@@ -21,7 +25,8 @@ export function scoreVoice(voice: SpeechSynthesisVoice, preferredLang: string): 
   let score = 0
   const name = voice.name.toLowerCase()
 
-  if (BLOCKLIST.test(name)) score -= 200
+  if (NOVELTY_VOICES.test(name)) score -= 200
+  if (/espeak|eloquence|festival|mbrola/i.test(name)) score -= 12
   if (PREFER.test(name)) score += 40
   if (voice.localService) score += 35
   if (voice.default) score += 8
@@ -33,7 +38,7 @@ export function scoreVoice(voice: SpeechSynthesisVoice, preferredLang: string): 
 
 export function pickBestVoice(
   voices: SpeechSynthesisVoice[],
-  preferredLang = typeof navigator !== 'undefined' ? navigator.language : 'en-US',
+  preferredLang = HANDBOOK_TTS_LANG,
 ): SpeechSynthesisVoice | null {
   if (!voices.length) return null
 
@@ -43,6 +48,36 @@ export function pickBestVoice(
     .sort((a, b) => b.score - a.score)
 
   return ranked[0]?.v ?? voices[0] ?? null
+}
+
+export async function waitForVoices(
+  synth: SpeechSynthesis,
+  { timeoutMs = 3000, pollMs = 80 } = {},
+): Promise<SpeechSynthesisVoice[]> {
+  const read = () => synth.getVoices().filter(v => v.name.trim().length > 0)
+  const immediate = read()
+  if (immediate.length) return immediate
+
+  return new Promise(resolve => {
+    let settled = false
+    const finish = () => {
+      if (settled) return
+      settled = true
+      synth.removeEventListener('voiceschanged', onChange)
+      window.clearInterval(poll)
+      window.clearTimeout(timer)
+      resolve(read())
+    }
+    const onChange = () => {
+      if (read().length) finish()
+    }
+    synth.addEventListener('voiceschanged', onChange)
+    const poll = window.setInterval(() => {
+      if (read().length) finish()
+    }, pollMs)
+    const timer = window.setTimeout(finish, timeoutMs)
+    synth.getVoices()
+  })
 }
 
 export function listVoicesGrouped(voices: SpeechSynthesisVoice[]): SpeechSynthesisVoice[] {

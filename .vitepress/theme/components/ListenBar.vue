@@ -134,13 +134,14 @@ function onClose() {
         />
       </div>
 
-      <label v-if="voiceOptions.length > 1" class="listen-voice">
+      <label class="listen-voice">
         <span class="listen-voice-label">Voice</span>
         <select
           class="listen-voice-select"
           :value="selectedVoiceUri || ''"
           @change="setVoiceUri($event.target.value)"
         >
+          <option value="">Browser default (English)</option>
           <option v-for="v in voiceOptions" :key="v.voiceURI" :value="v.voiceURI">
             {{ v.name }} ({{ v.lang }}){{ v.localService ? ' · offline' : '' }}
           </option>
