@@ -160,7 +160,7 @@ function ttsSetupHint(): string {
   const ua = typeof navigator !== 'undefined' ? navigator.userAgent : ''
   const linux = /linux/i.test(ua)
   if (linux) {
-    return 'Install speech-dispatcher and espeak-ng (pacman -S speech-dispatcher espeak-ng), start the speech-dispatcher service, then restart your browser.'
+    return 'Install speech-dispatcher and espeak-ng, then run: systemctl --user enable --now speech-dispatcher.socket — restart the browser after.'
   }
   return 'Check system text-to-speech settings and restart the browser.'
 }

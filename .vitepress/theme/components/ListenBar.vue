@@ -153,8 +153,9 @@ function onClose() {
       <p v-if="voicesLoading" class="listen-hint">Loading voices…</p>
       <p v-else-if="!hasVoices" class="listen-hint listen-hint-warn">
         No voices detected. On Arch Linux run:
-        <code>sudo pacman -S speech-dispatcher espeak-ng</code>, enable the
-        <code>speech-dispatcher</code> user service, then restart Firefox/Zen.
+        <code>sudo pacman -S speech-dispatcher espeak-ng</code>, then
+        <code>systemctl --user enable --now speech-dispatcher.socket</code>
+        (not the .service unit), and restart Firefox/Zen.
       </p>
       <p v-else class="listen-hint">Reads handbook text only — skips quizzes, nav cards, and code blocks.</p>
     </section>
