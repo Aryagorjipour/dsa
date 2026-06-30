@@ -10,12 +10,15 @@ import {
   type ReadingSegment,
 } from '../utils/extractReadingSegments'
 import {
+  clearStoredVoiceUri,
   findVoiceByUri,
   HANDBOOK_TTS_LANG,
   listVoicesGrouped,
   loadStoredRate,
   loadStoredVoiceUri,
   pickBestVoice,
+  primeSpeechSynthesis,
+  readSpeechVoices,
   saveStoredRate,
   saveStoredVoiceUri,
   waitForVoices,
@@ -38,9 +41,9 @@ function getSynth(): SpeechSynthesis | null {
 function refreshVoices(): SpeechSynthesisVoice[] {
   const synth = getSynth()
   if (!synth) return []
-  const voices = synth.getVoices()
-  if (voices.length) {
-    voicesCache = voices
+  const list = readSpeechVoices(synth)
+  if (list.length) {
+    voicesCache = list
     voicesReady = true
   }
   return voicesCache
@@ -56,11 +59,14 @@ const activeBlockId = ref<string | null>(null)
 const panelOpen = ref(false)
 const selectedVoiceUri = ref<string | null>(loadStoredVoiceUri())
 const voices = ref<SpeechSynthesisVoice[]>([])
+const voicesLoading = ref(false)
 const tickTimer = ref(0)
 const segmentStartedAt = ref(0)
 
 let utterance: SpeechSynthesisUtterance | null = null
 let playingSession = 0
+let speechStartWatchdog = 0
+let voicesPrimed = false
 
 function clearHighlight(): void {
   document.querySelectorAll('.dsa-tts-active').forEach(el => {
@@ -114,22 +120,49 @@ function startTick(): void {
 async function ensureVoicesLoaded(): Promise<SpeechSynthesisVoice[]> {
   const synth = getSynth()
   if (!synth) return []
-  const list = await waitForVoices(synth)
-  if (list.length) {
-    voicesCache = list
-    voicesReady = true
-    voices.value = list
+  voicesLoading.value = true
+  try {
+    const list = await waitForVoices(synth)
+    if (list.length) {
+      voicesCache = list
+      voicesReady = true
+      voices.value = list
+    }
+    return list
+  } finally {
+    voicesLoading.value = false
   }
-  return list
+}
+
+function primeVoicesOnce(): void {
+  if (voicesPrimed) return
+  voicesPrimed = true
+  const synth = getSynth()
+  if (!synth) return
+  primeSpeechSynthesis(synth)
+  void ensureVoicesLoaded()
 }
 
 function selectedVoice(list = voices.value.length ? voices.value : refreshVoices()): SpeechSynthesisVoice | null {
-  const stored = findVoiceByUri(list, selectedVoiceUri.value)
-  if (selectedVoiceUri.value && !stored && list.length) {
+  const pref = selectedVoiceUri.value
+  if (pref === '') return null
+
+  const stored = findVoiceByUri(list, pref)
+  if (pref && !stored && list.length) {
     selectedVoiceUri.value = null
-    if (typeof localStorage !== 'undefined') localStorage.removeItem('dsa-tts-voice-uri')
+    clearStoredVoiceUri()
   }
-  return stored ?? pickBestVoice(list, HANDBOOK_TTS_LANG)
+  if (pref) return stored ?? pickBestVoice(list, HANDBOOK_TTS_LANG)
+  return pickBestVoice(list, HANDBOOK_TTS_LANG)
+}
+
+function ttsSetupHint(): string {
+  const ua = typeof navigator !== 'undefined' ? navigator.userAgent : ''
+  const linux = /linux/i.test(ua)
+  if (linux) {
+    return 'Install speech-dispatcher and espeak-ng (pacman -S speech-dispatcher espeak-ng), start the speech-dispatcher service, then restart your browser.'
+  }
+  return 'Check system text-to-speech settings and restart the browser.'
 }
 
 function loadSegments(): boolean {
@@ -143,6 +176,10 @@ function cancelSpeech(): void {
   const synth = getSynth()
   synth?.cancel()
   utterance = null
+  if (speechStartWatchdog) {
+    window.clearTimeout(speechStartWatchdog)
+    speechStartWatchdog = 0
+  }
 }
 
 function updateMediaSession(pageTitle: string): void {
@@ -246,17 +283,19 @@ function speakCurrent(pageTitle: string, session: number): void {
 
   const u = new SpeechSynthesisUtterance(text)
   const voice = selectedVoice()
-  if (voice) {
-    u.voice = voice
-    selectedVoiceUri.value = voice.voiceURI
-    saveStoredVoiceUri(voice.voiceURI)
-  }
+  if (voice) u.voice = voice
   u.rate = rate.value
   u.pitch = 1
   u.lang = voice?.lang || HANDBOOK_TTS_LANG
 
+  if (speechStartWatchdog) window.clearTimeout(speechStartWatchdog)
+
   u.onstart = () => {
     if (session !== playingSession) return
+    if (speechStartWatchdog) {
+      window.clearTimeout(speechStartWatchdog)
+      speechStartWatchdog = 0
+    }
     status.value = 'playing'
     segmentStartedAt.value = performance.now()
     startTick()
@@ -275,8 +314,18 @@ function speakCurrent(pageTitle: string, session: number): void {
     speakCurrent(pageTitle, session)
   }
 
-  u.onerror = () => {
+  u.onerror = (event) => {
     if (session !== playingSession) return
+    if (speechStartWatchdog) {
+      window.clearTimeout(speechStartWatchdog)
+      speechStartWatchdog = 0
+    }
+    const code = event.error
+    if (code === 'synthesis-unavailable' || code === 'voice-unavailable' || code === 'language-unavailable') {
+      showToast(`Speech unavailable — ${ttsSetupHint()}`)
+      stop()
+      return
+    }
     if (currentIndex.value < segments.value.length - 1) {
       currentIndex.value += 1
       currentOffsetMs.value = 0
@@ -293,6 +342,13 @@ function speakCurrent(pageTitle: string, session: number): void {
 
   utterance = u
   synth.speak(u)
+
+  speechStartWatchdog = window.setTimeout(() => {
+    if (session !== playingSession) return
+    if (segmentStartedAt.value) return
+    showToast(`Speech did not start — ${ttsSetupHint()}`)
+    stop()
+  }, 3000)
 }
 
 async function play(pageTitle: string): Promise<void> {
@@ -307,12 +363,8 @@ async function play(pageTitle: string): Promise<void> {
     return
   }
 
+  primeVoicesOnce()
   await ensureVoicesLoaded()
-
-  const voice = selectedVoice()
-  if (!voice) {
-    showToast('Using browser default voice — pick one in Listen settings when voices load')
-  }
 
   playingSession += 1
   const session = playingSession
@@ -423,8 +475,8 @@ function setRate(next: number): void {
 
 function setVoiceUri(uri: string): void {
   if (!uri) {
-    selectedVoiceUri.value = null
-    if (typeof localStorage !== 'undefined') localStorage.removeItem('dsa-tts-voice-uri')
+    selectedVoiceUri.value = ''
+    saveStoredVoiceUri('')
     return
   }
   selectedVoiceUri.value = uri
@@ -473,9 +525,12 @@ export function useHandbookTts() {
 
   function onVoicesChanged() {
     voices.value = refreshVoices()
-    if (!selectedVoiceUri.value) {
+    if (selectedVoiceUri.value === null) {
       const best = pickBestVoice(voices.value)
-      if (best) selectedVoiceUri.value = best.voiceURI
+      if (best) {
+        selectedVoiceUri.value = best.voiceURI
+        saveStoredVoiceUri(best.voiceURI)
+      }
     }
   }
 
@@ -486,7 +541,9 @@ export function useHandbookTts() {
     onVoicesChanged()
     const synth = getSynth()
     synth?.addEventListener('voiceschanged', onVoicesChanged)
-    void ensureVoicesLoaded()
+    primeVoicesOnce()
+    document.addEventListener('pointerdown', primeVoicesOnce, { once: true, passive: true })
+    document.addEventListener('keydown', primeVoicesOnce, { once: true, passive: true })
   })
 
   onUnmounted(() => {
@@ -514,6 +571,8 @@ export function useHandbookTts() {
 
   watch(rate, v => saveStoredRate(v))
 
+  const hasVoices = computed(() => voiceOptions.value.length > 0)
+
   return {
     status,
     rate,
@@ -523,6 +582,8 @@ export function useHandbookTts() {
     currentLabel,
     panelOpen,
     isSupported,
+    voicesLoading,
+    hasVoices,
     voiceOptions,
     selectedVoiceUri,
     play: () => play(pageTitle.value),

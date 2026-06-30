@@ -50,22 +50,45 @@ export function pickBestVoice(
   return ranked[0]?.v ?? voices[0] ?? null
 }
 
+export function readSpeechVoices(synth: SpeechSynthesis): SpeechSynthesisVoice[] {
+  return synth.getVoices().filter(v => v.name.trim().length > 0 || v.lang.trim().length > 0)
+}
+
+/** Nudge Chromium/Firefox to populate getVoices() — often empty until first synthesis. */
+export function primeSpeechSynthesis(synth: SpeechSynthesis): void {
+  try {
+    const prime = new SpeechSynthesisUtterance('\u200b')
+    prime.volume = 0.01
+    prime.rate = 10
+    prime.lang = HANDBOOK_TTS_LANG
+    synth.speak(prime)
+    if (synth.speaking) synth.cancel()
+  } catch {
+    /* ignore */
+  }
+  synth.getVoices()
+}
+
 export async function waitForVoices(
   synth: SpeechSynthesis,
-  { timeoutMs = 3000, pollMs = 80 } = {},
+  { timeoutMs = 5000, pollMs = 100 } = {},
 ): Promise<SpeechSynthesisVoice[]> {
-  const read = () => synth.getVoices().filter(v => v.name.trim().length > 0)
+  const read = () => readSpeechVoices(synth)
+  primeSpeechSynthesis(synth)
+
   const immediate = read()
   if (immediate.length) return immediate
 
   return new Promise(resolve => {
     let settled = false
+    let primedAgain = false
     const finish = () => {
       if (settled) return
       settled = true
       synth.removeEventListener('voiceschanged', onChange)
       window.clearInterval(poll)
       window.clearTimeout(timer)
+      window.clearTimeout(reprime)
       resolve(read())
     }
     const onChange = () => {
@@ -75,6 +98,12 @@ export async function waitForVoices(
     const poll = window.setInterval(() => {
       if (read().length) finish()
     }, pollMs)
+    const reprime = window.setTimeout(() => {
+      if (!read().length && !primedAgain) {
+        primedAgain = true
+        primeSpeechSynthesis(synth)
+      }
+    }, Math.min(1500, timeoutMs / 2))
     const timer = window.setTimeout(finish, timeoutMs)
     synth.getVoices()
   })
@@ -104,14 +133,25 @@ export function saveStoredRate(rate: number): void {
   localStorage.setItem(TTS_RATE_KEY, String(rate))
 }
 
+/** `null` = auto-pick best; `''` = explicit browser default; else a voice URI/name. */
 export function loadStoredVoiceUri(): string | null {
   if (typeof localStorage === 'undefined') return null
-  return localStorage.getItem(TTS_VOICE_KEY)
+  try {
+    const raw = localStorage.getItem(TTS_VOICE_KEY)
+    return raw
+  } catch {
+    return null
+  }
 }
 
 export function saveStoredVoiceUri(uri: string): void {
   if (typeof localStorage === 'undefined') return
   localStorage.setItem(TTS_VOICE_KEY, uri)
+}
+
+export function clearStoredVoiceUri(): void {
+  if (typeof localStorage === 'undefined') return
+  localStorage.removeItem(TTS_VOICE_KEY)
 }
 
 export function findVoiceByUri(

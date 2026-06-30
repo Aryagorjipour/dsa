@@ -11,6 +11,8 @@ const {
   currentLabel,
   panelOpen,
   isSupported,
+  voicesLoading,
+  hasVoices,
   voiceOptions,
   selectedVoiceUri,
   play,
@@ -138,7 +140,7 @@ function onClose() {
         <span class="listen-voice-label">Voice</span>
         <select
           class="listen-voice-select"
-          :value="selectedVoiceUri || ''"
+          :value="selectedVoiceUri ?? ''"
           @change="setVoiceUri($event.target.value)"
         >
           <option value="">Browser default (English)</option>
@@ -148,7 +150,13 @@ function onClose() {
         </select>
       </label>
 
-      <p class="listen-hint">Reads handbook text only — skips quizzes, nav cards, and code blocks.</p>
+      <p v-if="voicesLoading" class="listen-hint">Loading voices…</p>
+      <p v-else-if="!hasVoices" class="listen-hint listen-hint-warn">
+        No voices detected. On Arch Linux run:
+        <code>sudo pacman -S speech-dispatcher espeak-ng</code>, enable the
+        <code>speech-dispatcher</code> user service, then restart Firefox/Zen.
+      </p>
+      <p v-else class="listen-hint">Reads handbook text only — skips quizzes, nav cards, and code blocks.</p>
     </section>
   </div>
 </template>
@@ -340,6 +348,15 @@ function onClose() {
   font-size: 10px;
   line-height: 1.4;
   color: var(--vp-c-text-3);
+}
+
+.listen-hint-warn {
+  color: var(--vp-c-warning-1, #d97706);
+}
+
+.listen-hint code {
+  font-size: 9px;
+  word-break: break-all;
 }
 
 @media (max-width: 640px) {
