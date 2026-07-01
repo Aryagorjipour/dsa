@@ -92,7 +92,6 @@ function highlightBlock(blockId: string, _segmentIndex: number): void {
   if (el instanceof HTMLElement) {
     el.classList.add('dsa-tts-active')
     wrapBlockWords(el)
-    el.scrollIntoView({ block: 'nearest', behavior: 'smooth' })
   }
 }
 

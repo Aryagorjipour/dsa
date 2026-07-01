@@ -118,11 +118,8 @@ export function setLinePointer(blockEl: HTMLElement, speakableWordIndex: number)
     w.classList.toggle('dsa-tts-word-muted', mute)
   }
 
-  const tops = lineWords.map(w => w.getBoundingClientRect().top - blockRect.top)
-  const bottoms = lineWords.map(w => w.getBoundingClientRect().bottom - blockRect.top)
-  const lineTop = Math.min(...tops)
-  const lineBottom = Math.max(...bottoms)
-  const lineHeight = Math.max(4, lineBottom - lineTop)
+  const wordRect = wordEl.getBoundingClientRect()
+  const lineTop = wordRect.top - blockRect.top
 
   let pointer = blockEl.querySelector('.dsa-tts-line-pointer') as HTMLElement | null
   if (!pointer) {
@@ -133,8 +130,9 @@ export function setLinePointer(blockEl: HTMLElement, speakableWordIndex: number)
   }
 
   blockEl.classList.add('dsa-tts-has-pointer')
-  pointer.style.top = `${lineTop}px`
-  pointer.style.height = `${lineHeight}px`
+  const pointerHeight = pointer.offsetHeight || 10
+  pointer.style.top = `${lineTop + (wordRect.height - pointerHeight) / 2}px`
+  pointer.style.height = ''
 }
 
 export function lineTopForWordIndex(

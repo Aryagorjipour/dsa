@@ -205,27 +205,27 @@ html.dark mark.dsa-hl:hover {
 /* Listen mode — highlight block being read aloud */
 .vp-doc .dsa-tts-active {
   position: relative;
-  padding-left: 10px;
-  outline: 1px solid color-mix(in srgb, var(--vp-c-brand-1) 50%, transparent);
-  outline-offset: 2px;
-  border-radius: 4px;
-  background: color-mix(in srgb, var(--vp-c-brand-1) 6%, transparent);
+  outline: 2px solid color-mix(in srgb, var(--vp-c-brand-1) 70%, transparent);
+  outline-offset: 4px;
+  border-radius: 6px;
+  background: color-mix(in srgb, var(--vp-c-brand-1) 8%, transparent);
   transition: background 0.2s ease, outline-color 0.2s ease;
 }
 
 html.dark .vp-doc .dsa-tts-active {
-  background: color-mix(in srgb, var(--vp-c-brand-1) 10%, transparent);
+  background: color-mix(in srgb, var(--vp-c-brand-1) 14%, transparent);
 }
 
 .vp-doc .dsa-tts-active .dsa-tts-line-pointer {
   position: absolute;
-  left: 2px;
-  width: 3px;
-  border-radius: 2px;
-  background: var(--vp-c-brand-1);
-  opacity: 0.85;
+  left: -14px;
+  width: 0;
+  height: 0;
+  border-top: 5px solid transparent;
+  border-bottom: 5px solid transparent;
+  border-left: 8px solid var(--vp-c-brand-1);
   pointer-events: none;
-  transition: top 0.15s ease-out, height 0.15s ease-out;
+  transition: top 0.12s ease-out;
 }
 
 html.focus-mode .vp-doc .dsa-tts-active .dsa-tts-word-muted {
