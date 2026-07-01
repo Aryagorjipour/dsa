@@ -49,7 +49,7 @@ export default defineConfig({
     plugins: [
       VitePWA({
         registerType: 'prompt',
-        injectRegister: 'script',
+        injectRegister: false,
         includeAssets: [
           'favicon.ico',
           'favicon.svg',

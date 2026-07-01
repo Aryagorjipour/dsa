@@ -1,10 +1,18 @@
 <script setup>
-import { useServiceWorker } from '../composables/useServiceWorker'
+import { ref } from 'vue'
+import { applyServiceWorkerUpdate, useServiceWorker } from '../composables/useServiceWorker'
 
-const { needRefresh, offlineReady, updateServiceWorker } = useServiceWorker()
+const { needRefresh, offlineReady } = useServiceWorker()
+const updating = ref(false)
 
-function applyUpdate() {
-  updateServiceWorker(true)
+async function applyUpdate() {
+  if (updating.value) return
+  updating.value = true
+  try {
+    await applyServiceWorkerUpdate()
+  } catch {
+    window.location.reload()
+  }
 }
 
 function dismissUpdate() {
@@ -16,7 +24,9 @@ function dismissUpdate() {
   <div v-if="needRefresh" class="pwa-update-prompt" role="alert">
     <span class="pwa-update-text">A new handbook version is available.</span>
     <div class="pwa-update-actions">
-      <button class="pwa-update-btn primary" @click="applyUpdate">Refresh</button>
+      <button class="pwa-update-btn primary" :disabled="updating" @click="applyUpdate">
+        {{ updating ? 'Refreshing…' : 'Refresh' }}
+      </button>
       <button class="pwa-update-btn" @click="dismissUpdate">Later</button>
     </div>
   </div>
