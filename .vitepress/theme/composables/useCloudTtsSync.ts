@@ -9,6 +9,7 @@ import { loadCloudTtsConfig } from '../tts/ttsSecretStore'
 /** Periodically re-test cloud TTS and refresh stored provider settings. */
 export function useCloudTtsSync(onUpdated?: () => void): void {
   let intervalId: ReturnType<typeof setInterval> | null = null
+  let syncActive = false
 
   async function runSync(force = false): Promise<void> {
     if (!force) {
@@ -24,12 +25,18 @@ export function useCloudTtsSync(onUpdated?: () => void): void {
   }
 
   onMounted(() => {
-    void runSync(false)
-    intervalId = setInterval(() => void runSync(false), CLOUD_TTS_SYNC_INTERVAL_MS)
-    document.addEventListener('visibilitychange', onVisibilityChange)
+    void (async () => {
+      const config = await loadCloudTtsConfig()
+      if (!config.configured) return
+      syncActive = true
+      void runSync(false)
+      intervalId = setInterval(() => void runSync(false), CLOUD_TTS_SYNC_INTERVAL_MS)
+      document.addEventListener('visibilitychange', onVisibilityChange)
+    })()
   })
 
   onUnmounted(() => {
+    if (!syncActive) return
     document.removeEventListener('visibilitychange', onVisibilityChange)
     if (intervalId) clearInterval(intervalId)
   })

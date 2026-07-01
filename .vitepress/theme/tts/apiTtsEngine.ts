@@ -1,6 +1,7 @@
 import { sliceTextAtOffset } from '../utils/extractReadingSegments'
 import type { ReadingSegment } from '../utils/extractReadingSegments'
 import type { PreparedSegment } from './preparedSegment'
+/** Cloud-only: batches page segments into API-sized chunks for token limits. */
 import {
   buildPlaybackChunks,
   segmentIndexAtOffsetInChunk,

@@ -140,7 +140,8 @@ function getEngine(): TtsEngine {
 
 function loadSegments(): boolean {
   assignBlockIds()
-  const next = extractReadingSegments()
+  const mode = ttsEngine.value === 'cloud' ? 'cloud' : 'offline'
+  const next = extractReadingSegments(undefined, mode)
   segments.value = prepareAllSegments(next)
   return next.length > 0
 }

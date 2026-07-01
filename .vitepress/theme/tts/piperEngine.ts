@@ -5,15 +5,16 @@ import type { PreparedSegment } from './preparedSegment'
 import { ensureOrtWasmConfigured, getPiperWasmPaths } from './piperWasmPaths'
 import {
   buildEstimatedDurations,
-  mergeDurations,
-  resolveSegmentAtDurations,
   totalDurationMs,
 } from './segmentTiming'
 import { prepareSpeechText, displayWordFromSpoken } from './speechPrep'
 import { getGlossaryVersion } from './glossary/glossaryStore'
 import { charWeightsForText, spokenWordAtOffset } from './wordTiming'
-import { blockWordIndexForSegment } from './wordHighlight'
-import { targetSegmentForBlockSkip } from './blockNavigation'
+import {
+  blockSpanAtChar,
+  spokenCharOffset,
+  targetMsForBlockSkip,
+} from './offlineDocument'
 import type { TtsEngine, TtsEngineCallbacks } from './types'
 
 type PiperModule = typeof import('@mintplex-labs/piper-tts-web')
@@ -65,15 +66,15 @@ async function blobDurationMs(blob: Blob): Promise<number> {
   }
 }
 
-function prepareSegments(raw: ReadingSegment[]): PreparedSegment[] {
-  return raw.map(seg => {
-    const speech = prepareSpeechText(seg.text)
-    return {
-      ...seg,
-      speech,
-      phonemeWeights: charWeightsForText(speech.spokenText),
-    }
-  })
+function prepareDocument(raw: ReadingSegment[]): PreparedSegment | null {
+  const seg = raw[0]
+  if (!seg) return null
+  const speech = prepareSpeechText(seg.text)
+  return {
+    ...seg,
+    speech,
+    phonemeWeights: charWeightsForText(speech.spokenText),
+  }
 }
 
 function spokenTextFor(seg: PreparedSegment): string {
@@ -90,64 +91,40 @@ export function createPiperEngine(
   let session: TtsSession | null = null
   let audio: HTMLAudioElement | null = null
   let objectUrl: string | null = null
-  let segments: PreparedSegment[] = []
-  let currentIndex = 0
-  let contentOffsetMs = 0
-  let estimatedDurations: number[] = []
-  let actualDurations: Array<number | undefined> = []
+  let document: PreparedSegment | null = null
+  let durationMs = 0
+  let resumeOffsetMs = 0
   let playingSession = 0
-  let prefetchIndex = -1
-  let prefetchPromise: Promise<{ blob: Blob; durationMs: number }> | null = null
 
-  function effectiveDurations(): number[] {
-    return mergeDurations(estimatedDurations, actualDurations).map(d => d / rate)
-  }
-
-  function detachAudioListeners(): void {
-    if (!audio) return
-    audio.ontimeupdate = null
-    audio.onended = null
-    audio.onerror = null
+  function spokenLength(): number {
+    return spokenTextFor(document ?? { text: '' }).length
   }
 
   function currentElapsedMs(): number {
-    const durations = effectiveDurations()
-    let elapsed = 0
-    for (let i = 0; i < currentIndex; i++) {
-      elapsed += durations[i] ?? 0
-    }
-    if (audio) {
-      elapsed += (audio.currentTime * 1000) / rate
-    } else {
-      elapsed += contentOffsetMs
-    }
-    return elapsed
+    if (audio) return (audio.currentTime * 1000) / rate
+    return resumeOffsetMs
+  }
+
+  function contentDurationMs(): number {
+    return durationMs > 0 ? durationMs / rate : 0
   }
 
   function reportProgress(): void {
-    const durations = effectiveDurations()
-    const total = totalDurationMs(durations)
+    if (!document) return
+    const total = contentDurationMs()
     const elapsed = Math.min(currentElapsedMs(), total)
     callbacks.onProgress(elapsed, total)
 
-    if (callbacks.onWordHighlight) {
-      const seg = segments[currentIndex]
-      if (seg?.speech) {
-        const segDuration = durations[currentIndex] ?? 0
-        let offsetInSeg = 0
-        if (audio) {
-          offsetInSeg = (audio.currentTime * 1000) / rate
-        } else {
-          offsetInSeg = contentOffsetMs
-        }
-        const weights = seg.phonemeWeights ?? charWeightsForText(seg.speech.spokenText)
-        const spokenIdx = spokenWordAtOffset(offsetInSeg, segDuration, weights)
-        const displayIdx = displayWordFromSpoken(seg.speech.alignment, spokenIdx)
-        callbacks.onWordHighlight(
-          seg.blockId,
-          blockWordIndexForSegment(segments, currentIndex, displayIdx),
-        )
-      }
+    const spoken = spokenTextFor(document)
+    const charOffset = spokenCharOffset(elapsed, total, spoken.length)
+    const block = blockSpanAtChar(document.blockSpans ?? [], charOffset)
+    if (block) callbacks.onHighlight(block.blockId, 0)
+
+    if (callbacks.onWordHighlight && document.speech) {
+      const weights = document.phonemeWeights ?? charWeightsForText(spoken)
+      const spokenIdx = spokenWordAtOffset(elapsed, total, weights)
+      const displayIdx = displayWordFromSpoken(document.speech.alignment, spokenIdx)
+      callbacks.onWordHighlight(block?.blockId ?? document.blockId, displayIdx)
     }
   }
 
@@ -168,14 +145,14 @@ export function createPiperEngine(
 
   function cleanupAudio(): void {
     if (audio) {
-      detachAudioListeners()
+      audio.ontimeupdate = null
+      audio.onended = null
+      audio.onerror = null
       audio.pause()
       audio.src = ''
       audio = null
     }
     revokeObjectUrl()
-    prefetchPromise = null
-    prefetchIndex = -1
   }
 
   async function ensureSession(): Promise<TtsSession> {
@@ -188,133 +165,80 @@ export function createPiperEngine(
     return session
   }
 
-  async function synthesize(seg: PreparedSegment): Promise<{ blob: Blob; durationMs: number }> {
-    const spoken = spokenTextFor(seg)
+  async function synthesizeDocument(
+    seg: PreparedSegment,
+    fromOffsetMs = 0,
+  ): Promise<{ blob: Blob; durationMs: number }> {
+    let spoken = spokenTextFor(seg)
+    if (fromOffsetMs > 0) {
+      spoken = sliceTextAtOffset(spoken, fromOffsetMs * rate, rate)
+      if (!spoken) throw new Error('Nothing left to read')
+      seg = {
+        ...seg,
+        speech: prepareSpeechText(spoken),
+        phonemeWeights: charWeightsForText(prepareSpeechText(spoken).spokenText),
+      }
+      spoken = spokenTextFor(seg)
+    }
+
     const key = cacheKey(voiceId, spoken)
     const cached = await get<Blob>(key)
     if (cached) {
-      const durationMs = (await get<number>(`${key}:dur`)) ?? (await blobDurationMs(cached))
+      const cachedDuration = (await get<number>(`${key}:dur`)) ?? (await blobDurationMs(cached))
       const weights = (await get<number[]>(`${key}:weights`)) ?? seg.phonemeWeights
       if (weights) seg.phonemeWeights = weights
-      return { blob: cached, durationMs }
+      return { blob: cached, durationMs: cachedDuration }
     }
 
     const active = await ensureSession()
     const blob = await active.predict(spoken)
-    const durationMs = await blobDurationMs(blob)
+    const blobMs = await blobDurationMs(blob)
     const weights = seg.phonemeWeights ?? charWeightsForText(spoken)
     await set(key, blob)
-    await set(`${key}:dur`, durationMs)
+    await set(`${key}:dur`, blobMs)
     await set(`${key}:weights`, weights)
-    return { blob, durationMs }
+    return { blob, durationMs: blobMs }
   }
 
-  function prefetchNext(sessionId: number): void {
-    const nextIndex = currentIndex + 1
-    if (nextIndex >= segments.length || prefetchIndex === nextIndex) return
-    const seg = segments[nextIndex]
-    if (!seg) return
-    prefetchIndex = nextIndex
-    prefetchPromise = synthesize(seg)
-  }
+  async function startPlayback(sessionId: number, fromOffsetMs = 0): Promise<void> {
+    if (sessionId !== playingSession || !document) return
 
-  async function getSegmentAudio(index: number): Promise<{ blob: Blob; durationMs: number }> {
-    if (prefetchIndex === index && prefetchPromise) {
-      const result = await prefetchPromise
-      prefetchPromise = null
-      prefetchIndex = -1
-      return result
-    }
-    const seg = segments[index]
-    if (!seg) throw new Error('Missing segment')
-    return synthesize(seg)
-  }
-
-  async function playSegment(sessionId: number): Promise<void> {
-    if (sessionId !== playingSession) return
-
-    const seg = segments[currentIndex]
-    if (!seg) {
-      callbacks.onFinish()
-      return
-    }
-
-    callbacks.onHighlight(seg.blockId, currentIndex)
-
-    let spoken = spokenTextFor(seg)
-    if (contentOffsetMs > 0) {
-      spoken = sliceTextAtOffset(spoken, contentOffsetMs * rate, rate)
-      if (!spoken) {
-        currentIndex += 1
-        contentOffsetMs = 0
-        await playSegment(sessionId)
-        return
-      }
-    }
+    let synthTimer: ReturnType<typeof setTimeout> | null = setTimeout(() => {
+      if (sessionId === playingSession) callbacks.onStatus('synthesizing')
+    }, 200)
 
     try {
-      const playSeg: PreparedSegment =
-        spoken !== spokenTextFor(seg)
-          ? {
-              ...seg,
-              speech: prepareSpeechText(spoken),
-              phonemeWeights: charWeightsForText(prepareSpeechText(spoken).spokenText),
-            }
-          : seg
-
-      prefetchNext(sessionId)
-      const needsCustomSynth = spoken !== spokenTextFor(seg)
-      let synthTimer: ReturnType<typeof setTimeout> | null = setTimeout(() => {
-        if (sessionId === playingSession) callbacks.onStatus('synthesizing')
-      }, 200)
-      const { blob, durationMs } = needsCustomSynth
-        ? await synthesize(playSeg)
-        : await getSegmentAudio(currentIndex)
+      const { blob, durationMs: blobMs } = await synthesizeDocument(document, fromOffsetMs)
       if (synthTimer) clearTimeout(synthTimer)
       synthTimer = null
       if (sessionId !== playingSession) return
 
-      actualDurations[currentIndex] = durationMs
+      durationMs = blobMs
+      resumeOffsetMs = fromOffsetMs
       cleanupAudio()
 
       objectUrl = URL.createObjectURL(blob)
       audio = new Audio(objectUrl)
       audio.playbackRate = rate
-      if (contentOffsetMs > 0) {
-        audio.currentTime = (contentOffsetMs * rate) / 1000
-      }
 
       audio.onended = () => {
         if (sessionId !== playingSession) return
-        currentIndex += 1
-        contentOffsetMs = 0
-        if (currentIndex >= segments.length) {
-          callbacks.onFinish()
-          return
-        }
-        void playSegment(sessionId)
+        callbacks.onFinish()
       }
 
       audio.onerror = () => {
         if (sessionId !== playingSession) return
-        if (currentIndex < segments.length - 1) {
-          currentIndex += 1
-          contentOffsetMs = 0
-          void playSegment(sessionId)
-          return
-        }
         callbacks.onError('Playback failed')
       }
 
       bindAudioProgress(sessionId)
-
       await audio.play()
       if (sessionId !== playingSession) return
 
       callbacks.onStatus('playing')
       reportProgress()
-      prefetchNext(sessionId)
     } catch (err) {
+      if (synthTimer) clearTimeout(synthTimer)
       if (sessionId !== playingSession) return
       console.error('[piper] synthesis failed', err)
       callbacks.onError('Speech synthesis failed — try reloading the page')
@@ -359,31 +283,27 @@ export function createPiperEngine(
     },
 
     async play(nextSegments) {
-      segments = prepareSegments(nextSegments)
-      currentIndex = 0
-      contentOffsetMs = 0
-      estimatedDurations = buildEstimatedDurations(
-        segments.map(s => ({ ...s, text: spokenTextFor(s) })),
-        rate,
-      )
-      actualDurations = new Array(segments.length)
+      document = prepareDocument(nextSegments)
+      if (!document) return
+
+      durationMs = buildEstimatedDurations([document], rate)[0] ?? 0
+      resumeOffsetMs = 0
       playingSession += 1
       const sessionId = playingSession
       cleanupAudio()
-      callbacks.onStatus('playing')
-      await playSegment(sessionId)
+      await startPlayback(sessionId, 0)
     },
 
     pause() {
       if (!audio || audio.paused) return
-      contentOffsetMs = (audio.currentTime * 1000) / rate
+      resumeOffsetMs = currentElapsedMs()
       audio.pause()
       reportProgress()
       callbacks.onStatus('paused')
     },
 
     async resume() {
-      if (!segments.length) return
+      if (!document) return
 
       if (audio && audio.paused && audio.src) {
         await audio.play()
@@ -394,66 +314,59 @@ export function createPiperEngine(
       playingSession += 1
       const sessionId = playingSession
       cleanupAudio()
-      callbacks.onStatus('playing')
-      await playSegment(sessionId)
+      await startPlayback(sessionId, resumeOffsetMs)
     },
 
     stop() {
       playingSession += 1
       cleanupAudio()
-      segments = []
-      currentIndex = 0
-      contentOffsetMs = 0
-      estimatedDurations = []
-      actualDurations = []
+      document = null
+      durationMs = 0
+      resumeOffsetMs = 0
       callbacks.onClearHighlight()
       callbacks.onStatus('idle')
       callbacks.onProgress(0, 0)
     },
 
     skip(deltaMs) {
-      if (!segments.length) return
-      const durations = effectiveDurations()
-      const total = totalDurationMs(durations)
+      if (!document || !durationMs) return
+      const total = durationMs / rate
       const target = Math.max(0, Math.min(total - 1, currentElapsedMs() + deltaMs))
       this.seekTo(target)
     },
 
     skipSegment(deltaBlocks) {
-      if (!segments.length) return
-      const durations = effectiveDurations()
-      const targetSeg = targetSegmentForBlockSkip(
-        segments,
-        durations,
+      if (!document?.blockSpans?.length || !durationMs) return
+      const target = targetMsForBlockSkip(
+        document.blockSpans,
         currentElapsedMs(),
+        contentDurationMs(),
+        spokenLength(),
         deltaBlocks,
       )
-      if (targetSeg === null) return
-      let elapsed = 0
-      for (let i = 0; i < targetSeg; i++) elapsed += durations[i] ?? 0
-      this.seekTo(elapsed)
+      if (target === null) return
+      this.seekTo(target)
     },
 
     seekTo(targetMs) {
-      if (!segments.length) return
-
-      const durations = effectiveDurations()
-      const total = totalDurationMs(durations)
+      if (!document || !durationMs) return
+      const total = contentDurationMs()
       const target = Math.max(0, Math.min(total - 1, targetMs))
 
-      const resolved = resolveSegmentAtDurations(durations, target)
-      currentIndex = resolved.index
-      contentOffsetMs = resolved.offsetMs
-
-      if (!audio || audio.paused) {
+      if (audio && !audio.paused) {
+        audio.currentTime = (target * rate) / 1000
+        resumeOffsetMs = target
         reportProgress()
         return
       }
 
-      playingSession += 1
-      const sessionId = playingSession
-      cleanupAudio()
-      void playSegment(sessionId)
+      resumeOffsetMs = target
+      reportProgress()
+      const block = blockSpanAtChar(
+        document.blockSpans ?? [],
+        spokenCharOffset(target, contentDurationMs(), spokenLength()),
+      )
+      if (block) callbacks.onHighlight(block.blockId, 0)
     },
 
     setRate(next) {
@@ -463,11 +376,9 @@ export function createPiperEngine(
         const contentPos = (audio.currentTime * 1000) / prevRate
         audio.playbackRate = rate
         audio.currentTime = (contentPos * rate) / 1000
-        contentOffsetMs = contentPos
+        resumeOffsetMs = contentPos
       }
-      if (audio && !audio.paused) {
-        reportProgress()
-      }
+      if (audio && !audio.paused) reportProgress()
     },
 
     setVoice(nextVoiceId) {
@@ -479,14 +390,15 @@ export function createPiperEngine(
     },
 
     reloadVoice() {
-      if (!segments.length) return
+      if (!document) return
       const wasPlaying = !!(audio && !audio.paused)
+      resumeOffsetMs = currentElapsedMs()
       playingSession += 1
       cleanupAudio()
       if (wasPlaying) {
         const sessionId = playingSession
         callbacks.onStatus('playing')
-        void playSegment(sessionId)
+        void startPlayback(sessionId, resumeOffsetMs)
       }
     },
 

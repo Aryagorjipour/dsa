@@ -7,12 +7,25 @@ const SKIP_ANCESTOR =
 export const MAX_CHUNK_CHARS = 160
 export const CHARS_PER_SECOND = 12
 
+export interface BlockSpan {
+  blockId: string
+  tagName: string
+  /** Inclusive start in joined page speakable text */
+  charStart: number
+  /** Exclusive end in joined page speakable text */
+  charEnd: number
+}
+
 export interface ReadingSegment {
   id: string
   blockId: string
   text: string
   tagName: string
+  /** Offline Piper: block boundaries inside merged `text` */
+  blockSpans?: BlockSpan[]
 }
+
+export type ReadingExtractMode = 'cloud' | 'offline'
 
 export function normalizeReadingText(raw: string): string {
   return raw
@@ -104,15 +117,103 @@ function shouldSkipBlock(el: Element): boolean {
   return false
 }
 
-/** Extract speakable segments from handbook `.vp-doc` content only. */
-export function extractReadingSegments(root?: ParentNode | null): ReadingSegment[] {
-  if (typeof document === 'undefined' && !root) return []
+function resolveVpDoc(root?: ParentNode | null): Element | null {
+  if (typeof document === 'undefined' && !root) return null
+  return root instanceof Element && root.classList.contains('vp-doc')
+    ? root
+    : ((root ?? document).querySelector?.('.vp-doc') ?? null)
+}
 
-  const doc =
-    root instanceof Element && root.classList.contains('vp-doc')
-      ? root
-      : (root ?? document).querySelector?.('.vp-doc') ?? null
+/** One speakable segment per content block — no character splitting (offline Piper). */
+export function extractBlockSegments(root?: ParentNode | null): ReadingSegment[] {
+  const doc = resolveVpDoc(root)
+  if (!doc) return []
 
+  const segments: ReadingSegment[] = []
+  let counter = 0
+
+  doc.querySelectorAll(BLOCK_SELECTOR).forEach(el => {
+    if (!(el instanceof Element)) return
+    if (shouldSkipBlock(el)) return
+
+    const text = speakableBlockText(el)
+    if (!text) return
+
+    const blockId = el.getAttribute('data-dsa-block') || `block-${counter}`
+    segments.push({
+      id: `tts-${counter++}`,
+      blockId,
+      text,
+      tagName: el.tagName.toLowerCase(),
+    })
+  })
+
+  return segments
+}
+
+/** Merge block segments into one continuous document for offline one-shot playback. */
+export function buildOfflineDocument(blocks: ReadingSegment[]): {
+  segment: ReadingSegment | null
+  blockSpans: BlockSpan[]
+} {
+  if (!blocks.length) return { segment: null, blockSpans: [] }
+
+  const joined = normalizeReadingText(blocks.map(b => b.text).join(' '))
+  if (!joined) return { segment: null, blockSpans: [] }
+
+  const blockSpans: BlockSpan[] = []
+  let searchFrom = 0
+
+  for (const block of blocks) {
+    const norm = normalizeReadingText(block.text)
+    if (!norm) continue
+    const idx = joined.indexOf(norm, searchFrom)
+    const start = idx >= 0 ? idx : searchFrom
+    const end = start + norm.length
+    blockSpans.push({
+      blockId: block.blockId,
+      tagName: block.tagName,
+      charStart: start,
+      charEnd: end,
+    })
+    searchFrom = end
+    while (searchFrom < joined.length && joined[searchFrom] === ' ') searchFrom++
+  }
+
+  return {
+    segment: {
+      id: 'tts-offline-document',
+      blockId: blocks[0]!.blockId,
+      text: joined,
+      tagName: 'document',
+      blockSpans,
+    },
+    blockSpans,
+  }
+}
+
+export function extractOfflineDocument(root?: ParentNode | null): {
+  segment: ReadingSegment | null
+  blockSpans: BlockSpan[]
+} {
+  return buildOfflineDocument(extractBlockSegments(root))
+}
+
+/**
+ * Extract speakable segments from handbook `.vp-doc` content.
+ * - `offline`: entire page as one segment (Piper reads in one take).
+ * - `cloud`: 160-char sub-chunks per block for API token batching.
+ */
+export function extractReadingSegments(
+  root?: ParentNode | null,
+  mode: ReadingExtractMode = 'cloud',
+): ReadingSegment[] {
+  if (mode === 'offline') {
+    const { segment } = extractOfflineDocument(root)
+    return segment ? [segment] : []
+  }
+
+  const doc = resolveVpDoc(root)
   if (!doc) return []
 
   const segments: ReadingSegment[] = []
