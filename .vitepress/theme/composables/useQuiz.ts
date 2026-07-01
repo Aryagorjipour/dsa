@@ -1,4 +1,4 @@
-import { ref, computed, watch } from 'vue'
+import { ref, computed, watch, onMounted } from 'vue'
 import { useRoute } from 'vitepress'
 import type { QuizPack, Question, TopicProgress, QuizProgressStore } from '../../../quizzes/types'
 import { MASTERY_THRESHOLD } from '../../../quizzes/types'
@@ -43,6 +43,7 @@ export function useQuiz() {
   const route = useRoute()
   const pack = ref<QuizPack | null>(null)
   const packLoading = ref(false)
+  const clientReady = ref(false)
   const expanded = ref(false)
   const activeTab = ref<'quiz' | 'challenges'>('quiz')
   const currentIndex = ref(0)
@@ -115,7 +116,7 @@ export function useQuiz() {
     pack.value = await loadQuizPack(pagePath.value)
     packLoading.value = false
 
-    if (typeof window !== 'undefined' && window.location.hash.startsWith('#quiz')) {
+    if (clientReady.value && window.location.hash.startsWith('#quiz')) {
       expanded.value = true
       const qMatch = window.location.hash.match(/#quiz\/q(\d+)/)
       if (qMatch) {
@@ -157,10 +158,24 @@ export function useQuiz() {
     resetQuestionState()
   })
 
+  onMounted(() => {
+    clientReady.value = true
+    if (window.location.hash.startsWith('#quiz')) {
+      expanded.value = true
+      const qMatch = window.location.hash.match(/#quiz\/q(\d+)/)
+      if (qMatch) {
+        const idx = parseInt(qMatch[1], 10) - 1
+        if (idx >= 0) currentIndex.value = idx
+      }
+    }
+  })
+
   watch(pagePath, () => {
     if (typeof window === 'undefined') return
     currentIndex.value = 0
-    expanded.value = window.location.hash.startsWith('#quiz')
+    if (clientReady.value) {
+      expanded.value = window.location.hash.startsWith('#quiz')
+    }
     activeTab.value = 'quiz'
     loadPack()
   }, { immediate: true })
@@ -221,6 +236,7 @@ export function useQuiz() {
   return {
     pack,
     packLoading,
+    clientReady,
     pageHasQuiz,
     expanded,
     activeTab,

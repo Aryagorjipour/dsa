@@ -1,5 +1,10 @@
 import { get, set } from 'idb-keyval'
-import { sliceTextAtOffset } from '../utils/extractReadingSegments'
+import {
+  PIPER_SYNTH_MAX_CHARS,
+  sliceTextAtOffset,
+  splitIntoChunks,
+} from '../utils/extractReadingSegments'
+import { concatWavBlobs } from './concatWav'
 import type { ReadingSegment } from '../utils/extractReadingSegments'
 import type { PreparedSegment } from './preparedSegment'
 import { ensureOrtWasmConfigured, getPiperWasmPaths } from './piperWasmPaths'
@@ -89,6 +94,7 @@ export function createPiperEngine(
   let voiceId = initialVoiceId
   let rate = initialRate
   let session: TtsSession | null = null
+  let voiceReady = false
   let audio: HTMLAudioElement | null = null
   let objectUrl: string | null = null
   let document: PreparedSegment | null = null
@@ -191,7 +197,22 @@ export function createPiperEngine(
     }
 
     const active = await ensureSession()
-    const blob = await active.predict(spoken)
+    const chunks = splitIntoChunks(spoken, PIPER_SYNTH_MAX_CHARS)
+    const wavParts: Blob[] = []
+
+    for (const chunk of chunks) {
+      const chunkKey = cacheKey(voiceId, chunk)
+      const cachedChunk = await get<Blob>(chunkKey)
+      if (cachedChunk) {
+        wavParts.push(cachedChunk)
+        continue
+      }
+      const wav = await active.predict(chunk)
+      await set(chunkKey, wav)
+      wavParts.push(wav)
+    }
+
+    const blob = await concatWavBlobs(wavParts)
     const blobMs = await blobDurationMs(blob)
     const weights = seg.phonemeWeights ?? charWeightsForText(spoken)
     await set(key, blob)
@@ -257,6 +278,8 @@ export function createPiperEngine(
     },
 
     async ensureReady(onModelProgress) {
+      if (voiceReady && session?.voiceId === voiceId) return true
+
       try {
         await ensureOrtWasmConfigured()
         const piper = await loadPiper()
@@ -270,11 +293,16 @@ export function createPiperEngine(
           })
         }
 
-        session = null
-        resetPiperSessionSingleton()
-        await ensureSession()
+        if (!session || session.voiceId !== voiceId) {
+          resetPiperSessionSingleton()
+          session = null
+          await ensureSession()
+        }
+
+        voiceReady = true
         return true
       } catch (err) {
+        voiceReady = false
         session = null
         resetPiperSessionSingleton()
         console.error('[piper] init failed', err)
@@ -384,6 +412,7 @@ export function createPiperEngine(
     setVoice(nextVoiceId) {
       if (voiceId === nextVoiceId) return
       voiceId = nextVoiceId
+      voiceReady = false
       session = null
       resetPiperSessionSingleton()
       this.reloadVoice()
@@ -404,6 +433,7 @@ export function createPiperEngine(
 
     destroy() {
       this.stop()
+      voiceReady = false
       session = null
       resetPiperSessionSingleton()
     },

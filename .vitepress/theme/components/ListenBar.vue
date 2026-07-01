@@ -46,7 +46,7 @@ const isPiper = computed(() => ttsEngine.value === 'piper')
 const isCloud = computed(() => ttsEngine.value === 'cloud')
 
 const statusLabel = computed(() => {
-  if (modelLoading.value && isPiper.value) return 'Downloading voice'
+  if (modelLoading.value && isPiper.value) return 'Downloading voice…'
   if (isSynthesizing.value && isCloud.value) return 'Buffering audio…'
   if (isSynthesizing.value) return 'Preparing speech…'
   if (isPlaying.value) return 'Playing'

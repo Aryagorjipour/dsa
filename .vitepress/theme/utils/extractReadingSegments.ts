@@ -5,6 +5,9 @@ const SKIP_ANCESTOR =
 
 /** ~12 chars/sec at rate 1.0 — keeps Chrome utterances under ~14s limit */
 export const MAX_CHUNK_CHARS = 160
+
+/** Piper ONNX phoneme tensors overflow on full handbook pages — synth in batches, play as one. */
+export const PIPER_SYNTH_MAX_CHARS = 480
 export const CHARS_PER_SECOND = 12
 
 export interface BlockSpan {

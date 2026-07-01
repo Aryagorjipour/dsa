@@ -15,11 +15,24 @@ export async function ensureOrtWasmConfigured(): Promise<void> {
   if (ortConfigured) return
 
   const ort = await import('onnxruntime-web')
-  ort.env.wasm.numThreads = 1
 
-  const wasmEnv = ort.env.wasm as { wasmPaths?: unknown }
+  const wasmEnv = ort.env.wasm as { wasmPaths?: unknown; numThreads?: number }
   try {
-    Object.defineProperty(wasmEnv, 'wasmPaths', {
+    Object.defineProperty(wasmEnv, 'numThreads', {
+      get: () => 1,
+      set: () => {
+        /* Piper init sets hardwareConcurrency; keep single-thread without COOP/COEP */
+      },
+      configurable: true,
+      enumerable: true,
+    })
+  } catch {
+    wasmEnv.numThreads = 1
+  }
+
+  const wasmEnvPaths = ort.env.wasm as { wasmPaths?: unknown }
+  try {
+    Object.defineProperty(wasmEnvPaths, 'wasmPaths', {
       get: () => ortWasmPaths,
       set: () => {
         /* ignore piper CDN prefix override */
@@ -28,7 +41,7 @@ export async function ensureOrtWasmConfigured(): Promise<void> {
       enumerable: true,
     })
   } catch {
-    wasmEnv.wasmPaths = ortWasmPaths
+    wasmEnvPaths.wasmPaths = ortWasmPaths
   }
 
   ortConfigured = true

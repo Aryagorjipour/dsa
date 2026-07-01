@@ -239,11 +239,16 @@ async function ensureEngineReady(): Promise<boolean> {
     return await getEngine().ensureReady()
   }
 
+  const cached = await getEngine().isVoiceCached()
+  modelCached.value = cached
+
+  if (cached) {
+    return await getEngine().ensureReady()
+  }
+
   modelLoading.value = true
   modelProgress.value = 0
   try {
-    const cached = await getEngine().isVoiceCached()
-    modelCached.value = cached
     return await getEngine().ensureReady(p => {
       modelProgress.value = p
     })

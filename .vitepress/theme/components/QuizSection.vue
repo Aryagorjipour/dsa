@@ -8,6 +8,7 @@ import { buildPlaygroundUrl } from '../utils/playgroundUrl'
 const {
   pack,
   packLoading,
+  clientReady,
   pageHasQuiz,
   expanded,
   activeTab,
@@ -96,9 +97,9 @@ function playgroundUrl() {
         <span class="quiz-title">
           <span class="quiz-icon" aria-hidden="true">✦</span>
           Quizzes &amp; Challenges
-          <span v-if="isMastered" class="mastered-badge" title="Topic mastered">★</span>
+          <span v-if="clientReady && isMastered" class="mastered-badge" title="Topic mastered">★</span>
         </span>
-        <span class="quiz-summary">{{ packLoading ? 'Loading…' : summaryText }}</span>
+        <span class="quiz-summary">{{ clientReady ? (packLoading ? 'Loading…' : summaryText) : '' }}</span>
         <span class="arrow" aria-hidden="true">{{ expanded ? '▾' : '▸' }}</span>
       </button>
     </div>
