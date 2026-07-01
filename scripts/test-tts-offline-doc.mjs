@@ -51,6 +51,48 @@ function blockSpanIndexAtChar(spans, charOffset) {
   return Math.max(0, spans.length - 1)
 }
 
+const PIPER_SYNTH_MAX_CHARS = 480
+
+function splitIntoChunks(text, maxChars = PIPER_SYNTH_MAX_CHARS) {
+  const normalized = normalizeReadingText(text)
+  if (!normalized) return []
+  if (normalized.length <= maxChars) return [normalized]
+  const sentences = normalized.split(/(?<=[.!?])\s+/).filter(Boolean)
+  const chunks = []
+  let buffer = ''
+  for (const sentence of sentences) {
+    const piece = buffer ? `${buffer} ${sentence}` : sentence
+    if (piece.length <= maxChars) {
+      buffer = piece
+      continue
+    }
+    if (buffer) chunks.push(buffer)
+    if (sentence.length <= maxChars) {
+      buffer = sentence
+      continue
+    }
+    buffer = ''
+    for (let i = 0; i < sentence.length; i += maxChars) {
+      chunks.push(sentence.slice(i, i + maxChars).trim())
+    }
+  }
+  if (buffer) chunks.push(buffer)
+  return chunks.filter(Boolean)
+}
+
+function buildSynthChunkPlan(spoken, maxChars = PIPER_SYNTH_MAX_CHARS) {
+  const parts = splitIntoChunks(spoken, maxChars)
+  const plan = []
+  let searchFrom = 0
+  for (const text of parts) {
+    const idx = spoken.indexOf(text, searchFrom)
+    const charStart = idx >= 0 ? idx : searchFrom
+    plan.push({ text, charStart, charEnd: charStart + text.length })
+    searchFrom = charStart + text.length
+  }
+  return plan
+}
+
 let failed = 0
 function assert(name, cond) {
   if (!cond) {
@@ -74,6 +116,12 @@ assert('second span starts after first', blockSpans[1].charStart >= blockSpans[0
 
 const mid = spokenCharOffset(500, 1000, segment.text.length)
 assert('block index resolves mid doc', blockSpanIndexAtChar(blockSpans, mid) >= 0)
+
+const longSpoken = `${segment.text} ${'More words here. '.repeat(80)}`.trim()
+const synthPlan = buildSynthChunkPlan(longSpoken)
+assert('long spoken splits into synth plan', synthPlan.length > 1)
+assert('synth chunks stay within limit', synthPlan.every(c => c.text.length <= PIPER_SYNTH_MAX_CHARS))
+assert('synth plan preserves order', synthPlan[0].charStart === 0)
 
 if (failed) {
   console.error(`\n${failed} test(s) failed`)

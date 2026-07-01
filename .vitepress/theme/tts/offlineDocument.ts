@@ -1,4 +1,31 @@
-import type { BlockSpan } from '../utils/extractReadingSegments'
+import {
+  PIPER_SYNTH_MAX_CHARS,
+  splitIntoChunks,
+  type BlockSpan,
+} from '../utils/extractReadingSegments'
+
+export interface SynthChunkPlan {
+  text: string
+  charStart: number
+  charEnd: number
+}
+
+/** Map Piper synthesis batches back to positions in the merged offline document. */
+export function buildSynthChunkPlan(
+  spoken: string,
+  maxChars = PIPER_SYNTH_MAX_CHARS,
+): SynthChunkPlan[] {
+  const parts = splitIntoChunks(spoken, maxChars)
+  const plan: SynthChunkPlan[] = []
+  let searchFrom = 0
+  for (const text of parts) {
+    const idx = spoken.indexOf(text, searchFrom)
+    const charStart = idx >= 0 ? idx : searchFrom
+    plan.push({ text, charStart, charEnd: charStart + text.length })
+    searchFrom = charStart + text.length
+  }
+  return plan
+}
 
 export function spokenCharOffset(
   elapsedMs: number,

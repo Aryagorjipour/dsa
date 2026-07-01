@@ -2,6 +2,7 @@
 import { computed, defineAsyncComponent } from 'vue'
 import { useData } from 'vitepress'
 import DefaultTheme from 'vitepress/theme'
+import ClientOnly from './components/ClientOnly.vue'
 import DSAExplorer from './components/DSAExplorer.vue'
 import PageTools from './components/PageTools.vue'
 import NotesPanel from './components/NotesPanel.vue'
@@ -80,7 +81,9 @@ const showFallbackFocus = computed(() => {
     </template>
 
     <template #doc-after>
-      <QuizSection />
+      <ClientOnly>
+        <QuizSection />
+      </ClientOnly>
       <PageTools />
     </template>
   </Layout>

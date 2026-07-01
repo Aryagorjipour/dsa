@@ -53,9 +53,12 @@ const glossaryOverrides = ref<GlossaryRule[]>(loadGlossaryOverrides())
 let activeEngine: TtsEngine | null = null
 let activeEngineKind: TtsEngineChoice | null = null
 let lastWordHighlight: { blockId: string; displayWordIndex: number } | null = null
+let lastHighlightBlockId: string | null = null
+let cachedSegmentPath = ''
 
 function clearHighlight(): void {
   lastWordHighlight = null
+  lastHighlightBlockId = null
   document.querySelectorAll('.dsa-tts-active').forEach(el => {
     el.classList.remove('dsa-tts-active', 'dsa-tts-has-pointer')
     if (el instanceof HTMLElement) clearLinePointer(el)
@@ -71,7 +74,10 @@ function escapeAttr(value: string): string {
 }
 
 function highlightBlock(blockId: string, _segmentIndex: number): void {
+  if (lastHighlightBlockId === blockId) return
+  lastHighlightBlockId = blockId
   clearHighlight()
+  lastHighlightBlockId = blockId
   const el = document.querySelector(`[data-dsa-block="${escapeAttr(blockId)}"]`)
   if (el instanceof HTMLElement) {
     el.classList.add('dsa-tts-active')
@@ -138,12 +144,31 @@ function getEngine(): TtsEngine {
   return activeEngine
 }
 
-function loadSegments(): boolean {
+function loadSegments(force = false): boolean {
+  const path = typeof location !== 'undefined' ? location.pathname : ''
+  if (!force && path && path === cachedSegmentPath && segments.value.length) {
+    return true
+  }
+
   assignBlockIds()
   const mode = ttsEngine.value === 'cloud' ? 'cloud' : 'offline'
   const next = extractReadingSegments(undefined, mode)
   segments.value = prepareAllSegments(next)
+  cachedSegmentPath = path
   return next.length > 0
+}
+
+function warmListenEngine(): void {
+  if (ttsEngine.value !== 'piper' || !canUsePiperTts()) return
+  void getEngine()
+    .isVoiceCached()
+    .then(cached => {
+      modelCached.value = cached
+      if (cached) return getEngine().ensureReady()
+    })
+    .catch(() => {
+      /* ignore background warm failures */
+    })
 }
 
 function updateMediaSession(pageTitle: string): void {
@@ -274,7 +299,9 @@ async function play(pageTitle: string): Promise<void> {
   panelMinimized.value = false
   bindMediaSessionHandlers(pageTitle)
 
-  const ready = await ensureEngineReady()
+  const ready = modelCached.value
+    ? await getEngine().ensureReady()
+    : await ensureEngineReady()
   if (!ready) {
     showToast(
       ttsEngine.value === 'cloud'
@@ -460,7 +487,6 @@ export function useHandbookTts() {
 
   onUnmounted(() => {
     stop()
-    destroyEngine()
   })
 
   watch(
@@ -470,8 +496,19 @@ export function useHandbookTts() {
       panelOpen.value = false
       panelMinimized.value = false
       segments.value = []
+      cachedSegmentPath = ''
+      if (typeof window !== 'undefined') {
+        requestAnimationFrame(() => {
+          loadSegments(true)
+          warmListenEngine()
+        })
+      }
     },
   )
+
+  watch(panelOpen, open => {
+    if (open) warmListenEngine()
+  })
 
   watch(isFocusMode, () => {
     if (!lastWordHighlight) return
