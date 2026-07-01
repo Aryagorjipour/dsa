@@ -55,6 +55,8 @@ let activeEngineKind: TtsEngineChoice | null = null
 let lastWordHighlight: { blockId: string; displayWordIndex: number } | null = null
 let lastHighlightBlockId: string | null = null
 let cachedSegmentPath = ''
+let pointerRaf = 0
+let pendingPointer: { blockId: string; displayWordIndex: number } | null = null
 
 function clearHighlight(): void {
   lastWordHighlight = null
@@ -73,10 +75,18 @@ function escapeAttr(value: string): string {
   return value.replace(/\\/g, '\\\\').replace(/"/g, '\\"')
 }
 
+function deactivateBlock(blockId: string | null): void {
+  if (!blockId) return
+  const el = document.querySelector(`[data-dsa-block="${escapeAttr(blockId)}"]`)
+  if (el instanceof HTMLElement) {
+    el.classList.remove('dsa-tts-active', 'dsa-tts-has-pointer')
+    clearLinePointer(el)
+  }
+}
+
 function highlightBlock(blockId: string, _segmentIndex: number): void {
   if (lastHighlightBlockId === blockId) return
-  lastHighlightBlockId = blockId
-  clearHighlight()
+  deactivateBlock(lastHighlightBlockId)
   lastHighlightBlockId = blockId
   const el = document.querySelector(`[data-dsa-block="${escapeAttr(blockId)}"]`)
   if (el instanceof HTMLElement) {
@@ -84,6 +94,24 @@ function highlightBlock(blockId: string, _segmentIndex: number): void {
     wrapBlockWords(el)
     el.scrollIntoView({ block: 'nearest', behavior: 'smooth' })
   }
+}
+
+function flushPointer(): void {
+  pointerRaf = 0
+  if (!pendingPointer) return
+  const { blockId, displayWordIndex } = pendingPointer
+  pendingPointer = null
+  lastWordHighlight = { blockId, displayWordIndex }
+  const el = document.querySelector(`[data-dsa-block="${escapeAttr(blockId)}"]`)
+  if (el instanceof HTMLElement) {
+    setLinePointer(el, displayWordIndex)
+  }
+}
+
+function schedulePointer(blockId: string, displayWordIndex: number): void {
+  pendingPointer = { blockId, displayWordIndex }
+  if (pointerRaf) return
+  pointerRaf = requestAnimationFrame(flushPointer)
 }
 
 function engineCallbacks(): TtsEngineCallbacks {
@@ -99,11 +127,7 @@ function engineCallbacks(): TtsEngineCallbacks {
     },
     onHighlight: highlightBlock,
     onWordHighlight(blockId, displayWordIndex) {
-      lastWordHighlight = { blockId, displayWordIndex }
-      const el = document.querySelector(`[data-dsa-block="${escapeAttr(blockId)}"]`)
-      if (el instanceof HTMLElement) {
-        setLinePointer(el, displayWordIndex)
-      }
+      schedulePointer(blockId, displayWordIndex)
     },
     onClearHighlight: clearHighlight,
     onFinish() {

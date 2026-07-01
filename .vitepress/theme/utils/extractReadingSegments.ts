@@ -110,9 +110,36 @@ export function speakableBlockText(el: Element): string {
   return normalizeReadingText(clone.textContent || '')
 }
 
+export function speakableTableRowText(
+  tr: Element,
+  headers: string[],
+): { text: string; isHeader: boolean; headers: string[] } | null {
+  const cells = [...tr.querySelectorAll('th, td')]
+  const cellTexts = cells
+    .map(cell => speakableBlockText(cell))
+    .filter(Boolean)
+  if (!cellTexts.length) return null
+
+  const isHeader = !!tr.querySelector('th') && headers.length === 0
+  if (isHeader) {
+    return {
+      text: `Columns: ${cellTexts.join(', ')}`,
+      isHeader: true,
+      headers: cellTexts,
+    }
+  }
+
+  const parts = cellTexts.map((text, i) => {
+    const label = headers[i] || `column ${i + 1}`
+    return `${label}: ${text}`
+  })
+  return { text: parts.join('. '), isHeader: false, headers }
+}
+
 function shouldSkipBlock(el: Element): boolean {
   if (el.closest(SKIP_ANCESTOR)) return true
   if (el.closest('pre, code')) return true
+  if (el.closest('table') && (el.tagName === 'TD' || el.tagName === 'TH')) return true
   if (hasSpeakableDescendant(el)) return true
   const text = speakableBlockText(el)
   if (!text) return true
@@ -127,29 +154,102 @@ function resolveVpDoc(root?: ParentNode | null): Element | null {
     : ((root ?? document).querySelector?.('.vp-doc') ?? null)
 }
 
+function pushSegment(
+  segments: ReadingSegment[],
+  counter: { value: number },
+  el: Element,
+  text: string,
+): void {
+  const blockId = el.getAttribute('data-dsa-block') || `block-${counter.value}`
+  segments.push({
+    id: `tts-${counter.value++}`,
+    blockId,
+    text,
+    tagName: el.tagName.toLowerCase(),
+  })
+}
+
+function collectTableElements(table: HTMLTableElement): Element[] {
+  const elements: Element[] = []
+  const caption = table.querySelector('caption')
+  if (caption instanceof HTMLElement && speakableBlockText(caption)) {
+    elements.push(caption)
+  }
+
+  let headers: string[] = []
+  table.querySelectorAll('tr').forEach(tr => {
+    if (!(tr instanceof HTMLTableRowElement)) return
+    const row = speakableTableRowText(tr, headers)
+    if (!row) return
+    if (row.isHeader) headers = row.headers
+    elements.push(tr)
+  })
+
+  return elements
+}
+
+function collectSpeakableElements(doc: Element): Element[] {
+  const elements: Element[] = []
+
+  function walk(node: Node): void {
+    if (!(node instanceof Element)) return
+
+    if (node.tagName === 'TABLE') {
+      if (node.closest('.vp-doc')) {
+        elements.push(...collectTableElements(node as HTMLTableElement))
+      }
+      return
+    }
+
+    if (node.matches(BLOCK_SELECTOR)) {
+      if (!shouldSkipBlock(node)) elements.push(node)
+      return
+    }
+
+    for (const child of node.children) walk(child)
+  }
+
+  for (const child of doc.children) walk(child)
+  return elements
+}
+
 /** One speakable segment per content block — no character splitting (offline Piper). */
 export function extractBlockSegments(root?: ParentNode | null): ReadingSegment[] {
   const doc = resolveVpDoc(root)
   if (!doc) return []
 
   const segments: ReadingSegment[] = []
-  let counter = 0
+  const counter = { value: 0 }
 
-  doc.querySelectorAll(BLOCK_SELECTOR).forEach(el => {
-    if (!(el instanceof Element)) return
-    if (shouldSkipBlock(el)) return
+  for (const el of collectSpeakableElements(doc)) {
+    if (el.tagName === 'TR') {
+      let headers: string[] = []
+      const table = el.closest('table')
+      if (table) {
+        for (const tr of table.querySelectorAll('tr')) {
+          if (tr === el) break
+          const row = speakableTableRowText(tr, headers)
+          if (!row) continue
+          if (row.isHeader) headers = row.headers
+        }
+      }
+      const row = speakableTableRowText(el, headers)
+      if (!row) continue
+      pushSegment(segments, counter, el, row.text)
+      continue
+    }
+
+    if (el.tagName === 'CAPTION') {
+      const cap = speakableBlockText(el)
+      if (!cap) continue
+      pushSegment(segments, counter, el, `Table: ${cap}`)
+      continue
+    }
 
     const text = speakableBlockText(el)
-    if (!text) return
-
-    const blockId = el.getAttribute('data-dsa-block') || `block-${counter}`
-    segments.push({
-      id: `tts-${counter++}`,
-      blockId,
-      text,
-      tagName: el.tagName.toLowerCase(),
-    })
-  })
+    if (!text) continue
+    pushSegment(segments, counter, el, text)
+  }
 
   return segments
 }
@@ -216,29 +316,21 @@ export function extractReadingSegments(
     return segment ? [segment] : []
   }
 
-  const doc = resolveVpDoc(root)
-  if (!doc) return []
-
+  const blocks = extractBlockSegments(root)
   const segments: ReadingSegment[] = []
   let counter = 0
 
-  doc.querySelectorAll(BLOCK_SELECTOR).forEach(el => {
-    if (!(el instanceof Element)) return
-    if (shouldSkipBlock(el)) return
-
-    const blockId = el.getAttribute('data-dsa-block') || `block-${counter}`
-    const tagName = el.tagName.toLowerCase()
-    const chunks = splitIntoChunks(speakableBlockText(el))
-
+  for (const block of blocks) {
+    const chunks = splitIntoChunks(block.text)
     for (const text of chunks) {
       segments.push({
         id: `tts-${counter++}`,
-        blockId,
+        blockId: block.blockId,
         text,
-        tagName,
+        tagName: block.tagName,
       })
     }
-  })
+  }
 
   return segments
 }

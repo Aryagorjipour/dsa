@@ -17,6 +17,30 @@ function handleOffline() {
   isOnline.value = false
 }
 
+export async function verifyOnlineStatus(): Promise<boolean> {
+  if (typeof navigator === 'undefined') return true
+  if (navigator.onLine) {
+    isOnline.value = true
+    return true
+  }
+
+  try {
+    const ctrl = new AbortController()
+    const timer = setTimeout(() => ctrl.abort(), 2500)
+    await fetch(`${window.location.origin}/favicon.ico`, {
+      method: 'HEAD',
+      cache: 'no-store',
+      signal: ctrl.signal,
+    })
+    clearTimeout(timer)
+    isOnline.value = true
+    return true
+  } catch {
+    isOnline.value = false
+    return false
+  }
+}
+
 export function useConnectivity() {
   onMounted(() => {
     if (typeof window === 'undefined') return

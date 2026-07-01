@@ -14,7 +14,9 @@ import { charWeightsForText, spokenWordAtOffset } from './wordTiming'
 import {
   blockSpanAtChar,
   buildSynthChunkPlan,
+  charOffsetForElapsed,
   spokenCharOffset,
+  spokenWordIndexForElapsed,
   targetMsForBlockSkip,
   type SynthChunkPlan,
 } from './offlineDocument'
@@ -52,8 +54,6 @@ function hashText(text: string): string {
 function cacheKey(voiceId: string, spokenText: string): string {
   return `piper-audio:${getGlossaryVersion()}:${voiceId}:${hashText(spokenText)}`
 }
-
-const yieldToMain = (): Promise<void> => new Promise(resolve => setTimeout(resolve, 0))
 
 async function blobDurationMs(blob: Blob): Promise<number> {
   const url = URL.createObjectURL(blob)
@@ -107,6 +107,7 @@ export function createPiperEngine(
   let playingChunkIdx = -1
   let chunkBaseMs = 0
   let progressRaf = 0
+  let prefetchingChunk = -1
   let lastHighlightBlockId: string | null = null
   let lastWordKey = ''
 
@@ -150,7 +151,9 @@ export function createPiperEngine(
     callbacks.onProgress(elapsed, total)
 
     const spoken = spokenTextFor(document)
-    const charOffset = spokenCharOffset(elapsed, total, spoken.length)
+    const charOffset = synthPlan.length
+      ? charOffsetForElapsed(elapsed, synthPlan, chunkDurationMs, rate)
+      : spokenCharOffset(elapsed, total, spoken.length)
     const block = blockSpanAtChar(document.blockSpans ?? [], charOffset)
     if (block && block.blockId !== lastHighlightBlockId) {
       lastHighlightBlockId = block.blockId
@@ -158,8 +161,9 @@ export function createPiperEngine(
     }
 
     if (callbacks.onWordHighlight && document.speech) {
-      const weights = document.phonemeWeights ?? charWeightsForText(spoken)
-      const spokenIdx = spokenWordAtOffset(elapsed, total, weights)
+      const spokenIdx = synthPlan.length
+        ? spokenWordIndexForElapsed(spoken, elapsed, synthPlan, chunkDurationMs, rate)
+        : spokenWordAtOffset(elapsed, total, document.phonemeWeights ?? charWeightsForText(spoken))
       const displayIdx = displayWordFromSpoken(document.speech.alignment, spokenIdx)
       const wordKey = `${block?.blockId ?? document.blockId}:${displayIdx}`
       if (wordKey !== lastWordKey) {
@@ -177,10 +181,40 @@ export function createPiperEngine(
     })
   }
 
+  function syncChunkDurationFromAudio(idx: number): void {
+    if (!audio || !Number.isFinite(audio.duration) || audio.duration <= 0) return
+    const measured = Math.round(audio.duration * 1000)
+    if (measured <= 0 || chunkDurationMs[idx] === measured) return
+    chunkDurationMs[idx] = measured
+    durationMs = chunkDurationMs.reduce((sum, value) => sum + (value || 0), 0)
+  }
+
+  function maybePrefetchNextChunk(sessionId: number): void {
+    const next = playingChunkIdx + 1
+    if (next >= synthPlan.length || chunkBlobs[next] || prefetchingChunk === next) return
+    if (!audio) return
+
+    const dur = resolveChunkDuration(playingChunkIdx)
+    const elapsedInChunk = (audio.currentTime * 1000) / rate
+    if (dur <= 0 || elapsedInChunk / dur < 0.7) return
+
+    prefetchingChunk = next
+    void synthChunkBlob(next).finally(() => {
+      if (prefetchingChunk === next) prefetchingChunk = -1
+    })
+  }
+
   function bindAudioProgress(sessionId: number): void {
     if (!audio) return
+    audio.onloadedmetadata = () => {
+      if (sessionId !== playingSession || playingChunkIdx < 0) return
+      syncChunkDurationFromAudio(playingChunkIdx)
+      scheduleProgress()
+    }
     audio.ontimeupdate = () => {
       if (sessionId !== playingSession) return
+      syncChunkDurationFromAudio(playingChunkIdx)
+      maybePrefetchNextChunk(sessionId)
       scheduleProgress()
     }
   }
@@ -195,6 +229,7 @@ export function createPiperEngine(
   function cleanupAudio(): void {
     if (audio) {
       audio.ontimeupdate = null
+      audio.onloadedmetadata = null
       audio.onended = null
       audio.onerror = null
       audio.pause()
@@ -235,17 +270,6 @@ export function createPiperEngine(
     return wav
   }
 
-  async function measureChunkDuration(idx: number): Promise<number> {
-    const known = chunkDurationMs[idx]
-    if (known) return known
-
-    const blob = chunkBlobs[idx] ?? (await synthChunkBlob(idx))
-    const ms = await blobDurationMs(blob)
-    chunkDurationMs[idx] = ms
-    durationMs = chunkDurationMs.reduce((sum, value) => sum + value, 0)
-    return ms
-  }
-
   async function cacheMergedDocumentInBackground(
     sessionId: number,
     spoken: string,
@@ -267,16 +291,6 @@ export function createPiperEngine(
     }
   }
 
-  async function prefetchRemainingChunks(sessionId: number, spoken: string): Promise<void> {
-    for (let i = 1; i < synthPlan.length; i++) {
-      if (sessionId !== playingSession) return
-      await synthChunkBlob(i)
-      await measureChunkDuration(i)
-      await yieldToMain()
-    }
-    void cacheMergedDocumentInBackground(sessionId, spoken)
-  }
-
   async function playChunkAt(
     sessionId: number,
     idx: number,
@@ -287,7 +301,6 @@ export function createPiperEngine(
     await synthChunkBlob(idx)
     if (sessionId !== playingSession) return
 
-    await measureChunkDuration(idx)
     playingChunkIdx = idx
     chunkBaseMs = chunkDurationMs.slice(0, idx).reduce((sum, value) => sum + value, 0)
 
@@ -317,6 +330,8 @@ export function createPiperEngine(
           }
         })()
       } else {
+        const spoken = document ? spokenTextFor(document) : ''
+        void cacheMergedDocumentInBackground(sessionId, spoken)
         callbacks.onFinish()
       }
     }
@@ -389,7 +404,6 @@ export function createPiperEngine(
     )
 
     callbacks.onStatus('synthesizing')
-    void prefetchRemainingChunks(sessionId, spoken)
 
     const { idx, offsetMs } = chunkAtElapsedMs(fromOffsetMs)
     resumeOffsetMs = fromOffsetMs

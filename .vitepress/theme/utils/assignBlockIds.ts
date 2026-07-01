@@ -1,11 +1,13 @@
 export const BLOCK_SELECTOR =
-  '.vp-doc p, .vp-doc li, .vp-doc td, .vp-doc th, .vp-doc blockquote, .vp-doc h1, .vp-doc h2, .vp-doc h3, .vp-doc h4, .vp-doc h5, .vp-doc h6, .vp-doc .custom-block'
+  '.vp-doc p, .vp-doc li, .vp-doc blockquote, .vp-doc h1, .vp-doc h2, .vp-doc h3, .vp-doc h4, .vp-doc h5, .vp-doc h6, .vp-doc table caption, .vp-doc table tr, .vp-doc .custom-block'
 
 export const CONTENT_BLOCK_TAGS = new Set([
   'P',
   'LI',
   'TD',
   'TH',
+  'TR',
+  'CAPTION',
   'BLOCKQUOTE',
   'H1',
   'H2',
@@ -75,6 +77,7 @@ export function assignBlockIds(): void {
   doc.querySelectorAll(BLOCK_SELECTOR).forEach(el => {
     if (!(el instanceof Element)) return
     if (el.closest('pre, code, .vp-code-group, .language-')) return
+    if (el.closest('table') && (el.tagName === 'TD' || el.tagName === 'TH')) return
     if (el.hasAttribute('data-dsa-block')) return
     const childBlock = el.querySelector('[data-dsa-block]')
     if (childBlock && el !== childBlock) return

@@ -1,27 +1,32 @@
 <script setup>
-import { ref, computed } from 'vue'
-import { useConnectivity } from '../composables/useConnectivity'
+import { ref, computed, onMounted } from 'vue'
+import { useConnectivity, verifyOnlineStatus } from '../composables/useConnectivity'
 
 const DISMISS_KEY = 'dsa-offline-banner-dismissed'
 
 const { isOnline } = useConnectivity()
-const dismissed = ref(
-  typeof sessionStorage !== 'undefined' && sessionStorage.getItem(DISMISS_KEY) === '1',
-)
+const networkReady = ref(false)
+const dismissed = ref(false)
 
-const visible = computed(() => !isOnline.value && !dismissed.value)
+const visible = computed(() => networkReady.value && !isOnline.value && !dismissed.value)
 
 function dismiss() {
   dismissed.value = true
   sessionStorage.setItem(DISMISS_KEY, '1')
 }
 
-if (typeof window !== 'undefined') {
+onMounted(() => {
+  dismissed.value = sessionStorage.getItem(DISMISS_KEY) === '1'
+
+  void verifyOnlineStatus().finally(() => {
+    networkReady.value = true
+  })
+
   window.addEventListener('offline', () => {
     dismissed.value = false
     sessionStorage.removeItem(DISMISS_KEY)
   })
-}
+})
 </script>
 
 <template>

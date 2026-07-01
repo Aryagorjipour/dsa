@@ -1,5 +1,15 @@
 import { tokenizeWords } from './wordHighlight'
 
+/** Word index at a character offset in normalized spoken text. */
+export function spokenWordIndexAtChar(spoken: string, charOffset: number): number {
+  const words = tokenizeWords(spoken)
+  if (!words.length) return 0
+  for (let i = 0; i < words.length; i++) {
+    if (charOffset < words[i]!.end) return i
+  }
+  return words.length - 1
+}
+
 /** Map playback offset within a segment to a spoken-word index using phoneme weights. */
 export function spokenWordAtOffset(
   offsetMs: number,

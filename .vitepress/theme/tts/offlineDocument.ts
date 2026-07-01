@@ -1,8 +1,10 @@
 import {
+  estimateSegmentMs,
   PIPER_SYNTH_MAX_CHARS,
   splitIntoChunks,
   type BlockSpan,
 } from '../utils/extractReadingSegments'
+import { spokenWordIndexAtChar } from './wordTiming'
 
 export interface SynthChunkPlan {
   text: string
@@ -35,6 +37,42 @@ export function spokenCharOffset(
   if (durationMs <= 0 || spokenLength <= 0) return 0
   const ratio = Math.max(0, Math.min(1, elapsedMs / durationMs))
   return Math.min(spokenLength - 1, Math.floor(ratio * spokenLength))
+}
+
+/** Map playback clock to document char offset using per-chunk measured durations. */
+export function charOffsetForElapsed(
+  elapsedMs: number,
+  plan: SynthChunkPlan[],
+  chunkDurationMs: number[],
+  fallbackRate: number,
+): number {
+  if (!plan.length) return 0
+
+  let acc = 0
+  for (let i = 0; i < plan.length; i++) {
+    const chunk = plan[i]!
+    const dur = chunkDurationMs[i] || estimateSegmentMs(chunk.text, fallbackRate)
+    if (elapsedMs < acc + dur) {
+      const charLen = Math.max(1, chunk.charEnd - chunk.charStart)
+      const localRatio = dur > 0 ? Math.max(0, Math.min(1, (elapsedMs - acc) / dur)) : 0
+      return chunk.charStart + Math.min(charLen - 1, Math.floor(localRatio * charLen))
+    }
+    acc += dur
+  }
+
+  const last = plan[plan.length - 1]!
+  return Math.max(0, last.charEnd - 1)
+}
+
+export function spokenWordIndexForElapsed(
+  spoken: string,
+  elapsedMs: number,
+  plan: SynthChunkPlan[],
+  chunkDurationMs: number[],
+  fallbackRate: number,
+): number {
+  const charOffset = charOffsetForElapsed(elapsedMs, plan, chunkDurationMs, fallbackRate)
+  return spokenWordIndexAtChar(spoken, charOffset)
 }
 
 export function blockSpanAtChar(spans: BlockSpan[], charOffset: number): BlockSpan | null {
