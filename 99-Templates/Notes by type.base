@@ -1,0 +1,39 @@
+filters:
+  and:
+    - file.ext == "md"
+    - type != ""
+formulas:
+  words: (file.size / 5).round(0)
+properties:
+  type:
+    displayName: Type
+  formula.words:
+    displayName: ~Words
+views:
+  - type: table
+    name: Notes
+    filters:
+      not:
+        - file.inFolder("99-Templates")
+    groupBy:
+      property: type
+      direction: ASC
+    order:
+      - file.name
+      - type
+      - file.folder
+      - formula.words
+    sort:
+      - property: file.folder
+        direction: ASC
+    summaries:
+      formula.words: Average
+      type: Unique
+  - type: list
+    name: Templates
+    filters:
+      and:
+        - file.inFolder("99-Templates")
+    order:
+      - file.name
+      - type
