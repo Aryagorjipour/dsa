@@ -14,10 +14,10 @@ The master theorem solves `T(n) = a T(n/b) + f(n)` by comparing `f(n)` with `n` 
 ## Details
 - Real cost: if `f` is polynomially smaller than `n^{log_b(a)}`, the leaves dominate and `T` is `Θ(n^{log_b(a)})`. If `f` is `Θ` of that same function, every level matches and `T` is `Θ(n^{log_b(a)} log n)`. If `f` is polynomially larger and the regularity condition holds (`a f(n/b) ≤ k f(n)` for some `k < 1`), the root dominates and `T` is `Θ(f(n))`. The case that matters is equal subproblem sizes.
 - When it beats the previous structure: it beats drawing a [[recursion trees|recursion tree]] once the split is equal and you only need the case.
-- Failure mode: unequal piece sizes, or case 3 claimed without the regularity check. Some `f` sit in a gap the plain theorem does not cover.
+- Failure mode: treating an `O` bound as the middle case. `O(n)` includes `O(1)`, and `O(1)` is the leaf case, not `Θ(n log n)`. Unequal piece sizes, case 3 without the regularity check, and an `f` in a gap the plain theorem does not cover are the other ways the claim fails.
 
 ## Uses
-- Read mergesort as `a = 2`, `b = 2`, `f(n) = O(n)`, and get `Θ(n log n)` from the middle case.
+- Read mergesort as `a = 2`, `b = 2`, `f(n) = Θ(n)`. The critical exponent is `1`, so the middle case applies and `T` is `Θ(n log n)`. `f(n) = O(n)` does not select that case.
 - Read a binary tree recursion that does `O(1)` at the node and get a linear bound from the leaf case.
 - Reject the theorem for a split into `n/3` and `2n/3`. Draw the tree instead.
 

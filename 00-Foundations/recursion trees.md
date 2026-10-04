@@ -17,7 +17,7 @@ A recursion tree draws each recursive cost as a node. The cost of a level is the
 - Failure mode: charging a full last level when some branches have already hit the base case.
 
 ## Uses
-- See why `2T(n/2) + O(n)` is `Θ(n log n)`: each of `log n` levels costs `O(n)`.
+- See why `2T(n/2) + Θ(n)` is `Θ(n log n)`: there are `Θ(log n)` levels, and each one costs `Θ(n)`. A level cost of `O(n)` does not pin this, because `O(1)` is also `O(n)`.
 - Sum a tree whose branches shrink at different rates.
 - Check a guessed bound by comparing the root work with the leaf work.
 

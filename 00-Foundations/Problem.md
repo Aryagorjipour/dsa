@@ -1,11 +1,11 @@
 ---
-type: Paradigm
+type: Pattern
 tags:
   - dsa
 ---
 
 # Problem
-Type: Paradigm
+Type: Pattern
 Needs: none
 
 ## What it is
@@ -33,6 +33,6 @@ state(task):
     return the problem
 ```
 
-## Loop
-- Set up: input, legal output, and `n`.
-- Refuse: a structure, a procedure, or a complexity claim before those three exist.
+## Shape
+- Recognize: a task whose input, legal output, or `n` is still unnamed.
+- Move: name those three. Do not pick a structure, a procedure, or a cost before that.

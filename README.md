@@ -51,7 +51,7 @@ Study loop on every item, in this order: invariant → real cost → when it bea
 2. [[Time vs. space (input size `n`)]]
 3. [[Asymptotic notation (Big-O (upper), Big-Ω (lower), Big-Θ (tight))]]
 4. [[Cases (Best, average, worst)]]
-5. [[Amortized analysis (aggregate, accounting, potential) ]]
+5. [[Amortized analysis (aggregate, accounting, potential)]]
 6. Analysis of Algorithms: 
 	1. [[Recurrences]]
 	2. [[Master theorem]]

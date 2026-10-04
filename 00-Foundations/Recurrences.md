@@ -17,9 +17,9 @@ A recurrence writes a cost `T(n)` in terms of the cost on smaller inputs, plus t
 - Failure mode: a base case left out, so several closed forms fit the same split.
 
 ## Uses
-- Write `T(n) = 2T(n/2) + O(n)` for a balanced split that also scans the range.
-- Write `T(n) = T(n - 1) + O(1)` for a chain of calls, and see the linear stack of work.
-- Hand the equation to a tree argument or to the master theorem instead of expanding it by hand.
+- Write `T(n) = 2T(n/2) + Θ(n)` for a balanced split that scans the whole range. That `Θ(n)` is the term the master theorem's middle case requires.
+- Write `T(n) = T(n - 1) + Θ(1)` for a chain of calls whose non-recursive work is a positive constant, and see the linear stack.
+- Hand that tight equation to a tree argument or to the master theorem. An `O(n)` driving function is not yet case 2.
 
 ## Pseudocode
 
