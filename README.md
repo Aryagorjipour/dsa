@@ -46,8 +46,8 @@ Study loop on every item, in this order: invariant → real cost → when it bea
 1. What a:
 	1. [[Problem]] is?
 	2. an [[ADT]] is?
-	3. a [[Data Structure]] is?
-	4. an [[Algorithm]] is?
+	3. a [[00-Foundations/Data Structure|Data Structure]] is?
+	4. an [[00-Foundations/Algorithm|Algorithm]] is?
 2. [[Time vs. space (input size `n`)]]
 3. [[Asymptotic notation (Big-O (upper), Big-Ω (lower), Big-Θ (tight))]]
 4. [[Cases (Best, average, worst)]]
