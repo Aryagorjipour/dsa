@@ -1,11 +1,11 @@
 ---
-type: Pattern
+type: Data Structure Detail
 tags:
   - dsa
 ---
 
 # Problem
-Type: Pattern
+Type: Data Structure Detail
 Needs: none
 
 ## What it is
@@ -33,6 +33,6 @@ state(task):
     return the problem
 ```
 
-## Shape
-- Recognize: a task whose input, legal output, or `n` is still unnamed.
-- Move: name those three. Do not pick a structure, a procedure, or a cost before that.
+## Choice
+- The statement fixes input, output, and `n`.
+- It does not choose an algorithm.

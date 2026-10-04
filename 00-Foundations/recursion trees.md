@@ -9,7 +9,7 @@ Type: Algorithm
 Needs: [[Recurrences]]
 
 ## What it is
-A recursion tree draws each recursive cost as a node. The cost of a level is the sum of the nodes on that level, and the total is the sum of the levels. The invariant is that the sizes on a level add up to the work that level really does.
+A recursion tree draws each recursive cost as a node. The cost of a level is the sum of the nodes on that level, and the total is the sum of the levels. The invariant is that the subproblem sizes on a level sum to at most `n`, and the work on that level is the sum of the driving costs, which is `Θ(n)` only when each driving cost is tight.
 
 ## Details
 - Real cost: time is the sum of per-level costs down to the leaves. The depth is also the stack space of that recursion. The case that matters is an unbalanced split, where the leaves are not all on one row.

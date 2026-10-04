@@ -9,7 +9,7 @@ Type: Pattern
 Needs: [[Asymptotic notation (Big-O (upper), Big-Ω (lower), Big-Θ (tight))]]
 
 ## What it is
-`f` is `Ω(g)` when `f` grows at least as fast as `g`, up to a constant, once `n` is large enough. The invariant is that there exist constants `c > 0` and `n0` such that for every `n ≥ n0`, `f(n) ≥ c · g(n)`.
+`f` is `Ω(g)` when `f` grows at least as fast as `g`, up to a constant, once `n` is large enough. The invariant is that there exist constants `c > 0` and `n0` such that for every `n ≥ n0`, `f(n) ≥ c · g(n)`. That inequality says `f` grows no slower than `g`.
 
 ## Details
 - Real cost: this is a floor on the steps or the cells, not a promise that the algorithm is fast. The case that matters is large `n`. A lower bound on a problem applies to every algorithm in that model.
@@ -33,5 +33,5 @@ is_lower(f, g):
 ```
 
 ## Shape
-- Recognize: the phrase "no better than," said of growth.
+- Recognize: the phrase "grows no slower than `g`," said of growth.
 - Move: name the function the cost cannot fall under in this model.

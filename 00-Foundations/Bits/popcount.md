@@ -12,7 +12,7 @@ Needs: [[Bits]], [[set, clear, test]]
 Popcount is the number of 1 bits in a word. The invariant is that the result counts those 1s and is not the numeric value of the word.
 
 ## Details
-- Real cost: a machine that has a population-count step does one word in `O(1)`. Clearing the lowest 1 bit until the word is 0 takes time proportional to the number of 1 bits, not to the width. Scanning every position is proportional to the width. The case that matters is a dense word if you chose the "clear lowest 1" loop, and a sparse word if you scan the whole width.
+- Real cost: a machine that has a population-count step does one word in `O(1)`. The clear-lowest-1 loop runs once per set bit, so it is expensive on a dense word. A scan of the whole width costs the width either way. A sparse word does not make that scan worse. The case that matters is a dense word when you clear the lowest 1 bit until the word is 0.
 - When it beats the previous structure: it beats calling [[set, clear, test|test]] once per position when the only question is "how many flags are on."
 - Failure mode: stopping at the sign bit, or counting the integer value instead of the 1s.
 
